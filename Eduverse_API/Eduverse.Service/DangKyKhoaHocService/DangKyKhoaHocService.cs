@@ -151,6 +151,19 @@ namespace Eduverse.Service.DangKyKhoaHocService
                 item.TrangThai = "HetHan";
                 await DeleteAsync(item);
                 await SaveAsync();
+
+                var khoaHoc = await _khoaHocRepository.GetAll().Where(x => x.Id == item.IdKhoaHoc).FirstOrDefaultAsync();
+
+                await _notificationPublisher.NotifyUserAsync(item.IdNguoiDangKi.Value, new NotificationPayload
+                {
+                    TieuDe = "Khóa học hết hạn",
+                    NoiDung = $"Khóa học {khoaHoc.TieuDe} đã đã hết hạn. Vui lòng đăng kí lại!",
+                    LoaiThongBao = "HetHanDangKiKhoaHoc",
+                    Link = $"/student/enroll-courses/{khoaHoc.Id}",
+                    FromUser = item.IdNguoiDangKi,
+                    ItemId = khoaHoc.Id,
+                    ItemName = khoaHoc.TieuDe
+                });
             }
 
             

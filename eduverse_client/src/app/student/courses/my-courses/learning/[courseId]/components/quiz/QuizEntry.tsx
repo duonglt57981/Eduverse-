@@ -18,7 +18,7 @@ import {
   LockRounded,
   InfoOutlined,
   PlayArrowRounded,
-  HistoryRounded,
+  SchoolRounded,
 } from "@mui/icons-material";
 import type { BaiKiemTraInfoDto, LichSuLamBaiDto } from "../../hooks/useQuiz";
 import { BRAND, COLORS, CSSVAR, STATUS } from "@/src/theme/tokens";
@@ -389,6 +389,37 @@ export function QuizEntry({
           </Button>
         )}
 
+        {/* Nút Xem đáp án — Chỉ hiển thị khi ĐÃ CÓ LẦN ĐẠT */}
+        {daDat && (
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => {
+              const lanDat =
+                lichSu.filter((l) => l.dat && l.thoiGianNop).slice(-1)[0] ??
+                lichSu.filter((l) => l.thoiGianNop)[0];
+              if (lanDat) {
+                onXemLai(lanDat.idLanLamBaiKiemTra);
+              }
+            }}
+            startIcon={<SchoolRounded />}
+            sx={{
+              py: 1.5,
+              borderRadius: "12px",
+              fontWeight: 900,
+              fontSize: 15,
+              bgcolor: STATUS.success,
+              color: "#fff",
+              boxShadow: `0 8px 20px rgba(16,185,129,0.2)`,
+              "&:hover": {
+                bgcolor: "#059669",
+              },
+            }}
+          >
+            Xem đáp án
+          </Button>
+        )}
+
         {error && (
           <Alert
             severity="error"
@@ -396,99 +427,6 @@ export function QuizEntry({
           >
             {error}
           </Alert>
-        )}
-
-        {/* Xem lại bài làm cũ */}
-        {lichSu.filter((l) => l.thoiGianNop).length > 0 && (
-          <>
-            <Divider sx={{ opacity: 0.4 }} />
-            <Typography
-              sx={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                textAlign: "center",
-              }}
-            >
-              Lịch sử làm bài
-            </Typography>
-            <Stack spacing={1}>
-              {lichSu
-                .filter((l) => l.thoiGianNop)
-                .slice(0, 3)
-                .map((l) => (
-                  <Box
-                    key={l.idLanLamBaiKiemTra}
-                    onClick={() => onXemLai(l.idLanLamBaiKiemTra)}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      p: 1.5,
-                      borderRadius: "10px",
-                      cursor: "pointer",
-                      border: "1px solid rgba(0,0,0,0.07)",
-                      bgcolor: CSSVAR.paper,
-                      "&:hover": {
-                        borderColor: RED,
-                        bgcolor: "rgba(141,19,19,0.02)",
-                      },
-                    }}
-                  >
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: "center" }}
-                    >
-                      <HistoryRounded
-                        sx={{
-                          fontSize: 16,
-                          color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                        }}
-                      />
-                      <Box>
-                        <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>
-                          Lần {l.lamLanThu}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontSize: 11,
-                            color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
-                          }}
-                        >
-                          {l.thoiGianNop
-                            ? new Date(l.thoiGianNop).toLocaleDateString(
-                                "vi-VN",
-                              )
-                            : ""}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: "center" }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: 13,
-                          fontWeight: 800,
-                          color: l.dat ? STATUS.success : RED,
-                        }}
-                      >
-                        {l.tongDiem?.toFixed(1) ?? "—"}đ
-                      </Typography>
-                      <Chip
-                        label={l.dat ? "Đạt" : "Chưa đạt"}
-                        size="small"
-                        color={l.dat ? "success" : "error"}
-                        sx={{ fontWeight: 800, height: 20, fontSize: 10 }}
-                      />
-                    </Stack>
-                  </Box>
-                ))}
-            </Stack>
-          </>
         )}
       </Stack>
     </Box>

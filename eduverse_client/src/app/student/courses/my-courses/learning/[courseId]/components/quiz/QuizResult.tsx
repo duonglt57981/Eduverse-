@@ -76,13 +76,11 @@ export const QuizResult = ({
   const nguongDat = diemDat ?? diemToiDa * 0.5;
   const daDat = diem >= nguongDat;
 
-  const scoreColor = daDat100
+  const scoreColor = daDat100 || daDat
     ? GREEN
-    : daDat
-      ? RED
-      : phanTram >= 40
-        ? AMBER
-        : CRIMSON;
+    : phanTram >= 40
+      ? AMBER
+      : CRIMSON;
 
   const getScoreLabel = () => {
     if (daDat100) return "Hoàn hảo!";
@@ -451,7 +449,7 @@ export const QuizResult = ({
                 </Button>
               )}
 
-              {onXemLai && review?.choXemDapAn ? (
+              {onXemLai && (review?.choXemDapAn ?? daDat) ? (
                 <Button
                   fullWidth
                   variant="contained"
@@ -469,22 +467,26 @@ export const QuizResult = ({
                 >
                   Xem đáp án đúng
                 </Button>
-              ) : onXemLai && !review?.choXemDapAn && (review?.dat || daDat) ? (
+              ) : onXemLai ? (
                 <Button
                   fullWidth
                   variant="outlined"
-                  disabled
-                  startIcon={<LockIcon />}
+                  startIcon={<SchoolIcon />}
+                  onClick={onXemLai}
                   sx={{
-                    borderColor: "#d1d7dc",
-                    color: SUB,
-                    fontWeight: 600,
+                    borderColor: alpha(RED, 0.5),
+                    color: RED,
+                    fontWeight: 700,
                     borderRadius: RADIUS,
                     textTransform: "none",
                     py: 1.25,
+                    "&:hover": {
+                      borderColor: RED,
+                      bgcolor: alpha(RED, 0.04),
+                    },
                   }}
                 >
-                  Đạt 100% để xem đáp án
+                  Xem lại bài làm
                 </Button>
               ) : null}
 

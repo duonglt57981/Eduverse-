@@ -16,6 +16,8 @@ import {
   Cancel as CancelIcon,
   ArrowBack as ArrowBackIcon,
   EmojiEvents as EmojiEventsIcon,
+  Lock as LockIcon,
+  HelpOutlined as HelpOutlineIcon,
 } from "@mui/icons-material";
 import {
   ReviewQizzDto,
@@ -23,7 +25,7 @@ import {
   DapAnReviewDto,
   isMultiChoice,
 } from "../../hooks/useQuiz";
-import { cleanHtmlContent, isHtmlContent, stripHtml } from "@/src/utils/htmlHelpers";
+import { cleanHtmlContent, isHtmlContent } from "@/src/utils/htmlHelpers";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizResult ──
 const RED = BRAND.main;
@@ -66,11 +68,23 @@ function CauHoiReviewItem({
     cauHoi.dapAns.filter((d) => d.laDapAnDung).length > 1 ||
     selectedAnswerIds.length > 1;
 
+  const headerBorderColor = choXemDapAn
+    ? dung
+      ? alpha(GREEN, 0.22)
+      : alpha(RED, 0.16)
+    : alpha(INK, 0.12);
+
+  const headerBgColor = choXemDapAn
+    ? dung
+      ? alpha(GREEN, 0.035)
+      : alpha(RED, 0.025)
+    : "#fafafa";
+
   return (
     <Box
       sx={{
         borderRadius: RADIUS,
-        border: `1.5px solid ${dung ? alpha(GREEN, 0.22) : alpha(RED, 0.16)}`,
+        border: `1.5px solid ${headerBorderColor}`,
         bgcolor: "#fff",
         overflow: "hidden",
       }}
@@ -82,8 +96,14 @@ function CauHoiReviewItem({
           display: "flex",
           alignItems: "flex-start",
           gap: 1.5,
-          borderBottom: `1px solid ${dung ? alpha(GREEN, 0.12) : alpha(RED, 0.1)}`,
-          bgcolor: dung ? alpha(GREEN, 0.035) : alpha(RED, 0.025),
+          borderBottom: `1px solid ${
+            choXemDapAn
+              ? dung
+                ? alpha(GREEN, 0.12)
+                : alpha(RED, 0.1)
+              : "rgba(0,0,0,0.06)"
+          }`,
+          bgcolor: headerBgColor,
         }}
       >
         <Box
@@ -95,14 +115,22 @@ function CauHoiReviewItem({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            bgcolor: dung ? alpha(GREEN, 0.14) : alpha(RED, 0.1),
+            bgcolor: choXemDapAn
+              ? dung
+                ? alpha(GREEN, 0.14)
+                : alpha(RED, 0.1)
+              : alpha(SUB, 0.1),
             mt: 0.1,
           }}
         >
-          {dung ? (
-            <CheckCircleIcon sx={{ color: GREEN, fontSize: 17 }} />
+          {choXemDapAn ? (
+            dung ? (
+              <CheckCircleIcon sx={{ color: GREEN, fontSize: 17 }} />
+            ) : (
+              <CancelIcon sx={{ color: RED, fontSize: 17 }} />
+            )
           ) : (
-            <CancelIcon sx={{ color: RED, fontSize: 17 }} />
+            <HelpOutlineIcon sx={{ color: SUB, fontSize: 17 }} />
           )}
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -179,18 +207,29 @@ function CauHoiReviewItem({
             let labelBg = "#f7f9fa";
             let textColor = INK;
 
-            if (laDung) {
-              borderColor = alpha(GREEN, 0.35);
-              bgColor = alpha(GREEN, 0.045);
-              labelColor = GREEN;
-              labelBg = alpha(GREEN, 0.12);
-            }
-            if (chonSai) {
-              borderColor = alpha(RED, 0.35);
-              bgColor = alpha(RED, 0.045);
-              labelColor = RED;
-              labelBg = alpha(RED, 0.12);
-              textColor = RED;
+            if (choXemDapAn) {
+              if (laDung) {
+                borderColor = alpha(GREEN, 0.35);
+                bgColor = alpha(GREEN, 0.045);
+                labelColor = GREEN;
+                labelBg = alpha(GREEN, 0.12);
+              }
+              if (chonSai) {
+                borderColor = alpha(RED, 0.35);
+                bgColor = alpha(RED, 0.045);
+                labelColor = RED;
+                labelBg = alpha(RED, 0.12);
+                textColor = RED;
+              }
+            } else {
+              // Khi chưa đạt (ẩn đáp án đúng), chỉ đánh dấu đáp án đã chọn trung tính
+              if (daChon) {
+                borderColor = alpha(RED, 0.4);
+                bgColor = alpha(RED, 0.035);
+                labelColor = RED;
+                labelBg = alpha(RED, 0.1);
+                textColor = INK;
+              }
             }
 
             const rawAnswer = da.noiDungDapAn ?? "";
@@ -239,7 +278,11 @@ function CauHoiReviewItem({
                       fontSize: 14,
                       flex: 1,
                       color: textColor,
-                      fontWeight: laDung || chonSai ? 600 : 400,
+                      fontWeight:
+                        (choXemDapAn && (laDung || chonSai)) ||
+                        (!choXemDapAn && daChon)
+                          ? 600
+                          : 400,
                       lineHeight: 1.5,
                       "& p": { m: 0 },
                       "& strong": { fontWeight: 700 },
@@ -252,7 +295,11 @@ function CauHoiReviewItem({
                       fontSize: 14,
                       flex: 1,
                       color: textColor,
-                      fontWeight: laDung || chonSai ? 600 : 400,
+                      fontWeight:
+                        (choXemDapAn && (laDung || chonSai)) ||
+                        (!choXemDapAn && daChon)
+                          ? 600
+                          : 400,
                       lineHeight: 1.5,
                     }}
                   >
@@ -268,6 +315,20 @@ function CauHoiReviewItem({
                 {choXemDapAn && chonSai && (
                   <CancelIcon
                     sx={{ color: RED, fontSize: 18, flexShrink: 0 }}
+                  />
+                )}
+                {!choXemDapAn && daChon && (
+                  <Chip
+                    label="Đã chọn"
+                    size="small"
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      height: 22,
+                      bgcolor: alpha(RED, 0.08),
+                      color: RED,
+                      borderRadius: RADIUS,
+                    }}
                   />
                 )}
               </Box>
@@ -306,6 +367,40 @@ function CauHoiReviewItem({
               sx={{ fontSize: 12, color: "#92400e", fontWeight: 600 }}
             >
               Bạn chưa trả lời câu này
+            </Typography>
+          </Box>
+        )}
+        {!choXemDapAn && !hasAnswered && (
+          <Box
+            sx={{
+              mt: 1.5,
+              px: 2,
+              py: 1,
+              borderRadius: RADIUS,
+              bgcolor: alpha(STATUS.warning, 0.06),
+              border: `1px solid ${alpha(STATUS.warning, 0.14)}`,
+            }}
+          >
+            <Typography
+              sx={{ fontSize: 12, color: "#92400e", fontWeight: 600 }}
+            >
+              Bạn chưa trả lời câu này
+            </Typography>
+          </Box>
+        )}
+        {!choXemDapAn && hasAnswered && (
+          <Box
+            sx={{
+              mt: 1.5,
+              px: 2,
+              py: 1,
+              borderRadius: RADIUS,
+              bgcolor: alpha(SUB, 0.04),
+              border: `1px solid ${alpha(SUB, 0.1)}`,
+            }}
+          >
+            <Typography sx={{ fontSize: 12, color: SUB, fontWeight: 500 }}>
+              🔒 Đáp án đúng được ẩn do bài kiểm tra chưa đạt yêu cầu
             </Typography>
           </Box>
         )}
@@ -417,6 +512,36 @@ export function QuizReview({ review, tieuDe, onQuayLai }: QuizReviewProps) {
           />
         </Stack>
       </Box>
+
+      {!choXemDapAn && (
+        <Box
+          sx={{
+            p: 2,
+            mb: 2.5,
+            borderRadius: RADIUS,
+            bgcolor: alpha(STATUS.warning, 0.08),
+            border: `1px solid ${alpha(STATUS.warning, 0.25)}`,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+          }}
+        >
+          <LockIcon
+            sx={{ color: STATUS.warningDark, fontSize: 22, flexShrink: 0 }}
+          />
+          <Box>
+            <Typography
+              sx={{ fontSize: 13.5, fontWeight: 700, color: "#92400e" }}
+            >
+              Đáp án đúng đang bị khóa
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, color: "#78350f", mt: 0.25 }}>
+              Bạn chỉ có thể xem chi tiết các đáp án đúng sau khi đã hoàn thành
+              đạt yêu cầu bài kiểm tra này.
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
       <Stack spacing={2}>
         {review.cauHois.map((cauHoi, i) => (

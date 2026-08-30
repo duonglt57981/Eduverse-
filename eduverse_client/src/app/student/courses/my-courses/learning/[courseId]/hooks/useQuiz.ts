@@ -463,22 +463,33 @@ export function useQuiz(
   // ── Xem lại bài làm ───────────────────────────────────────────────────────
   const xemLaiBai = useCallback(
     async (idLanLamBai?: string) => {
-      const id = idLanLamBai ?? idLanLam;
-      if (!id) return;
+      const targetId =
+        idLanLamBai ||
+        idLanLam ||
+        lichSu.find((l) => l.dat && l.thoiGianNop)?.idLanLamBaiKiemTra ||
+        lichSu.find((l) => l.thoiGianNop)?.idLanLamBaiKiemTra ||
+        lichSu[0]?.idLanLamBaiKiemTra;
+
+      if (!targetId) {
+        setError("Không tìm thấy thông tin lần làm bài để xem đáp án");
+        return;
+      }
       setLoading(true);
+      setError("");
       try {
         const res = await apiService.get<ReviewQizzDto>(
-          `/BaiKiemTra/review/${id}`, // ✅ viết hoa
+          `/BaiKiemTra/review/${targetId}`, // ✅ viết hoa
         );
         setReview(res.data);
         setPhase("review");
-      } catch {
+      } catch (err) {
+        console.error("Lỗi khi tải bài xem lại:", err);
         setError("Không thể tải kết quả chi tiết");
       } finally {
         setLoading(false);
       }
     },
-    [idLanLam],
+    [idLanLam, lichSu],
   );
 
   const lamLaiDau = useCallback(() => {

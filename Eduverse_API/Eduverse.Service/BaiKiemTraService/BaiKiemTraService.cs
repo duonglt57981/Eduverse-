@@ -1,4 +1,4 @@
-﻿using Eduverse.Model;
+using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.BaiKiemTraRepository;
@@ -721,22 +721,39 @@ namespace Eduverse.Service.BaiKiemTraService
                 .OrderBy(x => x.ThuTuSapXep)
                 .ToListAsync();
 
+            // 🛡️ FIX: dùng GroupBy + lấy bản ghi đầu tiên thay vì ToDictionary trực tiếp,
+            // vì có thể tồn tại dữ liệu trùng IdCauHoi (chi tiết bài làm bị lưu 2 lần cho cùng 1 câu hỏi).
+            // Nếu xảy ra trường hợp này, nên kiểm tra lại logic tạo ChiTietLamBaiKiemTra lúc nộp bài.
             var chiTietLookup = chiTiets
                 .Where(x => x.IdCauHoi.HasValue)
-                .ToDictionary(x => x.IdCauHoi!.Value, x => x);
+                .GroupBy(x => x.IdCauHoi!.Value)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.Id).First());
 
+            // 🛡️ FIX: tương tự, phòng trường hợp 1 câu hỏi bị nhập liệu sai và có hơn 1 đáp án
+            // được đánh dấu LaDapAnDung = true. Nên kiểm tra lại logic thêm/sửa đáp án ở phần quản lý câu hỏi.
             var dapAnDungLookup = dapAns
                 .Where(x => x.LaDapAnDung == true && x.IdCauHoi.HasValue)
-                .ToDictionary(x => x.IdCauHoi!.Value, x => x);
+                .GroupBy(x => x.IdCauHoi!.Value)
+                .ToDictionary(g => g.Key, g => g.First());
 
             var dapAnLookup = dapAns
                 .Where(x => x.IdCauHoi.HasValue)
                 .GroupBy(x => x.IdCauHoi!.Value)
                 .ToDictionary(x => x.Key, x => x.ToList());
 
-            // 🚀 Tính flag cho xem đáp án: Chỉ được xem nếu Đúng 100%
+            // 🚀 Tính flag cho xem đáp án: Chỉ được xem nếu ĐÃ ĐẠT (lần làm này đạt hoặc đã từng đạt bài kiểm tra này)
             var tongDiem = chiTiets.Sum(x => x.DiemNhanDuoc ?? 0);
-            var choXemDapAn = lanLam.Dat == true && Math.Round(tongDiem, 2) >= 99.99;
+            var daDatLanNao = lanLam.IdBaiKiemTra.HasValue && lanLam.IdNguoiDung.HasValue
+                ? await _lanLamBaiKiemTraService
+                    .GetQueryable()
+                    .AsNoTracking()
+                    .AnyAsync(x => x.IdBaiKiemTra == lanLam.IdBaiKiemTra.Value
+                                && x.IdNguoiDung == lanLam.IdNguoiDung.Value
+                                && x.Dat == true
+                                && !x.IsDeleted)
+                : false;
+
+            var choXemDapAn = (lanLam.Dat == true) || daDatLanNao;
 
             var review = new ReviewQizzDto
             {
@@ -789,7 +806,7 @@ namespace Eduverse.Service.BaiKiemTraService
                     TenCauHoi = cauHoi.TenCauHoi,
                     NoiDungCauHoi = cauHoi.NoiDungCauHoi,
                     IdDapAnChon = chiTiet.IdDapAnChon,
-                    IdDapAnDung = dapAnDung?.Id,
+                    IdDapAnDung = choXemDapAn ? dapAnDung?.Id : null,
                     LaDung = chiTiet.LaDung ?? false,
                     DiemNhanDuoc = chiTiet.DiemNhanDuoc ?? 0,
                     DapAns = dapAnGuiVe

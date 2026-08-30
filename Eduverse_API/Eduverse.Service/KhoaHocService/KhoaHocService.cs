@@ -439,7 +439,7 @@ namespace Eduverse.Service.KhoaHocService
                 .ToList();
 
             var dangKyIds = items
-                .Where(x => x.idDangKiKhoaHoc.HasValue)
+                .Where(x => x.idDangKiKhoaHoc.HasValue && x.IsDeleted == false)
                 .Select(x => x.idDangKiKhoaHoc.Value)
                 .Distinct()
                 .ToList();
