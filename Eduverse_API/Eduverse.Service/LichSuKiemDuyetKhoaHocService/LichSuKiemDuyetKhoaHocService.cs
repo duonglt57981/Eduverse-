@@ -625,16 +625,19 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
 
             var khoaHocQuery = _khoaHocRepository.GetAll()
                  .Where(x =>
-                    (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi"));
+                    (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi" || x.TrangThaiPheDuyet == "XemXet"));
 
-            if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase) && search.TrangThaiPheDuyet == "XemXet")
             {
-                khoaHocQuery = khoaHocQuery;
+                khoaHocQuery = khoaHocQuery.Where(x => x.TrangThaiPheDuyet == "XemXet");
+            }
+            else if (string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase))
+            {
+                khoaHocQuery = khoaHocQuery.Where(x => x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi");
             }
             else if (string.Equals(role, "personnel", StringComparison.OrdinalIgnoreCase))
             {
-                khoaHocQuery = khoaHocQuery.Where(x =>
-                    (x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi")
+                khoaHocQuery = khoaHocQuery.Where(x =>(x.TrangThaiPheDuyet == "DaDuyet" || x.TrangThaiPheDuyet == "TuChoi")
                     && (x.IdNguoiDuyet == userId || GetQueryable()
                         .Any(h => h.CreatedId == userId && h.IdDoiTuong == x.Id)));
             }
@@ -719,7 +722,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
             // 1. Lấy thông tin khóa học theo Id
             var targetVersion = await _khoaHocRepository.GetAll()
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == idKhoaHoc && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
 
             if (targetVersion == null)
                 return null;

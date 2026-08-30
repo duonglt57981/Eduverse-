@@ -149,14 +149,18 @@ export default function DuyetKhoaHocPage() {
   const [totalPage, setTotalPage] = useState(1);
   const [stats, setStats] = useState({ choDuyet: 0, dangDuyet: 0 });
   const [reviewers, setReviewers] = useState<NhanVienPheDuyetDto[]>([]);
-  const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(new Set());
+  const [selectedCourseIds, setSelectedCourseIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [courseIdsToAssign, setCourseIdsToAssign] = useState<string[]>([]);
   const [actionMenu, setActionMenu] = useState<{
     anchorEl: HTMLElement;
     course: KhoaHocKiemDuyetListDto;
   } | null>(null);
-  const [approvingCourseId, setApprovingCourseId] = useState<string | null>(null);
+  const [approvingCourseId, setApprovingCourseId] = useState<string | null>(
+    null,
+  );
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -203,7 +207,16 @@ export default function DuyetKhoaHocPage() {
         params.sapXepNgay = "Cu";
     }
     return params;
-  }, [keyword, tab, assignmentStatus, reviewerId, fromDate, toDate, sortBy, page]);
+  }, [
+    keyword,
+    tab,
+    assignmentStatus,
+    reviewerId,
+    fromDate,
+    toDate,
+    sortBy,
+    page,
+  ]);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -293,10 +306,7 @@ export default function DuyetKhoaHocPage() {
   };
 
   const handleAssignmentStatusChange = (e: any) => {
-    const value = e.target.value as
-      | "TatCa"
-      | "ChuaPhanCong"
-      | "DaPhanCong";
+    const value = e.target.value as "TatCa" | "ChuaPhanCong" | "DaPhanCong";
     setAssignmentStatus(value);
     if (value === "ChuaPhanCong") setReviewerId("");
     setPage(1);
@@ -343,8 +353,11 @@ export default function DuyetKhoaHocPage() {
     () => items.filter((item) => isTrangThaiCho(item.trangThaiPheDuyet)),
     [items],
   );
-  const selectedOnPage = eligibleItems.filter((item) => selectedCourseIds.has(item.idKhoaHoc)).length;
-  const allOnPageSelected = eligibleItems.length > 0 && selectedOnPage === eligibleItems.length;
+  const selectedOnPage = eligibleItems.filter((item) =>
+    selectedCourseIds.has(item.idKhoaHoc),
+  ).length;
+  const allOnPageSelected =
+    eligibleItems.length > 0 && selectedOnPage === eligibleItems.length;
   const someOnPageSelected = selectedOnPage > 0 && !allOnPageSelected;
 
   const toggleCourse = (courseId: string) => {
@@ -514,7 +527,9 @@ export default function DuyetKhoaHocPage() {
             {isAdmin && selectedCourseIds.size > 0 && (
               <Button
                 variant="contained"
-                onClick={() => openAssignmentDialog(Array.from(selectedCourseIds))}
+                onClick={() =>
+                  openAssignmentDialog(Array.from(selectedCourseIds))
+                }
                 sx={{
                   minWidth: { xs: 44, sm: 150 },
                   height: 44,
@@ -526,10 +541,16 @@ export default function DuyetKhoaHocPage() {
                   px: { xs: 1.5, sm: 2.25 },
                 }}
               >
-                <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+                <Box
+                  component="span"
+                  sx={{ display: { xs: "none", sm: "inline" } }}
+                >
                   Phân công ({selectedCourseIds.size})
                 </Box>
-                <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
+                <Box
+                  component="span"
+                  sx={{ display: { xs: "inline", sm: "none" } }}
+                >
                   {selectedCourseIds.size}
                 </Box>
               </Button>
@@ -626,7 +647,11 @@ export default function DuyetKhoaHocPage() {
                         letterSpacing: "-0.5px",
                       }}
                     >
-                      {loadingStats ? <CircularProgress size={20} /> : stat.value}
+                      {loadingStats ? (
+                        <CircularProgress size={20} />
+                      ) : (
+                        stat.value
+                      )}
                     </Typography>
                     <Typography
                       sx={{
@@ -960,13 +985,28 @@ export default function DuyetKhoaHocPage() {
                         indeterminate={someOnPageSelected}
                         onChange={toggleCurrentPage}
                         disabled={eligibleItems.length === 0}
-                        sx={{ color: COLORS.primary, "&.Mui-checked": { color: COLORS.primary } }}
+                        sx={{
+                          color: COLORS.primary,
+                          "&.Mui-checked": { color: COLORS.primary },
+                        }}
                       />
                     }
                     label="Chọn tất cả trang hiện tại"
-                    sx={{ "& .MuiFormControlLabel-label": { fontSize: 13.5, fontWeight: 700, color: COLORS.ink } }}
+                    sx={{
+                      "& .MuiFormControlLabel-label": {
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        color: COLORS.ink,
+                      },
+                    }}
                   />
-                  <Typography sx={{ fontSize: 13, fontWeight: 700, color: COLORS.primary }}>
+                  <Typography
+                    sx={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: COLORS.primary,
+                    }}
+                  >
                     Đã chọn {selectedCourseIds.size} khóa học
                   </Typography>
                 </Stack>
@@ -1048,8 +1088,12 @@ export default function DuyetKhoaHocPage() {
                           cursor: "pointer",
                           overflow: "hidden",
                           transition: "all .2s ease",
-                          bgcolor: isSelected ? alpha(COLORS.primary, 0.045) : COLORS.paperRaised,
-                          borderColor: isSelected ? alpha(COLORS.primary, 0.45) : COLORS.line,
+                          bgcolor: isSelected
+                            ? alpha(COLORS.primary, 0.045)
+                            : COLORS.paperRaised,
+                          borderColor: isSelected
+                            ? alpha(COLORS.primary, 0.45)
+                            : COLORS.line,
                           // Vạch màu bên trái, chỉ hiện khi rê chuột
                           "&::before": {
                             content: '""',
@@ -1064,7 +1108,7 @@ export default function DuyetKhoaHocPage() {
                           },
                           "&:hover": {
                             borderColor: alpha(COLORS.primary, 0.35),
-                            boxShadow: `0 10px 28px ${alpha(COLORS.primary, 0.10)}`,
+                            boxShadow: `0 10px 28px ${alpha(COLORS.primary, 0.1)}`,
                             transform: "translateY(-2px)",
                             "&::before": { opacity: 1 },
                             "& .view-btn": {
@@ -1312,13 +1356,17 @@ export default function DuyetKhoaHocPage() {
           <Snackbar
             open={snackbar.open}
             autoHideDuration={5000}
-            onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+            onClose={() =>
+              setSnackbar((current) => ({ ...current, open: false }))
+            }
             anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
           >
             <Alert
               severity={snackbar.severity}
               variant="filled"
-              onClose={() => setSnackbar((current) => ({ ...current, open: false }))}
+              onClose={() =>
+                setSnackbar((current) => ({ ...current, open: false }))
+              }
             >
               {snackbar.message}
             </Alert>

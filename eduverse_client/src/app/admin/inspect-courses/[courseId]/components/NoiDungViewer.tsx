@@ -289,12 +289,10 @@ export default function NoiDungViewer({
     targetLoai === "baiGiang"
       ? (targetItem?.idBaiGiang ?? targetItem?.id)
       : (targetItem?.idBaiKiemTra ?? targetItem?.id);
-  const isPendingTarget = isTrangThaiCho(targetItem?.trangThaiPheDuyet);
   const showLyDoForm =
     (targetLoai === "baiGiang" || targetLoai === "baiKiemTra") &&
-    isPendingTarget &&
     typeof onSaveLyDo === "function" &&
-    targetId;
+    Boolean(targetId);
 
   let currentLyDo = "";
   const lyDoData = targetItem?.lyDoTuChois;

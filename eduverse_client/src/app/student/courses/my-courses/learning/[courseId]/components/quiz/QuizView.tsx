@@ -23,6 +23,7 @@ import {
 } from "@mui/icons-material";
 import { useState } from "react";
 import type { CauHoiLamBaiDto } from "../../hooks/useQuiz";
+import { isMultiChoice } from "../../hooks/useQuiz";
 import { BRAND, STATUS } from "@/src/theme/tokens";
 
 // ── Design tokens ──
@@ -126,7 +127,7 @@ export function QuizView({
 
   const sapHetGio = coGioiHanThoiGian && thoiGianConLai <= 60;
   const canhoHetGio = coGioiHanThoiGian && thoiGianConLai <= 180;
-  const isMulti = cauHoi?.loaiCauHoi === 2;
+  const isMulti = isMultiChoice(cauHoi?.loaiCauHoi);
 
   if (!cauHoi) return null;
 

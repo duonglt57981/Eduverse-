@@ -38,14 +38,12 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import BlockRoundedIcon from "@mui/icons-material/BlockRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import SearchOffRoundedIcon from "@mui/icons-material/SearchOffRounded";
+import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
 
 import AuthGuard from "@/src/components/AuthGuard";
-import {
-  COLORS,
-  FONTS,
-} from "@/src/app/admin/approve-courses/types/constants";
+import { COLORS, FONTS } from "@/src/app/admin/approve-courses/types/constants";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import KiemDuyetService from "@/src/services/KiemDuyetServide";
@@ -237,8 +235,8 @@ export default function LichSuKiemDuyetPage() {
     !filtersEqual(draftFilters, DEFAULT_FILTERS) || hasAppliedFilters;
   const isDateRangeInvalid = Boolean(
     draftFilters.fromDate &&
-      draftFilters.toDate &&
-      draftFilters.fromDate > draftFilters.toDate,
+    draftFilters.toDate &&
+    draftFilters.fromDate > draftFilters.toDate,
   );
 
   const fetchList = useCallback(async () => {
@@ -284,6 +282,10 @@ export default function LichSuKiemDuyetPage() {
   const handleOpenCourse = (id: string) => {
     if (!id) return;
     router.push(`/admin/inspect-courses/${id}`);
+  };
+
+  const handleOpenHistory = () => {
+    router.push("/admin/inspect-courses/history");
   };
 
   const handleGoBack = () => {
@@ -392,14 +394,16 @@ export default function LichSuKiemDuyetPage() {
       if (creator) {
         const matchesCreator = creator.id
           ? course.createdId === creator.id
-          : normalizeText(course.createdBy ?? "") === normalizeText(creator.label);
+          : normalizeText(course.createdBy ?? "") ===
+            normalizeText(creator.label);
         if (!matchesCreator) return false;
       }
 
       if (fromTimestamp !== null || toTimestamp !== null) {
         const courseTimestamp = getCourseTimestamp(course);
         if (courseTimestamp === null) return false;
-        if (fromTimestamp !== null && courseTimestamp < fromTimestamp) return false;
+        if (fromTimestamp !== null && courseTimestamp < fromTimestamp)
+          return false;
         if (toTimestamp !== null && courseTimestamp > toTimestamp) return false;
       }
 
@@ -550,65 +554,97 @@ export default function LichSuKiemDuyetPage() {
 
               <Stack
                 direction="row"
-                spacing={1.25}
+                spacing={1.5}
                 sx={{
                   alignItems: "center",
                   alignSelf: { xs: "stretch", sm: "center" },
-                  pl: { xs: 0, sm: 2.5 },
-                  borderLeft: {
-                    xs: "none",
-                    sm: `1px solid ${mix(COLORS.ink, 0.08)}`,
-                  },
-                  flexShrink: 0,
+                  flexWrap: "wrap",
+                  gap: 1.5,
                 }}
               >
-                <Box
+                <Tooltip title="Lịch sử xem xét">
+                  <IconButton
+                    onClick={handleOpenHistory}
+                    sx={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: "14px",
+                      flexShrink: 0,
+                      color: COLORS.primary,
+                      bgcolor: alpha(COLORS.primary, 0.08),
+                      border: `1px solid ${alpha(COLORS.primary, 0.14)}`,
+                      transition: "all .18s ease",
+                      "&:hover": {
+                        bgcolor: alpha(COLORS.primary, 0.16),
+                        transform: "translateY(-1px)",
+                      },
+                    }}
+                  >
+                    <HistoryRoundedIcon sx={{ fontSize: 22 }} />
+                  </IconButton>
+                </Tooltip>
+
+                <Stack
+                  direction="row"
+                  spacing={1.25}
                   sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    bgcolor: alpha("#16A34A", 0.12),
-                    display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    pl: { xs: 0, sm: 2 },
+                    borderLeft: {
+                      xs: "none",
+                      sm: `1px solid ${mix(COLORS.ink, 0.08)}`,
+                    },
                     flexShrink: 0,
                   }}
                 >
-                  <VerifiedRoundedIcon
-                    sx={{ color: "success.main", fontSize: 22 }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
+                  <Box
                     sx={{
-                      fontSize: 24,
-                      fontWeight: 800,
-                      color: COLORS.ink,
-                      lineHeight: 1.1,
-                      fontFamily: FONTS.display,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 2,
+                      bgcolor: alpha("#16A34A", 0.12),
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
                     }}
                   >
-                    {loadingStats ? (
-                      <CircularProgress
-                        size={18}
-                        sx={{ color: "success.main" }}
-                      />
-                    ) : (
-                      tongDaDuyet
-                    )}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 11.5,
-                      color: COLORS.inkSoft,
-                      textTransform: "uppercase",
-                      letterSpacing: 0.4,
-                      fontWeight: 600,
-                    }}
-                  >
-                    Khóa học đã phát hành
-                  </Typography>
-                </Box>
+                    <VerifiedRoundedIcon
+                      sx={{ color: "success.main", fontSize: 22 }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: 24,
+                        fontWeight: 800,
+                        color: COLORS.ink,
+                        lineHeight: 1.1,
+                        fontFamily: FONTS.display,
+                      }}
+                    >
+                      {loadingStats ? (
+                        <CircularProgress
+                          size={18}
+                          sx={{ color: "success.main" }}
+                        />
+                      ) : (
+                        tongDaDuyet
+                      )}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: 11.5,
+                        color: COLORS.inkSoft,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.4,
+                        fontWeight: 600,
+                      }}
+                    >
+                      Khóa học đã phát hành
+                    </Typography>
+                  </Box>
+                </Stack>
               </Stack>
             </Stack>
           </Box>
@@ -642,7 +678,11 @@ export default function LichSuKiemDuyetPage() {
                 }}
               >
                 <Box>
-                  <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                  <Stack
+                    direction="row"
+                    spacing={0.75}
+                    sx={{ alignItems: "center" }}
+                  >
                     <FilterListRoundedIcon
                       aria-hidden="true"
                       sx={{ fontSize: 18, color: COLORS.primary }}
@@ -716,7 +756,12 @@ export default function LichSuKiemDuyetPage() {
                   }
                   sx={{
                     ...filterControlSx,
-                    gridColumn: { xs: "span 1", sm: "1 / -1", md: "span 2", lg: "span 1" },
+                    gridColumn: {
+                      xs: "span 1",
+                      sm: "1 / -1",
+                      md: "span 2",
+                      lg: "span 1",
+                    },
                   }}
                   slotProps={{
                     htmlInput: { "aria-label": "Tìm kiếm khóa học" },
@@ -746,7 +791,9 @@ export default function LichSuKiemDuyetPage() {
                     }))
                   }
                   getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) => option.key === value.key}
+                  isOptionEqualToValue={(option, value) =>
+                    option.key === value.key
+                  }
                   filterOptions={(options, state) => {
                     const keyword = normalizeText(state.inputValue);
                     if (!keyword) return options;
@@ -874,7 +921,12 @@ export default function LichSuKiemDuyetPage() {
                     display: "flex",
                     gap: 1,
                     minWidth: 0,
-                    gridColumn: { xs: "span 1", sm: "1 / -1", md: "1 / -1", lg: "span 1" },
+                    gridColumn: {
+                      xs: "span 1",
+                      sm: "1 / -1",
+                      md: "1 / -1",
+                      lg: "span 1",
+                    },
                     justifyContent: { md: "flex-end", lg: "stretch" },
                   }}
                 >
@@ -933,7 +985,12 @@ export default function LichSuKiemDuyetPage() {
                 <Typography
                   id="course-date-range-error"
                   role="alert"
-                  sx={{ mt: 1, fontSize: 12.5, fontWeight: 600, color: "error.main" }}
+                  sx={{
+                    mt: 1,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: "error.main",
+                  }}
                 >
                   Từ ngày không được sau Đến ngày.
                 </Typography>
@@ -997,14 +1054,24 @@ export default function LichSuKiemDuyetPage() {
                     />
                   </Box>
                   <Typography
-                    sx={{ color: COLORS.ink, fontSize: 15, fontWeight: 700, mb: 0.5 }}
+                    sx={{
+                      color: COLORS.ink,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      mb: 0.5,
+                    }}
                   >
                     Không tìm thấy khóa học phù hợp.
                   </Typography>
                   <Typography
                     variant="caption"
                     color={COLORS.inkSoft}
-                    sx={{ display: "block", mb: 2.5, maxWidth: 360, mx: "auto" }}
+                    sx={{
+                      display: "block",
+                      mb: 2.5,
+                      maxWidth: 360,
+                      mx: "auto",
+                    }}
                   >
                     Thử thay đổi từ khóa hoặc bộ lọc để xem kết quả khác.
                   </Typography>

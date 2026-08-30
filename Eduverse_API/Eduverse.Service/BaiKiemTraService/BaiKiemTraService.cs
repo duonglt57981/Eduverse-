@@ -426,15 +426,25 @@ namespace Eduverse.Service.BaiKiemTraService
 
             var result = _mapper.Map<BaiKiemTra, BaiKiemTraLamBaiDto>(baiKiemTra);
 
-            result.CauHois = cauHois.Select(c =>
+
+            result.CauHois = cauHois.Select(c => new CauHoiLamBaiDto
             {
-                var item = _mapper.Map<CauHoi, CauHoiLamBaiDto>(c);
-                item.DapAns = dapAns
-                    .Where(d => d.IdCauHoi == c.Id)
-                    .Select(d => _mapper.Map<DapAn, DapAnLamBaiDto>(d))
-                    .ToList();
-                return item;
+                Id = c.Id,
+                TenCauHoi = c.TenCauHoi,
+                NoiDungCauHoi = c.NoiDungCauHoi,
+                LoaiCauHoi = c.LoaiCauHoi,
+                Diem = c.Diem,
+                DoKho = c.DoKho,
+                DapAns = dapAns
+              .Where(d => d.IdCauHoi == c.Id)
+              .Select(d => new DapAnLamBaiDto
+              {
+                  Id = d.Id,
+                  NoiDungDapAn = d.NoiDungDapAn
+              })
+              .ToList()
             }).ToList();
+
 
             return result;
         }

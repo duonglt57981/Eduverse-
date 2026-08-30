@@ -65,20 +65,32 @@ const scrollbarSx = {
   },
 };
 
-const DOI_TUONG_ID_KEY: Record<"baiGiang" | "baiKiemTra" | "taiLieu", string> =
-  {
-    baiGiang: "idBaiGiang",
-    baiKiemTra: "idBaiKiemTra",
-    taiLieu: "idTaiLieu",
-  };
+// ── Nhận diện & lấy id của bài giảng / bài kiểm tra một cách "khoan dung" ──
+// Một số dữ liệu API thực tế không trả về idBaiGiang/idBaiKiemTra trên mọi
+// node (chỉ có "id" chung), nên cần fallback sang "id" — nhưng chỉ khi node
+// đó thực sự "trông giống" bài giảng/bài kiểm tra (tránh khớp nhầm sang phần,
+// tài liệu, câu hỏi... cũng có field "id" khi duyệt đệ quy cả cây dữ liệu).
+const isDoiTuongType = (
+  node: any,
+  loai: "baiGiang" | "baiKiemTra",
+): boolean => {
+  if (!node || typeof node !== "object") return false;
+  if (loai === "baiGiang") {
+    return "idBaiGiang" in node || "tenBaiGiang" in node;
+  }
+  return "idBaiKiemTra" in node || "tenBaiKiemTra" in node || "cauHois" in node;
+};
 
-const LOAI_DOI_TUONG: Record<
-  "baiGiang" | "baiKiemTra" | "taiLieu",
-  "BaiGiang" | "BaiKiemTra" | "TaiLieu"
-> = {
-  baiGiang: "BaiGiang",
-  baiKiemTra: "BaiKiemTra",
-  taiLieu: "TaiLieu",
+const getDoiTuongId = (
+  loai: "baiGiang" | "baiKiemTra",
+  node: any,
+): string | null => {
+  if (!node) return null;
+  const raw =
+    loai === "baiGiang"
+      ? (node.idBaiGiang ?? node.id)
+      : (node.idBaiKiemTra ?? node.id);
+  return raw != null ? String(raw) : null;
 };
 
 export default function ChiTietKiemDuyetKhoaHocPage() {
@@ -88,7 +100,11 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
 
   const [detailLoading, setDetailLoading] = useState(true);
   const [detail, setDetail] = useState<any>(null);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
+  const [selectedContent, setSelectedContent] = useState<{
+    loai: "baiGiang" | "taiLieu" | "baiKiemTra";
+    item: any;
+    lyDoTarget?: { loai: "baiGiang" | "baiKiemTra"; item: any } | null;
+  } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [ghiChu, setGhiChu] = useState("");
   const [showTuChoi, setShowTuChoi] = useState(false);
@@ -120,58 +136,23 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     return null;
   }, []);
 
-  // ── Chọn nội dung ──
-  const handleSelectContent = useCallback(
-    (loai: "baiGiang" | "taiLieu" | "baiKiemTra", item: any) => {
-      setSelectedContent({ loai, item });
-
-      if (loai === "baiGiang" || loai === "baiKiemTra" || loai === "taiLieu") {
-        const doiTuongId = item?.[DOI_TUONG_ID_KEY[loai]];
-        let existingLyDoId: string | null = null;
-        const lyDoData = item?.lyDoTuChois;
-
-        if (lyDoData) {
-          if (Array.isArray(lyDoData) && lyDoData.length > 0) {
-            const first = lyDoData[0];
-            if (first?.id) existingLyDoId = first.id;
-          } else if (typeof lyDoData === "object" && lyDoData.id) {
-            existingLyDoId = lyDoData.id;
+  // ── Tìm bài giảng cha của tài liệu ──
+  const findParentBaiGiang = useCallback(
+    (detailData: any, idBaiGiang: string | number) => {
+      if (!detailData?.phans) return null;
+      for (const phan of detailData.phans) {
+        if (phan.baiGiangs && Array.isArray(phan.baiGiangs)) {
+          for (const bg of phan.baiGiangs) {
+            if (String(bg.idBaiGiang) === String(idBaiGiang)) return bg;
           }
         }
-
-        if (!existingLyDoId) {
-          existingLyDoId =
-            item?.idLyDoTuChoi ?? item?.lyDoTuChoiId ?? item?.lyDo?.id ?? null;
-        }
-
-        if (doiTuongId && existingLyDoId) {
-          const key = `${loai}-${doiTuongId}`;
-          setLyDoIdMap((prev) =>
-            prev[key] ? prev : { ...prev, [key]: String(existingLyDoId) },
-          );
-        }
       }
+      return null;
     },
     [],
   );
 
-  // ── Tự động chọn nội dung đầu tiên khi detail load xong ──
-  useEffect(() => {
-    if (!detailLoading && detail && !selectedContent) {
-      const first = findFirstContent(detail);
-      if (first) {
-        handleSelectContent(first.loai, first.item);
-      }
-    }
-  }, [
-    detailLoading,
-    detail,
-    selectedContent,
-    findFirstContent,
-    handleSelectContent,
-  ]);
-
-  // ── Hàm tải chi tiết (trả về dữ liệu) ──
+  // ── Tải chi tiết khóa học ──
   const fetchDetail = useCallback(async () => {
     if (!idKhoaHoc) {
       setDetailLoading(false);
@@ -192,6 +173,76 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
     }
   }, [idKhoaHoc]);
 
+  // ── Chọn nội dung ──
+  const handleSelectContent = useCallback(
+    (
+      loai: "baiGiang" | "taiLieu" | "baiKiemTra",
+      item: any,
+      parentBaiGiang?: any,
+    ) => {
+      let lyDoTarget: { loai: "baiGiang" | "baiKiemTra"; item: any } | null =
+        null;
+
+      if (loai === "taiLieu") {
+        const parentBg =
+          parentBaiGiang ?? findParentBaiGiang(detail, item.idBaiGiang);
+        if (parentBg) {
+          lyDoTarget = { loai: "baiGiang", item: parentBg };
+        }
+      } else if (loai === "baiGiang" || loai === "baiKiemTra") {
+        lyDoTarget = { loai, item };
+      }
+
+      setSelectedContent({ loai, item, lyDoTarget });
+
+      // Cập nhật lyDoIdMap dựa trên target (nếu có)
+      const target = lyDoTarget || { loai, item };
+      if (target.loai === "baiGiang" || target.loai === "baiKiemTra") {
+        const doiTuongId = getDoiTuongId(target.loai, target.item);
+        let existingLyDoId: string | null = null;
+        const lyDoData = target.item?.lyDoTuChois;
+        if (lyDoData) {
+          if (Array.isArray(lyDoData) && lyDoData.length > 0) {
+            const first = lyDoData[0];
+            if (first?.id) existingLyDoId = first.id;
+          } else if (typeof lyDoData === "object" && lyDoData.id) {
+            existingLyDoId = lyDoData.id;
+          }
+        }
+        if (!existingLyDoId) {
+          existingLyDoId =
+            target.item?.idLyDoTuChoi ??
+            target.item?.lyDoTuChoiId ??
+            target.item?.lyDo?.id ??
+            null;
+        }
+        if (doiTuongId && existingLyDoId) {
+          const key = `${target.loai}-${doiTuongId}`;
+          setLyDoIdMap((prev) =>
+            prev[key] ? prev : { ...prev, [key]: String(existingLyDoId) },
+          );
+        }
+      }
+    },
+    [detail, findParentBaiGiang],
+  );
+
+  // ── Tự động chọn nội dung đầu tiên khi detail load xong ──
+  useEffect(() => {
+    if (!detailLoading && detail && !selectedContent) {
+      const first = findFirstContent(detail);
+      if (first) {
+        handleSelectContent(first.loai, first.item);
+      }
+    }
+  }, [
+    detailLoading,
+    detail,
+    selectedContent,
+    findFirstContent,
+    handleSelectContent,
+  ]);
+
   // ── Fetch khi component mount ──
   useEffect(() => {
     fetchDetail();
@@ -204,7 +255,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   // ── Hàm đệ quy tìm và cập nhật lý do từ chối trong cây dữ liệu detail ──
   const patchLyDoInTree = (
     node: any,
-    matchKey: string,
+    loai: "baiGiang" | "baiKiemTra",
     id: string,
     lyDo: string,
   ): boolean => {
@@ -212,12 +263,12 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
 
     if (Array.isArray(node)) {
       for (const child of node) {
-        if (patchLyDoInTree(child, matchKey, id, lyDo)) return true;
+        if (patchLyDoInTree(child, loai, id, lyDo)) return true;
       }
       return false;
     }
 
-    if (node[matchKey] === id) {
+    if (isDoiTuongType(node, loai) && getDoiTuongId(loai, node) === id) {
       if (Array.isArray(node.lyDoTuChois) && node.lyDoTuChois.length > 0) {
         node.lyDoTuChois[0].lyDo = lyDo;
       } else if (
@@ -234,7 +285,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
 
     for (const key of Object.keys(node)) {
       if (key !== "lyDoTuChois" && key !== "lyDoTuChoi") {
-        if (patchLyDoInTree(node[key], matchKey, id, lyDo)) return true;
+        if (patchLyDoInTree(node[key], loai, id, lyDo)) return true;
       }
     }
     return false;
@@ -243,7 +294,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
   // ── Lưu lý do từ chối (Create hoặc Update) và cập nhật UI ──
   const handleSaveLyDo = useCallback(
     async (
-      loai: "baiGiang" | "baiKiemTra" | "taiLieu",
+      loai: "baiGiang" | "baiKiemTra",
       id: string | number,
       lyDo: string,
     ) => {
@@ -254,7 +305,7 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
         const request: LyDoTuChoiRequest = {
           ...(existingId ? { id: existingId } : {}),
           idDoiTuong: String(id),
-          loaiDoiTuong: LOAI_DOI_TUONG[loai],
+          loaiDoiTuong: loai === "baiGiang" ? "BaiGiang" : "BaiKiemTra",
           lyDo,
         };
 
@@ -269,16 +320,17 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
           }
         }
 
+        // Cập nhật local state
         setDetail((prevDetail: any) => {
           if (!prevDetail) return prevDetail;
-          const matchKey = DOI_TUONG_ID_KEY[loai];
           const newDetail = { ...prevDetail };
-          const found = patchLyDoInTree(newDetail, matchKey, String(id), lyDo);
+          const found = patchLyDoInTree(newDetail, loai, String(id), lyDo);
           if (found) {
+            // Cập nhật selectedContent nếu đang xem chính đối tượng đó
             if (
               selectedContent &&
               selectedContent.loai === loai &&
-              selectedContent.item[matchKey] === id
+              getDoiTuongId(loai, selectedContent.item) === String(id)
             ) {
               const newItem = { ...selectedContent.item };
               if (
@@ -295,10 +347,39 @@ export default function ChiTietKiemDuyetKhoaHocPage() {
                 newItem.lyDoTuChois = { lyDo };
               }
               newItem.lyDoTuChoi = lyDo;
-              setSelectedContent({ loai, item: newItem });
+              setSelectedContent({ ...selectedContent, item: newItem });
+            }
+            // Nếu selectedContent là tài liệu và target là bài giảng
+            if (
+              selectedContent &&
+              selectedContent.loai === "taiLieu" &&
+              selectedContent.lyDoTarget?.loai === loai &&
+              getDoiTuongId(loai, selectedContent.lyDoTarget.item) ===
+                String(id)
+            ) {
+              const newTargetItem = { ...selectedContent.lyDoTarget.item };
+              if (
+                Array.isArray(newTargetItem.lyDoTuChois) &&
+                newTargetItem.lyDoTuChois.length > 0
+              ) {
+                newTargetItem.lyDoTuChois[0].lyDo = lyDo;
+              } else if (
+                typeof newTargetItem.lyDoTuChois === "object" &&
+                newTargetItem.lyDoTuChois !== null
+              ) {
+                newTargetItem.lyDoTuChois.lyDo = lyDo;
+              } else {
+                newTargetItem.lyDoTuChois = { lyDo };
+              }
+              newTargetItem.lyDoTuChoi = lyDo;
+              setSelectedContent({
+                ...selectedContent,
+                lyDoTarget: { loai, item: newTargetItem },
+              });
             }
             return newDetail;
           }
+          // Fallback: fetch lại nếu không tìm thấy
           fetchDetail();
           return prevDetail;
         });

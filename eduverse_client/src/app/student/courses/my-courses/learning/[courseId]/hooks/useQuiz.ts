@@ -18,11 +18,18 @@ export interface DapAnReviewDto {
   laDapAnDung?: boolean;
 }
 
+export function isMultiChoice(loaiCauHoi?: string | number): boolean {
+  if (loaiCauHoi === undefined || loaiCauHoi === null) return false;
+  if (typeof loaiCauHoi === "number") return loaiCauHoi === 2;
+  const s = String(loaiCauHoi).toUpperCase().trim();
+  return s === "MULTI" || s === "MULTIPLE" || s === "2" || s === "NHIEU";
+}
+
 export interface CauHoiLamBaiDto {
   id: string;
   tenCauHoi?: string;
   noiDungCauHoi?: string;
-  loaiCauHoi?: number;
+  loaiCauHoi?: string | number;
   diem?: number;
   dapAns: DapAnLamBaiDto[];
   dapAnDaChon?: string[];
@@ -68,10 +75,15 @@ export interface CauHoiReviewDto {
   tenCauHoi?: string;
   noiDungCauHoi?: string;
   idDapAnChon?: string;
+  idDapAnChons?: string[];
+  dapAnDaChon?: string[];
+  idDapAnsDaChon?: string[];
   idDapAnDung?: string;
+  idDapAnDungs?: string[];
   laDung: boolean;
   diemNhanDuoc: number;
   dapAns: DapAnReviewDto[];
+  loaiCauHoi?: string | number;
 }
 
 export interface ReviewQizzDto {
@@ -401,33 +413,25 @@ export function useQuiz(
   // ── Chọn đáp án + auto-save ────────────────────────────────────────────────
   const chonDapAn = useCallback(
     async (idCauHoi: string, idDapAn: string) => {
+      const cauHoi = cauHois.find((c) => c.id === idCauHoi);
+      const isMulti = isMultiChoice(cauHoi?.loaiCauHoi);
+      const current = traLois[idCauHoi] ?? [];
+      const updated = isMulti
+        ? current.includes(idDapAn)
+          ? current.filter((x) => x !== idDapAn)
+          : [...current, idDapAn]
+        : [idDapAn];
+
       // Cập nhật state ngay lập tức (optimistic update)
-      setTraLois((prev) => {
-        const current = prev[idCauHoi] ?? [];
-        const cauHoi = cauHois.find((c) => c.id === idCauHoi);
-        const isMulti = cauHoi?.loaiCauHoi === 2;
-        if (isMulti) {
-          const updated = current.includes(idDapAn)
-            ? current.filter((x) => x !== idDapAn)
-            : [...current, idDapAn];
-          return { ...prev, [idCauHoi]: updated };
-        }
-        return { ...prev, [idCauHoi]: [idDapAn] };
-      });
+      setTraLois((prev) => ({
+        ...prev,
+        [idCauHoi]: updated,
+      }));
 
       // Auto-save (không chặn UI)
       if (savingRef.current || !idLanLam) return;
       savingRef.current = true;
       try {
-        const cauHoi = cauHois.find((c) => c.id === idCauHoi);
-        const isMulti = cauHoi?.loaiCauHoi === 2;
-        const current = traLois[idCauHoi] ?? [];
-        const updated = isMulti
-          ? current.includes(idDapAn)
-            ? current.filter((x) => x !== idDapAn)
-            : [...current, idDapAn]
-          : [idDapAn];
-
         const res = await apiService.post<AutoSaveDapAnDto>(
           "/BaiKiemTra/auto-save", // ✅ viết hoa
           {

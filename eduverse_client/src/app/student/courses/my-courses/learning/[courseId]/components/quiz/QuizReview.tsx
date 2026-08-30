@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // QuizReview.tsx
 import { BRAND, STATUS } from "@/src/theme/tokens";
 import {
@@ -16,10 +17,11 @@ import {
   ArrowBack as ArrowBackIcon,
   EmojiEvents as EmojiEventsIcon,
 } from "@mui/icons-material";
-import type {
+import {
   ReviewQizzDto,
   CauHoiReviewDto,
   DapAnReviewDto,
+  isMultiChoice,
 } from "../../hooks/useQuiz";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizResult ──
@@ -47,6 +49,21 @@ function CauHoiReviewItem({
   choXemDapAn: boolean;
 }) {
   const dung = cauHoi.laDung;
+  const selectedAnswerIds: string[] = [
+    ...(Array.isArray(cauHoi.idDapAnChons) ? cauHoi.idDapAnChons : []),
+    ...(Array.isArray((cauHoi as any).dapAnDaChon)
+      ? (cauHoi as any).dapAnDaChon
+      : []),
+    ...(Array.isArray((cauHoi as any).idDapAnsDaChon)
+      ? (cauHoi as any).idDapAnsDaChon
+      : []),
+    ...(cauHoi.idDapAnChon ? [cauHoi.idDapAnChon] : []),
+  ];
+  const hasAnswered = selectedAnswerIds.length > 0;
+  const isMulti =
+    isMultiChoice(cauHoi.loaiCauHoi) ||
+    cauHoi.dapAns.filter((d) => d.laDapAnDung).length > 1 ||
+    selectedAnswerIds.length > 1;
 
   return (
     <Box
@@ -88,11 +105,36 @@ function CauHoiReviewItem({
           )}
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            sx={{ fontSize: 14, fontWeight: 700, color: INK, lineHeight: 1.5 }}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ alignItems: "center", flexWrap: "wrap", rowGap: 0.5 }}
           >
-            Câu {stt}. {cauHoi.tenCauHoi}
-          </Typography>
+            <Typography
+              sx={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: INK,
+                lineHeight: 1.5,
+              }}
+            >
+              Câu {stt}. {cauHoi.tenCauHoi}
+            </Typography>
+            {isMulti && (
+              <Chip
+                label="Chọn nhiều đáp án"
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: 11,
+                  height: 20,
+                  borderRadius: RADIUS,
+                  bgcolor: "rgba(59,130,246,0.08)",
+                  color: "#1E40AF",
+                }}
+              />
+            )}
+          </Stack>
           {cauHoi.noiDungCauHoi &&
             cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
               <Box
@@ -123,8 +165,11 @@ function CauHoiReviewItem({
       <Box sx={{ px: 3, py: 2 }}>
         <Stack spacing={1}>
           {cauHoi.dapAns.map((da: DapAnReviewDto, i: number) => {
-            const laDung = da.laDapAnDung === true;
-            const daChon = da.id === cauHoi.idDapAnChon;
+            const laDung =
+              da.laDapAnDung === true ||
+              (da as any).dung === true ||
+              (da as any).isDapAnDung === true;
+            const daChon = selectedAnswerIds.includes(da.id);
             const chonSai = daChon && !laDung;
 
             let borderColor = "#d1d7dc";
@@ -165,7 +210,7 @@ function CauHoiReviewItem({
                   sx={{
                     width: 28,
                     height: 28,
-                    borderRadius: "50%",
+                    borderRadius: isMulti ? "6px" : "50%",
                     flexShrink: 0,
                     display: "flex",
                     alignItems: "center",
@@ -176,7 +221,11 @@ function CauHoiReviewItem({
                     fontSize: 12,
                   }}
                 >
-                  {LABELS[i] ?? i + 1}
+                  {isMulti && daChon ? (
+                    <CheckCircleIcon sx={{ fontSize: 16 }} />
+                  ) : (
+                    (LABELS[i] ?? i + 1)
+                  )}
                 </Box>
 
                 <Typography
@@ -206,7 +255,7 @@ function CauHoiReviewItem({
           })}
         </Stack>
 
-        {choXemDapAn && !dung && cauHoi.idDapAnChon && (
+        {choXemDapAn && !dung && hasAnswered && (
           <Box
             sx={{
               mt: 1.5,
@@ -218,11 +267,11 @@ function CauHoiReviewItem({
             }}
           >
             <Typography sx={{ fontSize: 12, color: RED, fontWeight: 600 }}>
-              Bạn chọn sai — đáp án đúng được đánh dấu màu xanh lá
+              Bạn chọn chưa chính xác — đáp án đúng được đánh dấu màu xanh lá
             </Typography>
           </Box>
         )}
-        {choXemDapAn && !dung && !cauHoi.idDapAnChon && (
+        {choXemDapAn && !dung && !hasAnswered && (
           <Box
             sx={{
               mt: 1.5,
