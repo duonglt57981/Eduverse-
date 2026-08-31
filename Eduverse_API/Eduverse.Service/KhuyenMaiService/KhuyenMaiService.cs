@@ -90,8 +90,12 @@ namespace Eduverse.Service.KhuyenMaiService
                     .Distinct()
                     .ToListAsync();
 
+                var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+                var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+
                 khuyenMais = await GetQueryable()
-                    .Where(x => x.CreatedId == userId || khuyenMaiIdsLienQuan.Contains(x.Id))
+                    .Where(x => (x.CreatedId == userId || khuyenMaiIdsLienQuan.Contains(x.Id))
+                             && !(x.CreatedId.HasValue && adminIds.Contains(x.CreatedId.Value)))
                     .OrderByDescending(x => x.CreatedDate)
                     .ToListAsync();
             }
@@ -197,6 +201,10 @@ namespace Eduverse.Service.KhuyenMaiService
             var chuaDuyet = khoaHocs.Where(x => x.TrangThaiPheDuyet != "DaDuyet").Select(x => x.TieuDe).ToList();
             if (chuaDuyet.Any())
                 throw new Exception($"Chỉ áp dụng được cho khóa học đã duyệt. Chưa duyệt: {string.Join(", ", chuaDuyet)}");
+
+            var mienPhi = khoaHocs.Where(x => (x.Gia ?? 0) <= 0).Select(x => x.TieuDe).ToList();
+            if (mienPhi.Any())
+                throw new Exception($"Không thể áp dụng mã giảm giá cho khóa học miễn phí: {string.Join(", ", mienPhi)}");
 
             return khoaHocs;
         }
@@ -428,7 +436,8 @@ namespace Eduverse.Service.KhuyenMaiService
                 .Where(x => x.TrangThaiPheDuyet == "DaDuyet"
                          && x.IsBanHienTai == true
                          && !x.IsDeleted
-                         && x.TrangThai == "HoatDong");
+                         && x.TrangThai == "HoatDong"
+                         && x.Gia > 0);
 
             // ★ Admin được chọn TẤT CẢ khóa học đã duyệt (kể cả không sở
             //   hữu) — vì Admin sẽ đi qua luồng "xin phép" chứ không tự áp
