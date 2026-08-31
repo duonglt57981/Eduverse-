@@ -142,7 +142,10 @@ const TRANG_THAI_CHO_SUA_QUYEN = [
 
 export default function InstructorsContent() {
   const { idKhoaHoc, trangThai } = useCourseEdit();
+  const TRANG_THAI_CHO_THEM_GV = ["DangSua", "ChoDuyet", "DangDuyet"];
+
   const isEditable = TRANG_THAI_CHO_SUA_QUYEN.includes(trangThai);
+  const coTheThemGV = TRANG_THAI_CHO_THEM_GV.includes(trangThai);
   const { quyen: quyenCuaToi, loading: loadingQuyen } =
     useQuyenCuaToi(idKhoaHoc);
 
@@ -162,6 +165,7 @@ export default function InstructorsContent() {
   });
   const [dangGui, setDangGui] = useState(false);
   const [loiMoiDialog, setLoiMoiDialog] = useState<string | null>(null);
+  const [emailWarning, setEmailWarning] = useState<string | null>(null);
 
   // Dialog xác nhận remove
   const [removeTarget, setRemoveTarget] = useState<GiangVienCongTacDto | null>(
@@ -191,6 +195,35 @@ export default function InstructorsContent() {
       setLoading(false);
     }
   }, [idKhoaHoc]);
+
+  const normalizeEmail = (e: string) => e.trim().toLowerCase();
+
+  // Chủ sở hữu = chính người đang thao tác (vì chỉ chủ sở hữu mới được mời)
+  const ownerEmail = normalizeEmail(
+    rows.find((r) => r.laChuSoHuu)?.email || "",
+  );
+  const teamEmails = new Set(
+    rows
+      .filter((r) => !r.laChuSoHuu && r.email)
+      .map((r) => normalizeEmail(r.email!)),
+  );
+  const pendingEmails = new Set(
+    pendingRows
+      .map((lm) => lm.emailDuocMoi)
+      .filter((email): email is string => Boolean(email))
+      .map((email) => normalizeEmail(email)),
+  );
+
+  const validateInviteEmail = (rawEmail: string): string | null => {
+    const email = normalizeEmail(rawEmail);
+    if (!email) return null;
+    if (ownerEmail && email === ownerEmail)
+      return "Bạn không thể mời chính mình";
+    if (teamEmails.has(email)) return "Giảng viên này đã tham gia khóa học";
+    if (pendingEmails.has(email))
+      return "Đã có lời mời đang chờ xác nhận với giảng viên này";
+    return null;
+  };
 
   // Thêm hàm hủy lời mời:
   const handleHuyLoiMoi = async (idLoiMoi: string) => {
@@ -310,6 +343,12 @@ export default function InstructorsContent() {
       return;
     }
 
+    const canhBaoEmail = validateInviteEmail(formMoi.email);
+    if (canhBaoEmail) {
+      setLoiMoiDialog(canhBaoEmail);
+      return;
+    }
+
     // Kiểm tra tổng % sau khi thêm
     if (tongTyLe + formMoi.tyLeChiaDoanhThu > 100) {
       setLoiMoiDialog(
@@ -325,6 +364,7 @@ export default function InstructorsContent() {
       setToast({ open: true, message: "Đã gửi lời mời!", severity: "success" });
       setShowMoiDialog(false);
       setFormMoi({ ...DEFAULT_QUYEN });
+      setEmailWarning(null);
       await load();
     } catch (err: any) {
       setLoiMoiDialog(
@@ -454,13 +494,14 @@ export default function InstructorsContent() {
             </Typography>
           </Box>
 
-          {isEditable && (
+          {coTheThemGV ? (
             <Button
               variant="contained"
               startIcon={<AddIcon sx={{ fontSize: 20 }} />}
               onClick={() => {
                 setShowMoiDialog(true);
                 setLoiMoiDialog(null);
+                setEmailWarning(null);
                 setFormMoi({ ...DEFAULT_QUYEN });
               }}
               sx={{
@@ -483,6 +524,29 @@ export default function InstructorsContent() {
             >
               Thêm giảng viên
             </Button>
+          ) : (
+            isEditable &&
+            trangThai === "DaDuyet" && (
+              <Tooltip title="Khóa học đã được duyệt, không thể mời thêm giảng viên mới. Bạn vẫn có thể chỉnh sửa quyền của giảng viên hiện có.">
+                <span>
+                  <Button
+                    variant="contained"
+                    disabled
+                    startIcon={<AddIcon sx={{ fontSize: 20 }} />}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      borderRadius: "12px",
+                      px: 2.75,
+                      py: 1.1,
+                    }}
+                  >
+                    Thêm giảng viên
+                  </Button>
+                </span>
+              </Tooltip>
+            )
           )}
         </Box>
 
@@ -1276,10 +1340,14 @@ export default function InstructorsContent() {
                 fullWidth
                 placeholder="Ví dụ: giangvien@email.com"
                 value={formMoi.email}
-                onChange={(e) =>
-                  setFormMoi((p) => ({ ...p, email: e.target.value }))
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFormMoi((p) => ({ ...p, email: value }));
+                  setEmailWarning(validateInviteEmail(value));
+                }}
                 disabled={dangGui}
+                error={!!emailWarning}
+                helperText={emailWarning || ""}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -1370,7 +1438,8 @@ export default function InstructorsContent() {
                   size="small"
                   value={formMoi.tyLeChiaDoanhThu}
                   onChange={(e) => {
-                    const num = e.target.value === "" ? 0 : Number(e.target.value);
+                    const num =
+                      e.target.value === "" ? 0 : Number(e.target.value);
                     const v = Math.min(100, Math.max(0, isNaN(num) ? 0 : num));
                     setFormMoi((p) => ({ ...p, tyLeChiaDoanhThu: v }));
                   }}
@@ -1668,7 +1737,7 @@ export default function InstructorsContent() {
             <Button
               variant="contained"
               onClick={handleGuiLoiMoi}
-              disabled={dangGui || !formMoi.email.trim()}
+              disabled={dangGui || !formMoi.email.trim() || !!emailWarning}
               startIcon={
                 dangGui ? (
                   <CircularProgress size={18} sx={{ color: "#fff" }} />
