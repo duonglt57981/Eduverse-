@@ -248,10 +248,14 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         public async Task<LoiMoiGiangVienDto> GuiLoiMoi(GuiLoiMoiRequest request)
         {
             var userId = LayUserId();
+            var emailChuan = request.Email?.Trim().ToLower();
 
             var khoaHoc = await _khoaHocRepo.GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == request.IdKhoaHoc && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy khóa học");
+
+            if (khoaHoc.TrangThaiPheDuyet == "DaDuyet")
+                throw new Exception("Khóa học đã được duyệt, không thể mời thêm giảng viên mới. Bạn vẫn có thể chỉnh sửa quyền của giảng viên hiện có.");
 
             // Chỉ chủ sở hữu mới được mời
             var laChu = await _khoaHocGVRepo.GetQueryable()
@@ -264,7 +268,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
 
             // Tìm tài khoản theo email
             var nguoiDuocMoi = await _appUserService.GetQueryable()
-                .FirstOrDefaultAsync(x => x.Email == request.Email && !x.IsDeleted)
+                .FirstOrDefaultAsync(x => x.Email.ToLower() == emailChuan && !x.IsDeleted)
                 ?? throw new Exception("Email này chưa có tài khoản giảng viên trên hệ thống");
 
             // Không mời chính mình
@@ -299,7 +303,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 IdKhoaHoc = request.IdKhoaHoc,
                 IdNguoiMoi = userId,
                 IdNguoiDuocMoi = nguoiDuocMoi.Id,
-                EmailDuocMoi = request.Email,
+                EmailDuocMoi = nguoiDuocMoi.Email,
                 TrangThai = "Pending",
                 Visible = request.Visible,
                 TyLeChiaDoanhThu = request.TyLeChiaDoanhThu,
@@ -675,6 +679,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var pendingList = await _loiMoiRepo.GetQueryable()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc
                          && x.TrangThai == "Pending"
+                         && !x.IdKhuyenMai.HasValue   
+                         && x.IdNguoiMoi != x.IdNguoiDuocMoi
                          && !x.IsDeleted)
                 .ToListAsync();
 
