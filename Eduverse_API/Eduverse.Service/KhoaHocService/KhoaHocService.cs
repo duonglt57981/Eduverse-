@@ -3470,13 +3470,18 @@ namespace Eduverse.Service.KhoaHocService
                 .Where(x => x.CreatedId == userId
                          && x.TrangThaiPheDuyet == "DaDuyet"
                          && x.IsBanHienTai == true
-                         && !x.IsDeleted)              // ← thêm dòng này
+                         && !x.IsDeleted
+                         && (x.Gia ?? 0) > 0
+                         && x.LoaiKhoaHoc != "Khóa học miễn phí"
+                         && x.LoaiKhoaHoc != "MienPhi")
                 .OrderByDescending(x => x.CreatedDate)
                 .Select(x => new KhoaHocMiniDto
                 {
                     Id = x.Id,
                     TieuDe = x.TieuDe,
-                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                    Gia = x.Gia,
+                    LoaiKhoaHoc = x.LoaiKhoaHoc
                 })
                 .ToListAsync();
 

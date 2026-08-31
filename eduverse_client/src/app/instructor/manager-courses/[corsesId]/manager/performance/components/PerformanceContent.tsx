@@ -7,7 +7,6 @@ import {
   Box,
   Typography,
   Paper,
-  Avatar,
   Chip,
   Tab,
   Tabs,
@@ -29,6 +28,7 @@ import {
   Stack,
   Tooltip as MuiTooltip,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import MonetizationOnRoundedIcon from "@mui/icons-material/MonetizationOnRounded";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
@@ -912,19 +912,11 @@ export default function PerformanceContent() {
                                 gap: 1.5,
                               }}
                             >
-                              <Avatar
-                                src={gv.anhDaiDien || ""}
-                                sx={{
-                                  width: 38,
-                                  height: 38,
-                                  bgcolor: "#FEF2F2",
-                                  color: BRAND.main,
-                                  fontSize: 14,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                {gv.hoTen?.[0] || "G"}
-                              </Avatar>
+                              <EduAvatar
+                                src={gv.anhDaiDien}
+                                name={gv.hoTen}
+                                size={38}
+                              />
                               <Box>
                                 <Typography
                                   sx={{
@@ -1219,19 +1211,11 @@ export default function PerformanceContent() {
                         >
                           <TableCell>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                              <Avatar
-                                src={hv.anhDaiDien || ""}
-                                sx={{
-                                  width: 36,
-                                  height: 36,
-                                  bgcolor: "#FEF2F2",
-                                  color: BRAND.main,
-                                  fontSize: 13,
-                                  fontWeight: 800,
-                                }}
-                              >
-                                {hv.hoTen?.[0] || "U"}
-                              </Avatar>
+                              <EduAvatar
+                                src={hv.anhDaiDien}
+                                name={hv.hoTen}
+                                size={36}
+                              />
                               <Box>
                                 <Typography sx={{ fontWeight: 700, fontSize: 13.5, color: "#0F172A" }}>
                                   {hv.hoTen || "Học viên ẩn danh"}

@@ -24,7 +24,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Avatar,
   Grid,
   Stack,
   Checkbox,
@@ -38,6 +37,7 @@ import HourglassEmptyRoundedIcon from "@mui/icons-material/HourglassEmptyRounded
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import BlockRoundedIcon from "@mui/icons-material/BlockRounded";
 import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import DoneAllRoundedIcon from "@mui/icons-material/DoneAllRounded";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import { getTatCaYeuCau, xuLyYeuCau } from "@/src/store/rutTien/RutTienSlice";
@@ -650,17 +650,10 @@ function RutTienContent() {
                             gap: 1.5,
                           }}
                         >
-                          <Avatar
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              bgcolor: PRIMARY,
-                              fontSize: 14,
-                              fontWeight: 700,
-                            }}
-                          >
-                            {y.tenGiangVien?.[0] ?? "G"}
-                          </Avatar>
+                          <EduAvatar
+                            name={y.tenGiangVien}
+                            size={36}
+                          />
                           <Typography
                             sx={{
                               fontSize: 14,
@@ -838,17 +831,10 @@ function RutTienContent() {
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                       >
-                        <Avatar
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            bgcolor: PRIMARY,
-                            fontSize: 13,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {y.tenGiangVien?.[0] ?? "G"}
-                        </Avatar>
+                        <EduAvatar
+                          name={y.tenGiangVien}
+                          size={32}
+                        />
                         <Typography
                           sx={{
                             fontSize: 13.5,

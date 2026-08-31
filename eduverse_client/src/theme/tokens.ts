@@ -96,6 +96,27 @@ export const STATUS = {
   infoSoft: "rgba(2,132,199,0.10)",
 } as const;
 
+// -------- Avatar Design Tokens --------
+export const AVATAR_TOKENS = {
+  bg: BRAND.main, // #8B1313 (Đỏ đô EduVerse)
+  color: BRAND.contrast, // #FFFFFF
+  border: "#FFFFFF",
+  borderColor: "rgba(255, 255, 255, 0.9)",
+  shadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+  fontWeight: 700,
+  fontFamily: "var(--font-heading, 'Be Vietnam Pro', sans-serif)",
+  sizes: {
+    xs: { size: 24, fontSize: 10.5, border: 1.5 },
+    sm: { size: 32, fontSize: 13, border: 2 },
+    md: { size: 40, fontSize: 15, border: 2 },
+    lg: { size: 48, fontSize: 18, border: 2 },
+    xl: { size: 64, fontSize: 24, border: 2.5 },
+    "2xl": { size: 80, fontSize: 30, border: 3 },
+    profile: { size: 128, fontSize: 48, border: 3.5 },
+    profileLarge: { size: 160, fontSize: 58, border: 4 },
+  },
+} as const;
+
 export const PAGE_SPACING = {
   /** mt = 2 (16px) — khoảng cách từ Header xuống khối nội dung đầu tiên trên tất cả màn hình hệ thống */
   mt: 2,

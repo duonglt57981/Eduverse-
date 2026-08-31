@@ -34,11 +34,11 @@ import {
   TextField,
   Typography,
   Chip,
-  Avatar,
   FormControl,
   Checkbox,
   ListItemText,
 } from '@mui/material';
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import {
   SearchRounded,
   EditRounded,
@@ -779,20 +779,11 @@ export default function AdminUsersPage() {
                       {/* User block */}
                       <TableCell sx={{ pl: 3 }}>
                         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-                          <Avatar
-                            src={user.anhDaiDien || undefined}
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              bgcolor: COLORS.primary,
-                              fontWeight: 700,
-                              fontSize: 15,
-                            }}
-                          >
-                            {user.hoTen
-                              ? user.hoTen.split(' ').pop()?.substring(0, 2).toUpperCase()
-                              : user.userName.substring(0, 2).toUpperCase()}
-                          </Avatar>
+                          <EduAvatar
+                            src={user.anhDaiDien}
+                            name={user.hoTen || user.userName}
+                            size={44}
+                          />
                           <Box>
                             <Typography sx={{ fontWeight: 700, color: COLORS.textDark }}>
                               {user.hoTen || 'Chưa cập nhật họ tên'}

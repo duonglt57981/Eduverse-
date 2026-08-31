@@ -444,13 +444,6 @@ export function useQuiz(
         if (res.data?.coGioiHan && res.data.thoiGianConLai > 0) {
           setThoiGianConLai(res.data.thoiGianConLai);
         }
-
-        if (res.data?.nextQuestionId) {
-          const nextIdx = cauHois.findIndex(
-            (c) => c.id === res.data.nextQuestionId,
-          );
-          if (nextIdx !== -1) setCauHoiHienTai(nextIdx);
-        }
       } catch {
         /* ignore auto-save errors */
       } finally {

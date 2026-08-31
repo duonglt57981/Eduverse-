@@ -10,7 +10,6 @@ import {
   StarRounded,
 } from "@mui/icons-material";
 import {
-  Avatar,
   Box,
   Button,
   Chip,
@@ -19,6 +18,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { EduAvatar, getAvatarInitials } from "@/src/components/common/EduAvatar";
 import { apiService } from "@/src/services/index";
 import {
   aboutTimeline,
@@ -39,13 +39,7 @@ interface GiangVienNoiBat {
   soLuongDanhGia: number;
 }
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("");
-}
+const getInitials = (name: string) => getAvatarInitials(name);
 
 function stripHtml(html: string | null): string {
   if (!html) return "";
@@ -488,20 +482,12 @@ export default function AboutUsPage() {
                       textAlign: "center",
                     }}
                   >
-                    <Avatar
-                      src={member.anhDaiDien || undefined}
-                      sx={{
-                        width: 88,
-                        height: 88,
-                        mx: "auto",
-                        mb: 1.5,
-                        bgcolor: BRAND.main,
-                        fontSize: 28,
-                        fontWeight: 900,
-                      }}
-                    >
-                      {!member.anhDaiDien && getInitials(member.hoTen || "GV")}
-                    </Avatar>
+                    <EduAvatar
+                      src={member.anhDaiDien}
+                      name={member.hoTen || "GV"}
+                      size={88}
+                      sx={{ mx: "auto", mb: 1.5 }}
+                    />
                     <Typography sx={{ fontSize: 18, fontWeight: 900 }}>
                       {member.hoTen || "Giảng viên EduVerse"}
                     </Typography>

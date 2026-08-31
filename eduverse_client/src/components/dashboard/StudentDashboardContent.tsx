@@ -20,9 +20,9 @@ import {
   Tab,
   Tabs,
   Typography,
-  Avatar,
   Tooltip,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import Grid from "@mui/material/Grid";
 import {
   StarRounded,
@@ -1228,41 +1228,17 @@ export default function StudentDashboardContent() {
           direction="row"
           sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}
         >
-          <Avatar
+          <EduAvatar
             src={
               userAvatar ||
               user?.anhDaiDien ||
-              welcomeStats?.avatarUrl ||
-              undefined
+              welcomeStats?.avatarUrl
             }
-            sx={{
-              width: 72,
-              height: 72,
-              bgcolor: C.primary,
-              color: "#FFFFFF",
-              fontWeight: 800,
-              fontSize: 22,
-              border: "3px solid #fff",
-              boxShadow: `0 0 0 3px rgba(139,19,19,0.12), 0 8px 24px rgba(139,19,19,0.12)`,
-            }}
-          >
-            {welcomeStats?.userName || user?.hoTen
-              ? (() => {
-                  const name = (
-                    user?.hoTen ||
-                    welcomeStats?.userName ||
-                    ""
-                  ).trim();
-                  const parts = name.split(/\s+/);
-                  if (parts.length === 0) return "HV";
-                  if (parts.length === 1)
-                    return parts[0].substring(0, 2).toUpperCase();
-                  return (
-                    parts[0][0] + (parts[1] ? parts[1][0] : "")
-                  ).toUpperCase();
-                })()
-              : "HV"}
-          </Avatar>
+            name={user?.hoTen || welcomeStats?.userName || "Học viên"}
+            size={72}
+            border="3px solid #FFFFFF"
+            shadow="0 8px 24px rgba(139,19,19,0.12)"
+          />
           <Box>
             <Typography
               sx={{

@@ -48,6 +48,8 @@ interface KhoaHocMiniDto {
   id: string;
   tieuDe?: string;
   hinhAnhKhoaHoc?: string;
+  gia?: number | null;
+  loaiKhoaHoc?: string | null;
 }
 
 interface KhuyenMaiDto {
@@ -186,7 +188,14 @@ function PromotionsContent() {
       const res = await apiService.get<KhoaHocMiniDto[]>(
         "/KhuyenMai/khuyenmai-getall-khoahoc-daduyet",
       );
-      setAllKhoaHoc(res.data ?? []);
+      const rawData = res.data ?? [];
+      const filtered = rawData.filter(
+        (item) =>
+          (item.gia === undefined || item.gia === null || item.gia > 0) &&
+          item.loaiKhoaHoc !== "Khóa học miễn phí" &&
+          item.loaiKhoaHoc !== "MienPhi",
+      );
+      setAllKhoaHoc(filtered);
     } catch {
       setAllKhoaHoc([]);
     } finally {

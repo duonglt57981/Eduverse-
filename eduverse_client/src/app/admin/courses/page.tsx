@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Box, Typography, Card, CardActionArea, Stack } from "@mui/material";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
@@ -48,6 +49,12 @@ export default function CoursesHubPage() {
         r.toLowerCase() === "nhanvien" ||
         r.toLowerCase() === "kiemduyet",
     ) && !roles.includes("Admin");
+
+  useEffect(() => {
+    if (isPersonnel) {
+      router.replace("/personnel/approve-courses");
+    }
+  }, [isPersonnel, router]);
 
   return (
     <AuthGuard allowedRoles={["Admin", "personnel"]}>

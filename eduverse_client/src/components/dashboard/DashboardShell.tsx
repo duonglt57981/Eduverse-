@@ -61,6 +61,7 @@ import {
   Menu,
   MenuItem,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
@@ -1072,7 +1073,7 @@ export default function DashboardShell({
   }, [pathname, isPersonnel, roles]);
 
   const getHomeRoute = () => {
-    if (isPersonnelView) return "/personnel/courses";
+    if (isPersonnelView) return "/personnel/approve-courses";
     if (activeRoles.includes("Admin")) return "/admin/dashboard";
     if (activeRoles.includes("GiaoVien")) return "/instructor/dashboard";
     return "/student/dashboard";
@@ -1211,7 +1212,7 @@ export default function DashboardShell({
   );
 
   const sidebarWidth = pathname.startsWith("/admin") ? 250 : 280;
-  const headerHeight = "86px";
+  const headerHeight = "74px";
 
   const continueItems = useMemo(() => {
     if (!dashboardData?.continueLearning) return [];
@@ -1340,7 +1341,7 @@ export default function DashboardShell({
               right: 0,
               height: headerHeight,
               zIndex: 1200,
-              px: { xs: 2, md: 3.5 },
+              px: { xs: 2, md: 6 },
               borderBottom: `1px solid ${CSSVAR.divider}`,
               bgcolor: CSSVAR.paper,
               display: "flex",
@@ -1375,6 +1376,14 @@ export default function DashboardShell({
                   display: "flex",
                   alignItems: "center",
                   cursor: "pointer",
+                  flexShrink: 0,
+                  px: 0.75,
+                  py: 0.35,
+                  borderRadius: "10px",
+                  bgcolor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.92)"
+                      : "transparent",
                   transition: "opacity 150ms ease",
                   "&:hover": { opacity: 0.85 },
                 }}
@@ -1579,7 +1588,7 @@ export default function DashboardShell({
                       : pathname.startsWith("/admin")
                         ? "Admin Panel"
                         : pathname.startsWith("/instructor")
-                          ? `GS. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
+                          ? `GV. ${dashboardData?.welcomeStats?.userName || "Giảng viên"}`
                           : dashboardData?.welcomeStats?.userName || user?.hoTen || "Học viên"}
                   </Typography>
                   <Typography
@@ -1605,51 +1614,28 @@ export default function DashboardShell({
                           : "Học viên"}
                   </Typography>
                 </Stack>
-                <Avatar
+                <EduAvatar
                   src={
                     userAvatar ||
                     user?.anhDaiDien ||
-                    dashboardData?.welcomeStats?.avatarUrl ||
-                    undefined
+                    dashboardData?.welcomeStats?.avatarUrl
                   }
+                  name={
+                    dashboardData?.welcomeStats?.userName ||
+                    user?.hoTen ||
+                    "EduVerse"
+                  }
+                  size={pathname.startsWith("/admin") ? 36 : 38}
                   onClick={handleAvatarClick}
                   sx={{
-                    width: pathname.startsWith("/admin") ? 36 : 38,
-                    height: pathname.startsWith("/admin") ? 36 : 38,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    bgcolor: BRAND.main,
-                    color: "#fff",
-                    border: pathname.startsWith("/admin")
-                      ? `1px solid ${CSSVAR.divider}`
-                      : "2px solid #fff",
-                    boxShadow: pathname.startsWith("/admin")
-                      ? "none"
-                      : `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
-                    transition: "all 200ms ease",
                     cursor: "pointer",
+                    transition: "all 200ms ease",
                     "&:hover": {
-                      boxShadow: pathname.startsWith("/admin")
-                        ? "0 0 0 2px rgba(153,27,27,0.15)"
-                        : `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
+                      boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
                       transform: "scale(1.05)",
                     },
                   }}
-                >
-                  {dashboardData?.welcomeStats?.userName
-                    ? dashboardData.welcomeStats.userName
-                      .split(" ")
-                      .pop()
-                      ?.substring(0, 2)
-                      .toUpperCase()
-                    : user?.hoTen
-                      ? user.hoTen
-                        .split(" ")
-                        .pop()
-                        ?.substring(0, 2)
-                        .toUpperCase()
-                      : "HV"}
-                </Avatar>
+                />
 
                 <Menu
                   anchorEl={anchorEl}
@@ -1694,33 +1680,19 @@ export default function DashboardShell({
                       gap: 2,
                     }}
                   >
-                    <Avatar
+                    <EduAvatar
                       src={
                         userAvatar ||
                         dashboardData?.welcomeStats?.avatarUrl ||
-                        undefined
+                        user?.anhDaiDien
                       }
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        bgcolor: "#111827",
-                        fontWeight: 800,
-                      }}
-                    >
-                      {dashboardData?.welcomeStats?.userName
-                        ? dashboardData.welcomeStats.userName
-                          .split(" ")
-                          .pop()
-                          ?.substring(0, 2)
-                          .toUpperCase()
-                        : user?.hoTen
-                          ? user.hoTen
-                            .split(" ")
-                            .pop()
-                            ?.substring(0, 2)
-                            .toUpperCase()
-                          : "HV"}
-                    </Avatar>
+                      name={
+                        dashboardData?.welcomeStats?.userName ||
+                        user?.hoTen ||
+                        "EduVerse"
+                      }
+                      size={44}
+                    />
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography
                         noWrap
@@ -2120,30 +2092,20 @@ export default function DashboardShell({
                             textAlign: { xs: "center", md: "left" },
                           }}
                         >
-                          <Avatar
+                          <EduAvatar
                             src={
                               userAvatar ||
                               dashboardData?.welcomeStats?.avatarUrl ||
-                              undefined
+                              user?.anhDaiDien
                             }
-                            sx={{
-                              width: 80,
-                              height: 80,
-                              bgcolor: "rgba(141, 19, 19, 0.05)",
-                              color: COLORS.primary,
-                              fontSize: 28,
-                              fontWeight: 900,
-                              boxShadow: "0 10px 24px rgba(141,19,19,0.08)",
-                            }}
-                          >
-                            {dashboardData?.welcomeStats?.userName
-                              ? dashboardData.welcomeStats.userName
-                                .split(" ")
-                                .pop()
-                                ?.substring(0, 1)
-                                .toUpperCase()
-                              : "A"}
-                          </Avatar>
+                            name={
+                              dashboardData?.welcomeStats?.userName ||
+                              user?.hoTen ||
+                              "EduVerse"
+                            }
+                            size={80}
+                            shadow="0 10px 24px rgba(141,19,19,0.08)"
+                          />
                           <Box>
                             <Typography
                               sx={{

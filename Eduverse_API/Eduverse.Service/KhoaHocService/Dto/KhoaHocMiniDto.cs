@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +11,7 @@ namespace Eduverse.Service.KhoaHocService.Dto
         public Guid Id { get; set; }
         public string? TieuDe { get; set; }
         public string? HinhAnhKhoaHoc { get; set; }
+        public double? Gia { get; set; }
+        public string? LoaiKhoaHoc { get; set; }
     }
 }

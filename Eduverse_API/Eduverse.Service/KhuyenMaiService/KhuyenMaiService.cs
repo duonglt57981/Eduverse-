@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
 using Eduverse.Repository.KhoaHocRepository;
 using Eduverse.Repository.KhuyenMai_KhoaHocRepository;
@@ -202,7 +202,7 @@ namespace Eduverse.Service.KhuyenMaiService
             if (chuaDuyet.Any())
                 throw new Exception($"Chỉ áp dụng được cho khóa học đã duyệt. Chưa duyệt: {string.Join(", ", chuaDuyet)}");
 
-            var mienPhi = khoaHocs.Where(x => (x.Gia ?? 0) <= 0).Select(x => x.TieuDe).ToList();
+            var mienPhi = khoaHocs.Where(x => (x.Gia ?? 0) <= 0 || x.LoaiKhoaHoc == "Khóa học miễn phí" || x.LoaiKhoaHoc == "MienPhi").Select(x => x.TieuDe).ToList();
             if (mienPhi.Any())
                 throw new Exception($"Không thể áp dụng mã giảm giá cho khóa học miễn phí: {string.Join(", ", mienPhi)}");
 
@@ -437,7 +437,9 @@ namespace Eduverse.Service.KhuyenMaiService
                          && x.IsBanHienTai == true
                          && !x.IsDeleted
                          && x.TrangThai == "HoatDong"
-                         && x.Gia > 0);
+                         && (x.Gia ?? 0) > 0
+                         && x.LoaiKhoaHoc != "Khóa học miễn phí"
+                         && x.LoaiKhoaHoc != "MienPhi");
 
             // ★ Admin được chọn TẤT CẢ khóa học đã duyệt (kể cả không sở
             //   hữu) — vì Admin sẽ đi qua luồng "xin phép" chứ không tự áp
@@ -461,7 +463,9 @@ namespace Eduverse.Service.KhuyenMaiService
                 {
                     Id = x.Id,
                     TieuDe = x.TieuDe,
-                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc,
+                    Gia = x.Gia,
+                    LoaiKhoaHoc = x.LoaiKhoaHoc
                 })
                 .ToListAsync();
         }

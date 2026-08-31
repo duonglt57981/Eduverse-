@@ -10,11 +10,11 @@ import {
   Divider,
   TextField,
   Typography,
-  Avatar,
   Stack,
   CssBaseline,
   Alert,
 } from '@mui/material';
+import { EduAvatar } from '@/src/components/common/EduAvatar';
 import { ThemeProvider } from '@mui/material/styles';
 import { createAppTheme } from '@/src/theme/createAppTheme';
 
@@ -246,19 +246,11 @@ function OAuthCallbackContent() {
                     },
                   }}
                 >
-                  <Avatar
-                    sx={{
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      fontWeight: 'bold',
-                      mr: 2,
-                      width: 36,
-                      height: 36,
-                      fontSize: 15,
-                    }}
-                  >
-                    {user.name[0]}
-                  </Avatar>
+                  <EduAvatar
+                    name={user.name}
+                    size={36}
+                    sx={{ mr: 2 }}
+                  />
                   <Box>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, lineHeight: 1.2 }}>
                       {user.name}

@@ -38,6 +38,8 @@ import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
 import KhoaHocService from "@/src/services/KhoaHocService";
 import { KhoaHocType } from "@/src/types/khoaHoc/Dto/dto";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
+import { alpha } from "@mui/material/styles";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 import { getGioHang } from "@/src/store/gioHang/GioHangSlice";
@@ -196,7 +198,10 @@ export default function DashboardHeader({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      if (pathname.startsWith("/instructor")) {
+      if (pathname.startsWith("/personnel")) {
+        localStorage.setItem("current_role", "personnel");
+        setActiveRole("personnel");
+      } else if (pathname.startsWith("/instructor")) {
         localStorage.setItem("current_role", "GiaoVien");
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setActiveRole("GiaoVien");
@@ -211,7 +216,14 @@ export default function DashboardHeader({
         if (storedRole) {
           setActiveRole(storedRole);
         } else {
-          if (roles.includes("GiaoVien")) {
+          if (
+            roles.some(
+              (r: string) =>
+                r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien",
+            )
+          ) {
+            setActiveRole("personnel");
+          } else if (roles.includes("GiaoVien")) {
             setActiveRole("GiaoVien");
           } else if (roles.includes("Admin")) {
             setActiveRole("Admin");
@@ -223,9 +235,18 @@ export default function DashboardHeader({
     }
   }, [pathname, roles]);
 
-  const isInstructorMode = activeRole === "GiaoVien";
-  const isAdminMode = activeRole === "Admin";
-  const isStudentMode = activeRole === "HocVien";
+  const isPersonnelMode =
+    pathname.startsWith("/personnel") ||
+    activeRole === "personnel" ||
+    (roles.some(
+      (r: string) =>
+        r.toLowerCase() === "personnel" || r.toLowerCase() === "nhanvien",
+    ) &&
+      !pathname.startsWith("/instructor") &&
+      !pathname.startsWith("/admin"));
+  const isInstructorMode = !isPersonnelMode && activeRole === "GiaoVien";
+  const isAdminMode = !isPersonnelMode && activeRole === "Admin";
+  const isStudentMode = !isPersonnelMode && activeRole === "HocVien";
 
   useEffect(() => {
     const keyword = searchQuery.trim();
@@ -299,58 +320,75 @@ export default function DashboardHeader({
         top: 0,
         left: 0,
         right: 0,
-        width: "100%",
+        height: 74,
         zIndex: 1200,
-        px: { xs: 2, md: 3.5 },
-        py: 1.75,
+        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.92),
+        backdropFilter: "saturate(180%) blur(12px)",
         borderBottom: "1px solid",
         borderColor: "divider",
-        bgcolor: "background.paper",
-        display: "flex",
-        alignItems: "center",
-        height: 86,
+        boxShadow: "0 2px 12px rgba(0, 0, 0, 0.01)",
       }}
     >
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{ alignItems: "center", width: "100%", minHeight: 52 }}
+      <Box
+        sx={{
+          height: "100%",
+          width: "100%",
+          maxWidth: "100%",
+          mx: "auto",
+          px: { xs: 2, md: 6 },
+        }}
       >
-        {/* Mobile Sidebar Toggle Button */}
-        {onMenuClick && (
-          <IconButton
-            onClick={onMenuClick}
-            sx={{
-              display: { xs: "inline-flex", lg: "none" },
-              color: "primary.main",
-            }}
-          >
-            <MenuRounded />
-          </IconButton>
-        )}
-
-        {/* Logo */}
-        <Box
+        <Stack
+          direction="row"
           sx={{
-            width: { xs: 120, sm: 140, lg: 150 },
-            display: "flex",
+            height: "100%",
+            width: "100%",
             alignItems: "center",
-            cursor: "pointer",
-            flexShrink: 0,
-            transition: "opacity 150ms ease",
-            "&:hover": { opacity: 0.85 },
+            gap: { xs: 1.5, md: 2.5 },
           }}
-          onClick={() => router.push(getHomeRoute())}
         >
-          <Image
-            src="/auth/img/logo_nentrang.png"
-            alt="EduVerse"
-            width={150}
-            height={46}
-            priority
-            style={{ width: "100%", height: "auto", display: "block" }}
-          />
-        </Box>
+          {/* Mobile Sidebar Toggle Button */}
+          {onMenuClick && (
+            <IconButton
+              onClick={onMenuClick}
+              sx={{
+                display: { xs: "inline-flex", lg: "none" },
+                color: "primary.main",
+              }}
+            >
+              <MenuRounded />
+            </IconButton>
+          )}
+
+          {/* Logo */}
+          <Box
+            sx={{
+              width: { xs: 120, sm: 140, lg: 150 },
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              flexShrink: 0,
+              px: 0.75,
+              py: 0.35,
+              borderRadius: "10px",
+              bgcolor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? "rgba(255,255,255,0.92)"
+                  : "transparent",
+              transition: "opacity 150ms ease",
+              "&:hover": { opacity: 0.85 },
+            }}
+            onClick={() => router.push(getHomeRoute())}
+          >
+            <Image
+              src="/auth/img/logo_nentrang.png"
+              alt="EduVerse"
+              width={150}
+              height={46}
+              priority
+              style={{ width: "100%", height: "auto", display: "block" }}
+            />
+          </Box>
 
         {/* Left Side Links */}
         <Stack
@@ -359,6 +397,24 @@ export default function DashboardHeader({
           sx={{ display: { xs: "none", lg: "flex" }, flexShrink: 0 }}
         >
           {/* Active Navigation items based on roles / modes */}
+          {isPersonnelMode && (
+            <Button
+              onClick={() => router.push("/personnel/approve-courses")}
+              sx={{
+                color: pathname.startsWith("/personnel/approve-courses")
+                  ? "primary.main"
+                  : "text.primary",
+                fontWeight: 600,
+                fontSize: 14,
+                textTransform: "none",
+                px: 1.5,
+                "&:hover": { color: "primary.main", bgcolor: "transparent" },
+              }}
+            >
+              Kiểm duyệt khóa học
+            </Button>
+          )}
+
           {isStudentMode && (
             <Button
               onClick={() => router.push("/student/explore")}
@@ -519,18 +575,21 @@ export default function DashboardHeader({
               elevation={0}
               sx={{
                 width: "100%",
+                height: 44,
                 display: "flex",
                 alignItems: "center",
-                gap: 1.5,
-                px: 2.5,
-                py: 1.15,
-                borderRadius: 50,
-                bgcolor: "background.default",
+                gap: 1.25,
+                px: 2,
+                borderRadius: "999px",
+                bgcolor: "action.hover",
                 border: "1px solid",
                 borderColor: "divider",
-                transition: "border-color 150ms ease, box-shadow 150ms ease",
+                transition: "all 250ms cubic-bezier(0.4, 0, 0.2, 1)",
                 "&:focus-within": {
-                  borderColor: "rgba(0,0,0,0.3)",
+                  bgcolor: "background.paper",
+                  borderColor: "primary.main",
+                  boxShadow: (theme) =>
+                    `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
                 },
               }}
             >
@@ -871,19 +930,21 @@ export default function DashboardHeader({
             </>
           )}
 
-          <IconButton
-            aria-label="Lời mời giảng dạy"
-            onClick={() => router.push("/instructor/invites")}
-            sx={{
-              width: 42,
-              height: 42,
-              bgcolor: "transparent",
-              color: "text.primary",
-              "&:hover": { color: "primary.main" },
-            }}
-          >
-            <MailOutlineRounded fontSize="small" />
-          </IconButton>
+          {isInstructorMode && (
+            <IconButton
+              aria-label="Lời mời giảng dạy"
+              onClick={() => router.push("/instructor/invites")}
+              sx={{
+                width: 42,
+                height: 42,
+                bgcolor: "transparent",
+                color: "text.primary",
+                "&:hover": { color: "primary.main" },
+              }}
+            >
+              <MailOutlineRounded fontSize="small" />
+            </IconButton>
+          )}
 
           <IconButton
             aria-label="Mở thông báo"
@@ -902,28 +963,20 @@ export default function DashboardHeader({
           </IconButton>
 
           {/* User Avatar dropdown */}
-          <Avatar
-            src={userAvatar || user?.anhDaiDien || undefined}
+          <EduAvatar
+            src={userAvatar || user?.anhDaiDien}
+            name={hoTen}
+            size={38}
             onClick={handleAvatarClick}
             sx={{
-              width: 38,
-              height: 38,
-              bgcolor: BRAND.main,
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 700,
-              border: "2px solid #fff",
-              boxShadow: `0 0 0 2px rgba(139,19,19,0.2), 0 4px 8px rgba(0,0,0,0.06)`,
-              transition: "all 200ms ease",
               cursor: "pointer",
+              transition: "all 200ms ease",
               "&:hover": {
                 boxShadow: `0 0 0 2px rgba(139,19,19,0.45), 0 6px 14px rgba(139,19,19,0.15)`,
                 transform: "scale(1.05)",
               },
             }}
-          >
-            {userInitials}
-          </Avatar>
+          />
 
           <Menu
             anchorEl={anchorEl}
@@ -968,18 +1021,11 @@ export default function DashboardHeader({
                 gap: 2,
               }}
             >
-              <Avatar
-                src={userAvatar || undefined}
-                sx={{
-                  width: 44,
-                  height: 44,
-                  bgcolor: "primary.main",
-                  color: "#fff",
-                  fontWeight: 800,
-                }}
-              >
-                {userInitials}
-              </Avatar>
+              <EduAvatar
+                src={userAvatar || user?.anhDaiDien}
+                name={hoTen}
+                size={44}
+              />
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography
                   noWrap
@@ -1004,6 +1050,12 @@ export default function DashboardHeader({
             </Box>
 
             <Divider sx={{ my: 0.5 }} />
+
+            {isPersonnelMode && (
+              <MenuItem onClick={() => router.push("/personnel/approve-courses")}>
+                Kiểm duyệt khóa học
+              </MenuItem>
+            )}
 
             {isStudentMode && (
               <>
@@ -1122,5 +1174,6 @@ export default function DashboardHeader({
         </Stack>
       </Stack>
     </Box>
-  );
+  </Box>
+);
 }
