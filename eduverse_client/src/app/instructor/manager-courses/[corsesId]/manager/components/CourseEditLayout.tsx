@@ -130,21 +130,6 @@ export default function CourseEditLayout({
   const coLichSuKiemDuyet =
     !!lichSuKiemDuyet && !laNgayRong(lichSuKiemDuyet.ngayDuyet);
 
-  // Hàm xử lý xem trước - mở trang xem trước khóa học
-  const handleXemTruoc = () => {
-    // Lấy id từ props hoặc từ URL
-    const courseId = idKhoaHoc || window.location.pathname.split("/")[4];
-    if (!courseId) {
-      console.warn("Không có ID khóa học để xem trước");
-      return;
-    }
-    // Mở trang xem trước trong tab mới
-    window.open(
-      `/instructor/manager-courses/draft/${courseId}/learn`,
-      "_blank",
-    );
-  };
-
   const handleSuaTiep = async () => {
     const courseId = idKhoaHoc || window.location.pathname.split("/")[4];
     if (!courseId) {
@@ -322,34 +307,6 @@ export default function CourseEditLayout({
               flexShrink: 0,
             }}
           >
-            {/* Preview Button - Luôn hoạt động */}
-            {trangThai === "DangSua" && (
-              <Button
-                onClick={handleXemTruoc}
-                variant="outlined"
-                sx={{
-                  color: CSSVAR.divider,
-                  borderColor: "rgba(255,255,255,0.3)",
-                  textTransform: "none",
-                  fontWeight: 700,
-                  borderRadius: "8px",
-                  px: 2,
-                  py: 0.8,
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    bgcolor: "rgba(255,255,255,0.08)",
-                    borderColor: "rgba(255,255,255,0.5)",
-                    color: "#ffffff",
-                  },
-                  "&:focus-visible": {
-                    outline: `2px solid ${MAU.chinh}`,
-                  },
-                }}
-              >
-                Xem trước
-              </Button>
-            )}
-
             {/* Nút "Sửa tiếp" - chỉ hiện khi đã duyệt hoặc bị từ chối */}
             {coTheSuaTiep && (
               <Button

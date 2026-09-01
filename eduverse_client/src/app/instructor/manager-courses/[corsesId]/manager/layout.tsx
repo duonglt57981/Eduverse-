@@ -90,6 +90,15 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Bỏ thông báo phê duyệt khi khóa học đang ở trạng thái XemXet hoặc không phải DaDuyet
+      if (
+        trangThai === "XemXet" ||
+        (type === "khoahocdaduyet" && trangThai !== "DaDuyet")
+      ) {
+        handledNotificationIds.current.add(notification.id);
+        return;
+      }
+
       handledNotificationIds.current.add(notification.id);
       const rejected = type === "khoahoctuchoi";
       setToast({
@@ -104,7 +113,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       });
       void refreshData();
     },
-    [idKhoaHoc, refreshData],
+    [idKhoaHoc, refreshData, trangThai],
   );
 
   useSignalR("ReceiveNotification", handleCourseReviewNotification);

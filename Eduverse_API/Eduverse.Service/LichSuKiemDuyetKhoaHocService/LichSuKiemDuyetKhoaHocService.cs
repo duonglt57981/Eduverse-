@@ -1525,6 +1525,7 @@ namespace Eduverse.Service.LichSuKiemDuyetKhoaHocService
                     IdDoiTuong = khoaHoc.Id,
                     IdNguoiDuyet = userId,
                     LoaiDoiTuong = "KhoaHoc",
+                    LyDo = request.LyDo,
                     NgayDuyet = DateTime.UtcNow,
                     TrangThaiPheDuyet = request.TrangThaiPheDuyet
                 };

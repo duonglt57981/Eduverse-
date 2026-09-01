@@ -16,7 +16,6 @@ import {
   Replay as ReplayIcon,
   ArrowBack as ArrowBackIcon,
   School as SchoolIcon,
-  Timer as TimerIcon,
   Lock as LockIcon,
 } from "@mui/icons-material";
 import type { ReviewQizzDto } from "../../hooks/useQuiz";
@@ -49,13 +48,6 @@ interface KetQuaProps {
   review?: ReviewQizzDto | null;
 }
 
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m === 0) return `${s} giây`;
-  return `${m} phút ${s} giây`;
-}
-
 export const QuizResult = ({
   tieuDe,
   diem,
@@ -76,11 +68,8 @@ export const QuizResult = ({
   const nguongDat = diemDat ?? diemToiDa * 0.5;
   const daDat = diem >= nguongDat;
 
-  const scoreColor = daDat100 || daDat
-    ? GREEN
-    : phanTram >= 40
-      ? AMBER
-      : CRIMSON;
+  const scoreColor =
+    daDat100 || daDat ? GREEN : phanTram >= 40 ? AMBER : CRIMSON;
 
   const getScoreLabel = () => {
     if (daDat100) return "Hoàn hảo!";
@@ -320,46 +309,6 @@ export const QuizResult = ({
                 </Box>
               </Stack>
             </Box>
-
-            {thoiGianLam != null && (
-              <Box
-                sx={{
-                  px: 4,
-                  py: 2.25,
-                  borderRight: `1px solid ${alpha(scoreColor, 0.08)}`,
-                }}
-              >
-                <Stack
-                  direction="row"
-                  spacing={1.5}
-                  sx={{ alignItems: "center" }}
-                >
-                  <TimerIcon sx={{ color: SUB, fontSize: 20 }} />
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        color: SUB,
-                        display: "block",
-                        lineHeight: 1,
-                      }}
-                    >
-                      Thời gian
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: INK,
-                        mt: 0.4,
-                      }}
-                    >
-                      {formatDuration(thoiGianLam)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            )}
 
             {soLanLam != null && (
               <Box sx={{ px: 4, py: 2.25 }}>
