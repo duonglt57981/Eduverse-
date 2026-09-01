@@ -123,6 +123,12 @@ function QuanLyKhuyenMaiContent() {
       const rawData = res.data ?? [];
       const uniqueMap = new Map<string, KhoaHocMiniDto>();
       for (const item of rawData) {
+        const isMienPhi =
+          (item.gia !== undefined && item.gia !== null && item.gia <= 0) ||
+          item.loaiKhoaHoc === "Khóa học miễn phí" ||
+          item.loaiKhoaHoc === "MienPhi";
+        if (isMienPhi) continue;
+
         const key = item.id || item.tieuDe;
         if (key && !uniqueMap.has(key)) {
           uniqueMap.set(key, item);

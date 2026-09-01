@@ -6,7 +6,6 @@ import {
   Box,
   Typography,
   Paper,
-  Avatar,
   Chip,
   Button,
   IconButton,
@@ -38,6 +37,7 @@ import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import ForumRoundedIcon from "@mui/icons-material/ForumRounded";
 import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
 import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import PercentRoundedIcon from "@mui/icons-material/PercentRounded";
@@ -787,24 +787,11 @@ export default function InstructorsContent() {
                       overflow: "hidden",
                     }}
                   >
-                    <Avatar
-                      src={row.anhDaiDien || ""}
-                      sx={{
-                        width: 42,
-                        height: 42,
-                        flexShrink: 0,
-                        bgcolor: `${MAU.chinh}15`,
-                        color: MAU.chinh,
-                        fontSize: 15,
-                        fontWeight: 800,
-                        border: "2px solid #FFFFFF",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                      }}
-                    >
-                      {row.hoTen?.[0] || (
-                        <PersonOutlineIcon sx={{ fontSize: 20 }} />
-                      )}
-                    </Avatar>
+                    <EduAvatar
+                      src={row.anhDaiDien}
+                      name={row.hoTen}
+                      size={42}
+                    />
                     <Box sx={{ minWidth: 0 }}>
                       <Typography
                         sx={{
@@ -1100,21 +1087,11 @@ export default function InstructorsContent() {
                     }}
                   >
                     {/* Avatar */}
-                    <Avatar
-                      src={lm.anhDaiDienDuocMoi || ""}
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        bgcolor: "#FEF3C7",
-                        color: STATUS.warningDark,
-                        fontSize: 14,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {lm.hoTenDuocMoi?.[0] || (
-                        <PersonOutlineIcon sx={{ fontSize: 18 }} />
-                      )}
-                    </Avatar>
+                    <EduAvatar
+                      src={lm.anhDaiDienDuocMoi}
+                      name={lm.hoTenDuocMoi || lm.emailDuocMoi}
+                      size={36}
+                    />
 
                     {/* Info */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>

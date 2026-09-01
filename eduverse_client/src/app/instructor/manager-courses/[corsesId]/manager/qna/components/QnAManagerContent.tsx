@@ -14,6 +14,7 @@ import {
   Divider,
   Tooltip,
   InputAdornment,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import StarIcon from "@mui/icons-material/Star";
@@ -28,8 +29,14 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlined";
 import ReplyIcon from "@mui/icons-material/Reply";
 import CloseIcon from "@mui/icons-material/Close";
+import ClearIcon from "@mui/icons-material/Clear";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight";
+import PlayCircleFilledWhiteOutlinedIcon from "@mui/icons-material/PlayCircleFilledWhiteOutlined";
+import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import ForumOutlinedIcon from "@mui/icons-material/ForumOutlined";
+import TipsAndUpdatesOutlinedIcon from "@mui/icons-material/TipsAndUpdatesOutlined";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -43,8 +50,8 @@ import HoiDapService, {
   SearchHoiDapRequest,
 } from "@/src/services/HoiDapService";
 import { useSearchParams } from "next/navigation";
-import { Alert } from "@mui/material";
-import { STATUS, NEUTRAL } from "@/src/theme/tokens";
+import { BRAND, STATUS, NEUTRAL } from "@/src/theme/tokens";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 
 function thoiGianTuatoi(ngay: string) {
   try {
@@ -58,33 +65,25 @@ function UserAvatar({
   anh,
   ten,
   size = 36,
+  isInstructor = false,
 }: {
   anh?: string;
   ten?: string;
   size?: number;
+  isInstructor?: boolean;
 }) {
   return (
-    <Avatar
-      src={anh || ""}
-      sx={{
-        width: size,
-        height: size,
-        flexShrink: 0,
-        bgcolor: `${MAU.chinh}22`,
-        color: MAU.chinh,
-        fontWeight: 700,
-        fontSize: size * 0.4,
-      }}
-    >
-      {ten?.[0] || "?"}
-    </Avatar>
+    <EduAvatar
+      src={anh}
+      name={ten}
+      size={size}
+      border={isInstructor ? `2px solid ${BRAND.main}` : true}
+      shadow={isInstructor ? `0 2px 8px ${BRAND.main}30` : true}
+    />
   );
 }
 
 // ── Cây trả lời (build từ idTraLoiDuocReply) ─────────────────────────────
-// Giống hệt logic trong QnAPanel.tsx (view học viên) — xem file đó để biết
-// chi tiết lý do. Ở đây giữ song song vì 2 view độc lập, khác đủ nhiều thứ
-// (Top Answer, AI gợi ý, không có laCuaToi) nên không tách chung component.
 interface TraLoiNode {
   traLoi: TraLoiDto;
   con: TraLoiNode[];
@@ -99,8 +98,6 @@ function xayDungCayTraLoi(danhSach: TraLoiDto[]): TraLoiNode[] {
   danhSach.forEach((tl) => {
     const node = mapNode.get(tl.id)!;
     const idCha = tl.idTraLoiDuocReply;
-    // Chỉ coi là "con" nếu tìm thấy cha thật sự trong danh sách hiện có.
-    // Nếu cha không còn tồn tại (đã bị xóa) thì fallback về gốc, tránh mất trả lời.
     if (idCha && mapNode.has(idCha)) {
       mapNode.get(idCha)!.con.push(node);
     } else {
@@ -108,7 +105,6 @@ function xayDungCayTraLoi(danhSach: TraLoiDto[]): TraLoiNode[] {
     }
   });
 
-  // Sắp theo thời gian tạo (cũ → mới) ở mọi cấp
   const sapXep = (nodes: TraLoiNode[]) => {
     nodes.sort(
       (a, b) =>
@@ -123,17 +119,11 @@ function xayDungCayTraLoi(danhSach: TraLoiDto[]): TraLoiNode[] {
 }
 
 // ── Card câu trả lời ─────────────────────────────────────────────────────
-// Ghi chú (giống QnAPanel.tsx): KHÔNG dùng position:absolute + top/left
-// tính cứng theo px, vì chiều cao mỗi card thay đổi theo độ dài nội dung
-// → dễ lệch. Đường dọc là border-left của cả CỤM CON (xem TraLoiChildren),
-// tự co giãn theo chiều cao thật; ở đây chỉ vẽ 1 đường ngang ngắn nối vào
-// tâm avatar bằng flex + margin âm.
 function TraLoiCard({
   traLoi,
   tenNguoiDuocReply,
   depth,
   laCuoiNhom,
-  onLike,
   onToggleTopAnswer,
   onXoa,
   onReply,
@@ -147,44 +137,29 @@ function TraLoiCard({
   onXoa: () => void;
   onReply: (idTraLoi: string, tenNguoi: string) => void;
 }) {
+  const isTopAnswer = Boolean(traLoi.ghimTraLoi);
+  const isGV = Boolean(traLoi.laGiangVien);
+
   return (
     <Box
       sx={{
         display: "flex",
         alignItems: "flex-start",
-        gap: 1.5,
+        gap: 1.75,
         pt: 2,
-        // Card cuối cùng của một nhóm anh em KHÔNG có padding-bottom, vì
-        // padding này nằm bên trong đường borderLeft của khối cha (xem
-        // TraLoiChildren) — nếu để pb ở đây, đường kẻ dọc sẽ bị "thừa" một
-        // đoạn trống phía dưới avatar cuối cùng thay vì dừng khít lại.
-        // KHÔNG dùng margin thay thế: trong flex container, margin của
-        // phần tử con vẫn nằm trong phạm vi mà border-left của cha kéo dài
-        // qua, nên margin cũng kéo dài đường kẻ y hệt padding.
         pb: laCuoiNhom ? 0 : 2,
-        ...(traLoi.ghimTraLoi
-          ? {
-              bgcolor: "#FFFBEB",
-              border: "1px solid #FDE68A",
-              borderRadius: "12px",
-              px: 2,
-              mx: -2,
-              mb: laCuoiNhom ? 0 : 1,
-            }
-          : {}),
       }}
     >
-      {/* Đường ngang nối từ đường dọc (border-left của khối bọc, xem
-          TraLoiChildren) vào tâm avatar. */}
+      {/* Đường nối ngang */}
       {depth > 0 && (
         <Box
           sx={{
-            width: "17px",
+            width: "18px",
             height: "2px",
-            bgcolor: `${MAU.chinh}22`,
+            bgcolor: "#E2E8F0",
             flexShrink: 0,
-            mt: "19px", // canh vào tâm avatar 32px (pt:2 = 16px, +16px nửa avatar, -1px nửa đường kẻ)
-            ml: "-17px",
+            mt: "18px",
+            ml: "-18px",
           }}
         />
       )}
@@ -192,157 +167,240 @@ function TraLoiCard({
       <UserAvatar
         anh={traLoi.nguoiTraLoiAnh}
         ten={traLoi.nguoiTraLoiTen}
-        size={32}
+        size={34}
+        isInstructor={isGV}
       />
+
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        {/* Header trả lời */}
-        <Box
+        {/* Comment Box Container */}
+        <Paper
+          elevation={0}
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            mb: 0.5,
-            flexWrap: "wrap",
+            p: 2,
+            borderRadius: "16px",
+            bgcolor: isTopAnswer
+              ? "#FFFDF5"
+              : isGV
+                ? "#FAF7F6"
+                : "#F8FAFC",
+            border: `1px solid ${
+              isTopAnswer
+                ? "#FDE68A"
+                : isGV
+                  ? "rgba(139, 19, 19, 0.15)"
+                  : "#E2E8F0"
+            }`,
+            boxShadow: isTopAnswer
+              ? "0 4px 14px rgba(245, 158, 11, 0.12)"
+              : "0 1px 3px rgba(0, 0, 0, 0.02)",
+            position: "relative",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
+              borderColor: isTopAnswer ? "#F59E0B" : isGV ? BRAND.main : "#CBD5E1",
+            },
           }}
         >
-          <Typography sx={{ fontWeight: 700, fontSize: 13, color: NEUTRAL.textPrimary }}>
-            {traLoi.nguoiTraLoiTen || "Ẩn danh"}
-          </Typography>
-          {traLoi.laGiangVien && (
-            <Chip
-              icon={<SchoolOutlinedIcon sx={{ fontSize: 12 }} />}
-              label="Giảng viên"
-              size="small"
-              sx={{
-                fontSize: 10,
-                fontWeight: 700,
-                height: 18,
-                bgcolor: `${MAU.chinh}14`,
-                color: MAU.chinh,
-              }}
-            />
-          )}
-          {traLoi.ghimTraLoi && (
-            <Chip
-              icon={<StarIcon sx={{ fontSize: 12 }} />}
-              label="Top Answer"
-              size="small"
-              sx={{
-                fontSize: 10,
-                fontWeight: 700,
-                height: 18,
-                bgcolor: "#FEF3C7",
-                color: STATUS.warningDark,
-              }}
-            />
-          )}
-          <Typography sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}>
-            {thoiGianTuatoi(traLoi.ngayTao)}
-          </Typography>
-        </Box>
-
-        {/* Nhãn "Trả lời @Ten" — lấy từ id thật (idTraLoiDuocReply) */}
-        {tenNguoiDuocReply && (
+          {/* Header trả lời */}
           <Box
             sx={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: 0.4,
-              mb: 0.5,
-              px: 0.75,
-              py: 0.25,
-              borderRadius: "6px",
-              bgcolor: `${MAU.chinh}0A`,
+              gap: 1,
+              mb: 0.75,
+              flexWrap: "wrap",
             }}
           >
-            <SubdirectoryArrowRightIcon
-              sx={{ fontSize: 12, color: MAU.chinh, opacity: 0.7 }}
-            />
             <Typography
-              sx={{ fontSize: 11, fontWeight: 600, color: MAU.chinh }}
-            >
-              Trả lời {tenNguoiDuocReply}
-            </Typography>
-          </Box>
-        )}
-
-        {/* Nội dung */}
-        <Typography
-          sx={{
-            fontSize: 14,
-            color: "#374151",
-            lineHeight: 1.6,
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {traLoi.noiDung}
-        </Typography>
-
-        {/* Actions */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <ThumbUpOutlinedIcon sx={{ fontSize: 13, color: NEUTRAL.grey }} />
-            <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
-              {traLoi.soLike}
-            </Typography>
-          </Box>
-
-          <Button
-            size="small"
-            startIcon={<ReplyIcon sx={{ fontSize: 13 }} />}
-            onClick={() =>
-              onReply(traLoi.id, traLoi.nguoiTraLoiTen || "Ẩn danh")
-            }
-            sx={{
-              textTransform: "none",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#6B7280",
-              p: "2px 8px",
-              minWidth: 0,
-              "&:hover": { color: MAU.chinh, bgcolor: `${MAU.chinh}08` },
-            }}
-          >
-            Phản hồi
-          </Button>
-
-          {/* Nút Top Answer */}
-          <Tooltip
-            title={traLoi.ghimTraLoi ? "Bỏ Top Answer" : "Đánh dấu Top Answer"}
-          >
-            <IconButton
-              size="small"
-              onClick={onToggleTopAnswer}
               sx={{
-                p: 0.5,
-                color: traLoi.ghimTraLoi ? STATUS.warningDark : NEUTRAL.grey,
-                "&:hover": { color: STATUS.warningDark },
+                fontWeight: 800,
+                fontSize: "0.88rem",
+                color: isGV ? BRAND.dark : "#0F172A",
               }}
             >
-              {traLoi.ghimTraLoi ? (
-                <StarIcon sx={{ fontSize: 16 }} />
-              ) : (
-                <StarBorderIcon sx={{ fontSize: 16 }} />
-              )}
-            </IconButton>
-          </Tooltip>
+              {traLoi.nguoiTraLoiTen || "Ẩn danh"}
+            </Typography>
 
-          <Tooltip title="Xóa">
-            <IconButton
-              size="small"
-              onClick={onXoa}
-              sx={{ p: 0.5, color: NEUTRAL.grey, "&:hover": { color: STATUS.error } }}
+            {isGV && (
+              <Chip
+                icon={
+                  <SchoolOutlinedIcon
+                    sx={{ fontSize: "13px !important", color: "#FFFFFF !important" }}
+                  />
+                }
+                label="Giảng viên"
+                size="small"
+                sx={{
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  height: 20,
+                  bgcolor: BRAND.main,
+                  color: "#FFFFFF",
+                  borderRadius: "6px",
+                  px: 0.5,
+                }}
+              />
+            )}
+
+            {isTopAnswer && (
+              <Chip
+                icon={
+                  <StarIcon
+                    sx={{ fontSize: "13px !important", color: "#92400E !important" }}
+                  />
+                }
+                label="Top Answer"
+                size="small"
+                sx={{
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  height: 20,
+                  bgcolor: "#FEF3C7",
+                  color: "#92400E",
+                  border: "1px solid #FDE68A",
+                  borderRadius: "6px",
+                }}
+              />
+            )}
+
+            <Typography
+              sx={{
+                fontSize: "0.76rem",
+                color: "#94A3B8",
+                ml: "auto",
+                fontWeight: 500,
+              }}
             >
-              <DeleteOutlineIcon sx={{ fontSize: 15 }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
+              {thoiGianTuatoi(traLoi.ngayTao)}
+            </Typography>
+          </Box>
+
+          {/* Nhãn "Trả lời @Ten" */}
+          {tenNguoiDuocReply && (
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.5,
+                mb: 1,
+                px: 1,
+                py: 0.25,
+                borderRadius: "6px",
+                bgcolor: "rgba(139, 19, 19, 0.06)",
+              }}
+            >
+              <SubdirectoryArrowRightIcon
+                sx={{ fontSize: 13, color: BRAND.main, opacity: 0.8 }}
+              />
+              <Typography
+                sx={{ fontSize: "0.75rem", fontWeight: 700, color: BRAND.main }}
+              >
+                Trả lời @{tenNguoiDuocReply}
+              </Typography>
+            </Box>
+          )}
+
+          {/* Nội dung */}
+          <Typography
+            sx={{
+              fontSize: "0.9rem",
+              color: "#334155",
+              lineHeight: 1.65,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {traLoi.noiDung}
+          </Typography>
+
+          {/* Actions Bar */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              mt: 1.5,
+              pt: 1,
+              borderTop: "1px solid rgba(0,0,0,0.04)",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                  color: "#64748B",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                }}
+              >
+                <ThumbUpOutlinedIcon sx={{ fontSize: 14 }} />
+                <span>{traLoi.soLike}</span>
+              </Box>
+
+              <Button
+                size="small"
+                startIcon={<ReplyIcon sx={{ fontSize: 14 }} />}
+                onClick={() =>
+                  onReply(traLoi.id, traLoi.nguoiTraLoiTen || "Ẩn danh")
+                }
+                sx={{
+                  textTransform: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  color: "#475569",
+                  p: "2px 8px",
+                  borderRadius: "8px",
+                  "&:hover": { color: BRAND.main, bgcolor: "rgba(139, 19, 19, 0.08)" },
+                }}
+              >
+                Phản hồi
+              </Button>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Tooltip
+                title={isTopAnswer ? "Bỏ đánh dấu Top Answer" : "Đánh dấu là Top Answer"}
+              >
+                <IconButton
+                  size="small"
+                  onClick={onToggleTopAnswer}
+                  sx={{
+                    p: 0.5,
+                    color: isTopAnswer ? "#D97706" : "#94A3B8",
+                    "&:hover": { color: "#D97706", bgcolor: "#FEF3C7" },
+                  }}
+                >
+                  {isTopAnswer ? (
+                    <StarIcon sx={{ fontSize: 18 }} />
+                  ) : (
+                    <StarBorderIcon sx={{ fontSize: 18 }} />
+                  )}
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Xóa câu trả lời này">
+                <IconButton
+                  size="small"
+                  onClick={onXoa}
+                  sx={{
+                    p: 0.5,
+                    color: "#94A3B8",
+                    "&:hover": { color: STATUS.error, bgcolor: "#FEE2E2" },
+                  }}
+                >
+                  <DeleteOutlineIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+        </Paper>
       </Box>
     </Box>
   );
 }
 
-// ── Nhóm trả lời con — mặc định chỉ hiện vài cái đầu, có nút "Xem thêm" ──
+// ── Nhóm trả lời con ──────────────────────────────────────────────────────
 const SO_LUONG_HIEN_MAC_DINH = 2;
 
 function TraLoiChildren({
@@ -378,9 +436,9 @@ function TraLoiChildren({
       sx={
         coDuongDoc
           ? {
-              ml: "15px", // canh đúng tâm avatar 32px của card cha
-              pl: "17px", // khoảng cách từ đường dọc tới avatar con
-              borderLeft: `2px solid ${MAU.chinh}22`,
+              ml: "16px",
+              pl: "18px",
+              borderLeft: "2px solid #E2E8F0",
             }
           : {}
       }
@@ -406,22 +464,23 @@ function TraLoiChildren({
           }
           sx={{
             textTransform: "none",
-            fontSize: 12.5,
-            fontWeight: 700,
-            color: MAU.chinh,
-            p: "4px 8px",
-            minWidth: 0,
-            "&:hover": { bgcolor: `${MAU.chinh}08` },
+            fontSize: "0.78rem",
+            fontWeight: 800,
+            color: BRAND.main,
+            p: "4px 10px",
+            my: 0.5,
+            borderRadius: "8px",
+            "&:hover": { bgcolor: "rgba(139, 19, 19, 0.08)" },
           }}
         >
-          {daMoRong ? "Ẩn bớt phản hồi" : `Xem thêm ${soLuongAn} phản hồi`}
+          {daMoRong ? "Thu gọn phản hồi" : `Xem thêm ${soLuongAn} phản hồi`}
         </Button>
       )}
     </Box>
   );
 }
 
-// ── Render đệ quy cây trả lời (thread) ───────────────────────────────────
+// ── Render đệ quy cây trả lời ─────────────────────────────────────────────
 function TraLoiThread({
   nodes,
   depth,
@@ -462,9 +521,6 @@ function TraLoiThread({
               onReply={onReply}
             />
             {con.length > 0 && (
-              // Đường dọc = borderLeft của khối bọc quanh toàn bộ nhóm con —
-              // border thật trên 1 khối duy nhất nên luôn chạy liền mạch và
-              // tự co giãn đúng theo chiều cao thật của nội dung.
               <TraLoiChildren
                 nodes={con}
                 depth={depth + 1}
@@ -477,7 +533,7 @@ function TraLoiThread({
             )}
             {depth === 0 && idx < nodes.length - 1 && (
               <Box sx={{ pt: 0.5, pb: 0.5 }}>
-                <Divider />
+                <Divider sx={{ borderColor: "#F1F5F9" }} />
               </Box>
             )}
           </Box>
@@ -487,6 +543,7 @@ function TraLoiThread({
   );
 }
 
+// ── COMPONENT CHÍNH ────────────────────────────────────────────────────────
 export default function QnAManagerContent() {
   const { idKhoaHoc, trangThai } = useCourseEdit();
   const { coQuyen, loading: loadingQuyen } = useQuyenCuaToi(idKhoaHoc);
@@ -497,7 +554,7 @@ export default function QnAManagerContent() {
   const [filterLoai, setFilterLoai] = useState<
     "TatCa" | "ChuaTraLoi" | "ChuaDoc" | "NhieuLike"
   >("TatCa");
-  const [sapXep, setSapXep] = useState<"MoiNhat" | "NhieuTraLoi" | "DaGhim">(
+  const [sapXep] = useState<"MoiNhat" | "NhieuTraLoi" | "DaGhim">(
     "MoiNhat",
   );
 
@@ -532,7 +589,7 @@ export default function QnAManagerContent() {
 
   const [error, setError] = useState<string | null>(null);
 
-  // ── Load ──────────────────────────────────────────────────────────
+  // ── Load danh sách câu hỏi ─────────────────────────────────────────
   const load = useCallback(
     async (reset = true) => {
       if (!idKhoaHoc) return;
@@ -561,15 +618,14 @@ export default function QnAManagerContent() {
         setLoadingMore(false);
       }
     },
-    [idKhoaHoc, keyword, filterLoai, sapXep],
+    [idKhoaHoc, keyword, filterLoai, sapXep, page],
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load(true);
   }, [idKhoaHoc, filterLoai, sapXep]);
 
-  // ── Mở chi tiết ──────────────────────────────────────────────────
+  // ── Mở chi tiết câu hỏi ──────────────────────────────────────────
   const moChiTiet = useCallback(async (cauHoi: HoiDapDto) => {
     setLoadingChiTiet(true);
     setNoiDungTraLoi("");
@@ -585,7 +641,7 @@ export default function QnAManagerContent() {
     }
   }, []);
 
-  // ── AI gợi ý trả lời ─────────────────────────────────────────────
+  // ── AI gợi ý ─────────────────────────────────────────────────────
   const goiYTraLoi = useCallback(async () => {
     if (!cauHoiMo) return;
     setDangGoiY(true);
@@ -601,7 +657,7 @@ export default function QnAManagerContent() {
     } finally {
       setDangGoiY(false);
     }
-  }, [cauHoiMo]);
+  }, [cauHoiMo, replyingTo]);
 
   const goiYTraLoiReply = useCallback(async () => {
     if (!cauHoiMo || !replyingTo) return;
@@ -624,28 +680,32 @@ export default function QnAManagerContent() {
   const traLoi = useCallback(async () => {
     if (!cauHoiMo || !noiDungTraLoi.trim()) return;
     setDangTraLoi(true);
+    setError(null);
     try {
       const tl = await HoiDapService.TraLoi({
         idCauHoi: cauHoiMo.id,
         noiDung: noiDungTraLoi.trim(),
       });
-      setCauHoiMo((prev) =>
-        prev
-          ? {
-              ...prev,
-              danhSachTraLoi: [...prev.danhSachTraLoi, tl],
-              soTraLoi: prev.soTraLoi + 1,
-            }
-          : prev,
-      );
-      setCauHois((prev) =>
-        prev.map((c) =>
-          c.id === cauHoiMo.id ? { ...c, soTraLoi: c.soTraLoi + 1 } : c,
-        ),
-      );
-      setNoiDungTraLoi("");
+      if (tl) {
+        setCauHoiMo((prev) =>
+          prev
+            ? {
+                ...prev,
+                danhSachTraLoi: [...(prev.danhSachTraLoi || []), tl],
+                soTraLoi: (prev.soTraLoi || 0) + 1,
+              }
+            : prev,
+        );
+        setCauHois((prev) =>
+          prev.map((c) =>
+            c.id === cauHoiMo.id ? { ...c, soTraLoi: (c.soTraLoi || 0) + 1 } : c,
+          ),
+        );
+        setNoiDungTraLoi("");
+      }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Lỗi gửi câu trả lời:", err);
+      setError(err?.message || "Không thể gửi câu trả lời");
     } finally {
       setDangTraLoi(false);
     }
@@ -655,31 +715,35 @@ export default function QnAManagerContent() {
   const reply = useCallback(async () => {
     if (!cauHoiMo || !replyingTo || !noiDungReply.trim()) return;
     setDangReply(true);
+    setError(null);
     try {
       const tl = await HoiDapService.Reply({
         idCauHoi: cauHoiMo.id,
         idTraLoiDuocReply: replyingTo.idTraLoi,
         noiDung: noiDungReply.trim(),
       });
-      setCauHoiMo((prev) =>
-        prev
-          ? {
-              ...prev,
-              soTraLoi: prev.soTraLoi + 1,
-              danhSachTraLoi: [...prev.danhSachTraLoi, tl],
-            }
-          : prev,
-      );
-      setNoiDungReply("");
-      setReplyingTo(null);
+      if (tl) {
+        setCauHoiMo((prev) =>
+          prev
+            ? {
+                ...prev,
+                soTraLoi: (prev.soTraLoi || 0) + 1,
+                danhSachTraLoi: [...(prev.danhSachTraLoi || []), tl],
+              }
+            : prev,
+        );
+        setNoiDungReply("");
+        setReplyingTo(null);
+      }
     } catch (err: any) {
-      setError(err.message);
+      console.error("Lỗi gửi phản hồi:", err);
+      setError(err?.message || "Không thể gửi phản hồi");
     } finally {
       setDangReply(false);
     }
   }, [cauHoiMo, replyingTo, noiDungReply]);
 
-  // ── Top Answer (ghim) ─────────────────────────────────────────────
+  // ── Top Answer ────────────────────────────────────────────────────
   const toggleTopAnswer = useCallback(
     async (idTraLoi: string, ghimHienTai: boolean) => {
       try {
@@ -688,11 +752,10 @@ export default function QnAManagerContent() {
           prev
             ? {
                 ...prev,
-                danhSachTraLoi: prev.danhSachTraLoi.map(
-                  (t) =>
-                    t.id === idTraLoi
-                      ? { ...t, ghimTraLoi: !ghimHienTai }
-                      : { ...t, ghimTraLoi: false }, // bỏ ghim các cái khác
+                danhSachTraLoi: prev.danhSachTraLoi.map((t) =>
+                  t.id === idTraLoi
+                    ? { ...t, ghimTraLoi: !ghimHienTai }
+                    : { ...t, ghimTraLoi: false },
                 ),
               }
             : prev,
@@ -730,7 +793,7 @@ export default function QnAManagerContent() {
     [cauHoiMo],
   );
 
-  // ── Xóa ──────────────────────────────────────────────────────────
+  // ── Xóa câu hỏi ──────────────────────────────────────────────────
   const xoaCauHoi = useCallback(
     async (id: string) => {
       await HoiDapService.XoaCauHoi(id);
@@ -740,6 +803,7 @@ export default function QnAManagerContent() {
     [cauHoiMo],
   );
 
+  // ── Xóa trả lời ──────────────────────────────────────────────────
   const xoaTraLoi = useCallback(async (id: string) => {
     await HoiDapService.XoaTraLoi(id);
     setCauHoiMo((prev) =>
@@ -755,7 +819,6 @@ export default function QnAManagerContent() {
 
   useEffect(() => {
     const idCauHoiTuUrl = searchParams.get("idCauHoi");
-
     if (!idCauHoiTuUrl) return;
 
     const timer = setTimeout(() => {
@@ -765,9 +828,6 @@ export default function QnAManagerContent() {
     return () => clearTimeout(timer);
   }, [searchParams, moChiTiet]);
 
-  // ── Cây trả lời + map id→tên cho câu hỏi đang mở ────────────────────────
-  // Top answer (ghim) vẫn ưu tiên lên đầu ở cấp gốc — giữ đúng hành vi cũ,
-  // chỉ áp dụng khi build danh sách gốc, các cấp con vẫn sort theo thời gian.
   const cayTraLoi = useMemo(() => {
     if (!cauHoiMo) return [];
     const cay = xayDungCayTraLoi(cauHoiMo.danhSachTraLoi);
@@ -786,307 +846,532 @@ export default function QnAManagerContent() {
     return m;
   }, [cauHoiMo]);
 
+  // Quick stats
+  const totalQuestions = cauHois.length;
+  const unansweredCount = cauHois.filter((c) => c.soTraLoi === 0).length;
+  const pinnedCount = cauHois.filter((c) => c.daGhim).length;
+
   if (loadingQuyen) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-        <CircularProgress sx={{ color: MAU.chinh }} />
+      <Box sx={{ display: "flex", justifyContent: "center", py: 12 }}>
+        <CircularProgress sx={{ color: BRAND.main }} />
       </Box>
     );
   }
 
   if (trangThai !== "DaDuyet") {
     return (
-      <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
-          Hỏi đáp chỉ khả dụng sau khi khóa học được duyệt.
+      <Paper
+        elevation={0}
+        sx={{
+          p: 6,
+          textAlign: "center",
+          borderRadius: "24px",
+          border: "1.5px dashed #CBD5E1",
+          bgcolor: "#F8FAFC",
+          my: 4,
+        }}
+      >
+        <HelpOutlineOutlinedIcon sx={{ fontSize: 48, color: "#94A3B8", mb: 1.5 }} />
+        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#334155", mb: 0.5 }}>
+          Hỏi đáp chưa khả dụng
         </Typography>
-      </Box>
+        <Typography sx={{ fontSize: "0.88rem", color: "#64748B" }}>
+          Chức năng hỏi đáp & thảo luận chỉ khả dụng sau khi khóa học được phê duyệt chính thức.
+        </Typography>
+      </Paper>
     );
   }
 
   if (!coQuyen("qnA")) {
     return (
-      <Box sx={{ textAlign: "center", py: 10 }}>
-        <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
-          Bạn không có quyền truy cập mục Hỏi đáp.
+      <Paper
+        elevation={0}
+        sx={{
+          p: 6,
+          textAlign: "center",
+          borderRadius: "24px",
+          border: "1.5px dashed #CBD5E1",
+          bgcolor: "#F8FAFC",
+          my: 4,
+        }}
+      >
+        <LockOutlinedIcon sx={{ fontSize: 48, color: "#94A3B8", mb: 1.5 }} />
+        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#334155", mb: 0.5 }}>
+          Không có quyền truy cập
         </Typography>
-      </Box>
+        <Typography sx={{ fontSize: "0.88rem", color: "#64748B" }}>
+          Bạn chưa được ủy quyền quản lý mục Hỏi đáp cho khóa học này.
+        </Typography>
+      </Paper>
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────
   return (
     <AuthGuard allowedRoles={["Admin", "GiaoVien"]}>
       {error && (
         <Alert
           severity="error"
           onClose={() => setError(null)}
-          sx={{ mb: 2, borderRadius: "10px" }}
+          sx={{ mb: 2.5, borderRadius: "14px", fontWeight: 600 }}
         >
           {error}
         </Alert>
       )}
-      <Box sx={{ display: "flex", height: "calc(100vh - 200px)", gap: 0 }}>
-        {/* ── Cột trái: Danh sách ── */}
+
+      {/* ── Main Container Card (Master-Detail Architecture) ── */}
+      <Paper
+        elevation={0}
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          height: { xs: "auto", md: "calc(100vh - 160px)" },
+          minHeight: { xs: "auto", md: 680 },
+          borderRadius: "28px",
+          bgcolor: "#FFFFFF",
+          border: "1px solid #ECE7E4",
+          boxShadow: "0 12px 36px -10px rgba(0, 0, 0, 0.05)",
+          overflow: "hidden",
+        }}
+      >
+        {/* ── CỘT TRÁI: DANH SÁCH CÂU HỎI & BỘ LỌC ── */}
         <Box
           sx={{
-            width: cauHoiMo ? 380 : "100%",
+            width: { xs: "100%", md: 400 },
             flexShrink: 0,
-            borderRight: cauHoiMo ? `1px solid ${NEUTRAL.divider}` : "none",
+            borderRight: { xs: "none", md: "1px solid #F1F5F9" },
+            borderBottom: { xs: "1px solid #F1F5F9", md: "none" },
             display: "flex",
             flexDirection: "column",
-            transition: "width 0.2s ease",
+            bgcolor: "#FAF8F6",
             overflow: "hidden",
           }}
         >
-          {/* Header */}
-          <Box sx={{ p: 3, borderBottom: `1px solid ${NEUTRAL.divider}`, flexShrink: 0 }}>
-            <Typography
-              sx={{ fontWeight: 900, fontSize: 20, color: NEUTRAL.textPrimary, mb: 2 }}
+          {/* Header Panel */}
+          <Box
+            sx={{
+              p: { xs: 2.5, sm: 3 },
+              bgcolor: "#FFFFFF",
+              borderBottom: "1px solid #F1F5F9",
+              flexShrink: 0,
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
             >
-              Q&A Dashboard
-            </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "12px",
+                    background: `linear-gradient(135deg, ${BRAND.main} 0%, #A81B1B 100%)`,
+                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: `0 4px 12px ${BRAND.main}30`,
+                  }}
+                >
+                  <QuestionAnswerOutlinedIcon sx={{ fontSize: 22 }} />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontWeight: 900,
+                      fontSize: "1.18rem",
+                      color: "#0F172A",
+                      letterSpacing: "-0.015em",
+                    }}
+                  >
+                    Hỏi đáp & Thảo luận
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: "0.78rem", color: "#64748B", fontWeight: 500 }}
+                  >
+                    Quản lý và giải đáp câu hỏi của học viên
+                  </Typography>
+                </Box>
+              </Box>
 
-            {/* Search */}
+              {unansweredCount > 0 && (
+                <Chip
+                  label={`${unansweredCount} mới`}
+                  size="small"
+                  sx={{
+                    bgcolor: "#FEF2F2",
+                    color: BRAND.main,
+                    border: "1px solid #FECACA",
+                    fontWeight: 800,
+                    fontSize: "0.72rem",
+                    height: 22,
+                  }}
+                />
+              )}
+            </Box>
+
+            {/* Search Input */}
             <TextField
               fullWidth
               size="small"
-              placeholder="Tìm câu hỏi..."
+              placeholder="Tìm kiếm câu hỏi..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && load(true)}
-              sx={{
-                mb: 2,
-                "& .MuiOutlinedInput-root": {
-                  height: "44px",
-                  borderRadius: "10px",
-                  fontSize: 14,
-                  "& fieldset": { borderColor: NEUTRAL.divider },
-                  "&.Mui-focused fieldset": { borderColor: MAU.chinh },
-                },
-              }}
               slotProps={{
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon sx={{ fontSize: 18, color: NEUTRAL.grey }} />
+                      <SearchIcon sx={{ fontSize: 18, color: "#94A3B8" }} />
                     </InputAdornment>
                   ),
+                  endAdornment: keyword ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setKeyword("");
+                          load(true);
+                        }}
+                        sx={{ p: 0.5 }}
+                      >
+                        <ClearIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                },
+              }}
+              sx={{
+                mb: 2,
+                "& .MuiOutlinedInput-root": {
+                  height: 42,
+                  borderRadius: "12px",
+                  bgcolor: "#F8FAFC",
+                  fontSize: "0.88rem",
+                  "& fieldset": { borderColor: "#E2E8F0" },
+                  "&:hover fieldset": { borderColor: "#CBD5E1" },
+                  "&.Mui-focused fieldset": {
+                    borderColor: BRAND.main,
+                    borderWidth: "1.5px",
+                  },
                 },
               }}
             />
 
-            {/* Filter chips */}
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              {(
-                [
-                  { val: "TatCa", label: "Tất cả" },
-                  { val: "ChuaTraLoi", label: "Chưa trả lời" },
-                  { val: "ChuaDoc", label: "Chưa có GV trả lời" },
-                  { val: "NhieuLike", label: "Nhiều like" },
-                ] as const
-              ).map((f) => (
-                <Chip
-                  key={f.val}
-                  label={f.label}
-                  onClick={() => setFilterLoai(f.val)}
-                  size="small"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: 11.5,
-                    cursor: "pointer",
-                    height: 26,
-                    bgcolor: filterLoai === f.val ? MAU.chinh : "transparent",
-                    color: filterLoai === f.val ? "#fff" : "#6B7280",
-                    border: `1px solid ${filterLoai === f.val ? MAU.chinh : NEUTRAL.divider}`,
-                    "&:hover": {
-                      bgcolor:
-                        filterLoai === f.val ? MAU.chinhDam : `${MAU.chinh}08`,
-                      color: filterLoai === f.val ? "#fff" : MAU.chinh,
-                    },
-                  }}
-                />
-              ))}
+            {/* Filter Pills */}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 0.75,
+                overflowX: "auto",
+                pb: 0.5,
+                "&::-webkit-scrollbar": { display: "none" },
+                scrollbarWidth: "none",
+              }}
+            >
+              {[
+                { val: "TatCa" as const, label: "Tất cả" },
+                { val: "ChuaTraLoi" as const, label: "Chưa trả lời" },
+                { val: "ChuaDoc" as const, label: "Chưa có GV" },
+                { val: "NhieuLike" as const, label: "Nhiều like" },
+              ].map((f) => {
+                const isActive = filterLoai === f.val;
+                return (
+                  <Chip
+                    key={f.val}
+                    label={f.label}
+                    onClick={() => setFilterLoai(f.val)}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: "0.76rem",
+                      cursor: "pointer",
+                      height: 28,
+                      borderRadius: "8px",
+                      px: 0.5,
+                      bgcolor: isActive ? BRAND.main : "#F8FAFC",
+                      color: isActive ? "#FFFFFF" : "#64748B",
+                      border: `1px solid ${isActive ? BRAND.main : "#E2E8F0"}`,
+                      transition: "all 0.15s ease",
+                      "&:hover": {
+                        bgcolor: isActive ? BRAND.dark : "#F1F5F9",
+                        color: isActive ? "#FFFFFF" : "#1E293B",
+                      },
+                    }}
+                  />
+                );
+              })}
             </Box>
           </Box>
 
-          {/* Danh sách câu hỏi */}
+          {/* Danh sách câu hỏi cuộn */}
           <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
             {loading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-                <CircularProgress sx={{ color: MAU.chinh }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 10,
+                  gap: 1.5,
+                }}
+              >
+                <CircularProgress size={32} sx={{ color: BRAND.main }} />
+                <Typography sx={{ fontSize: "0.84rem", color: "#64748B", fontWeight: 600 }}>
+                  Đang tải câu hỏi...
+                </Typography>
               </Box>
             ) : cauHois.length === 0 ? (
-              <Box sx={{ textAlign: "center", py: 8 }}>
+              <Box sx={{ textAlign: "center", py: 8, px: 2 }}>
                 <QuestionAnswerOutlinedIcon
-                  sx={{ fontSize: 48, color: "#D1D5DB", mb: 1 }}
+                  sx={{ fontSize: 44, color: "#CBD5E1", mb: 1.5 }}
                 />
-                <Typography sx={{ fontWeight: 700, color: NEUTRAL.grey }}>
+                <Typography
+                  sx={{ fontWeight: 800, fontSize: "0.95rem", color: "#475569", mb: 0.5 }}
+                >
                   Không có câu hỏi nào
+                </Typography>
+                <Typography sx={{ fontSize: "0.82rem", color: "#94A3B8" }}>
+                  {keyword
+                    ? "Không tìm thấy câu hỏi khớp với từ khóa tìm kiếm"
+                    : "Chưa có học viên nào đặt câu hỏi trong mục này"}
                 </Typography>
               </Box>
             ) : (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {cauHois.map((cauHoi) => (
-                  <Paper
-                    key={cauHoi.id}
-                    elevation={0}
-                    onClick={() => moChiTiet(cauHoi)}
-                    sx={{
-                      p: 2,
-                      borderRadius: "12px",
-                      cursor: "pointer",
-                      border: `1px solid ${
-                        cauHoiMo?.id === cauHoi.id
-                          ? `${MAU.chinh}66`
-                          : cauHoi.daGhim
-                            ? "#FDE68A"
-                            : NEUTRAL.divider
-                      }`,
-                      bgcolor:
-                        cauHoiMo?.id === cauHoi.id
-                          ? `${MAU.chinh}06`
-                          : cauHoi.daGhim
-                            ? "#FFFBEB"
-                            : "#fff",
-                      transition: "all 0.15s ease",
-                      "&:hover": {
-                        borderColor: MAU.chinh,
-                        bgcolor: `${MAU.chinh}04`,
-                        transform: "translateY(-1px)",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
-                      },
-                    }}
-                  >
-                    {/* Câu hỏi */}
-                    <Typography
+                {cauHois.map((cauHoi) => {
+                  const isSelected = cauHoiMo?.id === cauHoi.id;
+                  const isUnanswered = cauHoi.soTraLoi === 0;
+
+                  return (
+                    <Paper
+                      key={cauHoi.id}
+                      elevation={0}
+                      onClick={() => moChiTiet(cauHoi)}
                       sx={{
-                        fontWeight: 700,
-                        fontSize: 14,
-                        color: NEUTRAL.textPrimary,
-                        mb: 1,
-                        lineHeight: 1.5,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
+                        p: 2,
+                        borderRadius: "16px",
+                        cursor: "pointer",
+                        position: "relative",
+                        border: isSelected
+                          ? `1.5px solid ${BRAND.main}`
+                          : cauHoi.daGhim
+                            ? "1px solid #FDE68A"
+                            : "1px solid #E2E8F0",
+                        bgcolor: isSelected
+                          ? "#FFFFFF"
+                          : cauHoi.daGhim
+                            ? "#FFFDF5"
+                            : "#FFFFFF",
+                        boxShadow: isSelected
+                          ? `0 6px 18px -4px ${BRAND.main}25, 0 2px 6px rgba(0,0,0,0.04)`
+                          : "0 1px 3px rgba(0,0,0,0.02)",
+                        transition: "all 0.2s ease",
+                        "&:hover": {
+                          borderColor: isSelected ? BRAND.main : "#CBD5E1",
+                          transform: "translateY(-1px)",
+                          boxShadow: "0 6px 16px rgba(0,0,0,0.05)",
+                        },
                       }}
                     >
-                      ❓ {cauHoi.noiDung}
-                    </Typography>
-
-                    {/* Bài giảng */}
-                    {cauHoi.tenBaiGiang && (
-                      <Typography
-                        sx={{ fontSize: 11.5, color: NEUTRAL.textMuted, mb: 1 }}
-                      >
-                        📹 {cauHoi.tenBaiGiang}
-                      </Typography>
-                    )}
-
-                    {/* Info row */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.5,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <UserAvatar
-                          anh={cauHoi.nguoiHoiAnh}
-                          ten={cauHoi.nguoiHoiTen}
-                          size={20}
-                        />
-                        <Typography
+                      {/* Active Indicator Bar */}
+                      {isSelected && (
+                        <Box
                           sx={{
-                            fontSize: 12,
-                            fontWeight: 600,
-                            color: NEUTRAL.textSecondary,
+                            position: "absolute",
+                            left: 0,
+                            top: 0,
+                            bottom: 0,
+                            width: 4,
+                            bgcolor: BRAND.main,
+                            borderRadius: "16px 0 0 16px",
+                          }}
+                        />
+                      )}
+
+                      {/* Header Info */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mb: 1,
+                          gap: 1,
+                        }}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                          <UserAvatar
+                            anh={cauHoi.nguoiHoiAnh}
+                            ten={cauHoi.nguoiHoiTen}
+                            size={24}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: "0.8rem",
+                              fontWeight: 700,
+                              color: "#334155",
+                              maxWidth: 160,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {cauHoi.nguoiHoiTen || "Ẩn danh"}
+                          </Typography>
+                        </Box>
+
+                        <Typography
+                          sx={{ fontSize: "0.72rem", color: "#94A3B8", flexShrink: 0 }}
+                        >
+                          {thoiGianTuatoi(cauHoi.ngayTao)}
+                        </Typography>
+                      </Box>
+
+                      {/* Title / Content */}
+                      <Typography
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: "0.9rem",
+                          color: isSelected ? BRAND.main : "#0F172A",
+                          lineHeight: 1.45,
+                          mb: 1,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {cauHoi.noiDung}
+                      </Typography>
+
+                      {/* Lesson Badge */}
+                      {cauHoi.tenBaiGiang && (
+                        <Box
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 0.75,
+                            px: 1,
+                            py: 0.35,
+                            borderRadius: "6px",
+                            bgcolor: "#F8FAFC",
+                            border: "1px solid #F1F5F9",
+                            maxWidth: "100%",
+                            mb: 1.25,
                           }}
                         >
-                          {cauHoi.nguoiHoiTen || "Ẩn danh"}
-                        </Typography>
-                      </Box>
+                          <PlayCircleFilledWhiteOutlinedIcon
+                            sx={{ fontSize: 13, color: "#64748B", flexShrink: 0 }}
+                          />
+                          <Typography
+                            sx={{
+                              fontSize: "0.74rem",
+                              color: "#64748B",
+                              fontWeight: 600,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {cauHoi.tenBaiGiang}
+                          </Typography>
+                        </Box>
+                      )}
 
+                      {/* Badges and Metrics */}
                       <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mt: 0.5,
+                        }}
                       >
-                        <ThumbUpOutlinedIcon
-                          sx={{ fontSize: 12, color: NEUTRAL.grey }}
-                        />
-                        <Typography sx={{ fontSize: 12, color: "#6B7280" }}>
-                          {cauHoi.tongLike ?? 0}
-                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.4,
+                              color: "#64748B",
+                              fontSize: "0.76rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            <ThumbUpOutlinedIcon sx={{ fontSize: 13 }} />
+                            <span>{cauHoi.tongLike ?? 0}</span>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.4,
+                              color: isUnanswered ? STATUS.warningDark : "#64748B",
+                              fontSize: "0.76rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            <QuestionAnswerOutlinedIcon sx={{ fontSize: 13 }} />
+                            <span>{cauHoi.soTraLoi}</span>
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                          {cauHoi.daGhim && (
+                            <Chip
+                              label="📌 Ghim"
+                              size="small"
+                              sx={{
+                                fontSize: "0.7rem",
+                                height: 20,
+                                bgcolor: "#FEF3C7",
+                                color: "#92400E",
+                                border: "1px solid #FDE68A",
+                                fontWeight: 800,
+                              }}
+                            />
+                          )}
+
+                          {isUnanswered ? (
+                            <Chip
+                              label="Chưa trả lời"
+                              size="small"
+                              sx={{
+                                fontSize: "0.7rem",
+                                height: 20,
+                                bgcolor: "#FEF2F2",
+                                color: BRAND.main,
+                                border: "1px solid #FECACA",
+                                fontWeight: 800,
+                              }}
+                            />
+                          ) : null}
+
+                          {cauHoi.daDong && (
+                            <Chip
+                              label="🔒 Đóng"
+                              size="small"
+                              sx={{
+                                fontSize: "0.7rem",
+                                height: 20,
+                                bgcolor: "#F1F5F9",
+                                color: "#64748B",
+                                fontWeight: 700,
+                              }}
+                            />
+                          )}
+                        </Box>
                       </Box>
-
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <QuestionAnswerOutlinedIcon
-                          sx={{ fontSize: 12, color: NEUTRAL.grey }}
-                        />
-                        <Typography
-                          sx={{
-                            fontSize: 12,
-                            color: "#6B7280",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {cauHoi.soTraLoi}
-                        </Typography>
-                      </Box>
-
-                      {cauHoi.soTraLoi === 0 && (
-                        <Chip
-                          label="Chưa trả lời"
-                          size="small"
-                          sx={{
-                            fontSize: 10,
-                            height: 18,
-                            bgcolor: "#FEF3C7",
-                            color: STATUS.warningDark,
-                            fontWeight: 700,
-                          }}
-                        />
-                      )}
-                      {cauHoi.daGhim && (
-                        <Chip
-                          label="📌 Ghim"
-                          size="small"
-                          sx={{
-                            fontSize: 10,
-                            height: 18,
-                            bgcolor: "#FEF3C7",
-                            color: STATUS.warningDark,
-                          }}
-                        />
-                      )}
-                      {cauHoi.daDong && (
-                        <Chip
-                          label="🔒 Đóng"
-                          size="small"
-                          sx={{
-                            fontSize: 10,
-                            height: 18,
-                            bgcolor: "#FEE2E2",
-                            color: STATUS.error,
-                          }}
-                        />
-                      )}
-
-                      <Typography
-                        sx={{ fontSize: 11, color: NEUTRAL.grey, ml: "auto" }}
-                      >
-                        {thoiGianTuatoi(cauHoi.ngayTao)}
-                      </Typography>
-                    </Box>
-                  </Paper>
-                ))}
+                    </Paper>
+                  );
+                })}
 
                 {page < totalPages && (
                   <Button
@@ -1097,16 +1382,19 @@ export default function QnAManagerContent() {
                     sx={{
                       mt: 1,
                       textTransform: "none",
-                      borderRadius: "10px",
-                      borderColor: NEUTRAL.divider,
-                      color: "#6B7280",
-                      "&:hover": { borderColor: MAU.chinh, color: MAU.chinh },
+                      fontWeight: 700,
+                      fontSize: "0.84rem",
+                      borderRadius: "12px",
+                      borderColor: "#E2E8F0",
+                      color: "#475569",
+                      bgcolor: "#FFFFFF",
+                      "&:hover": { borderColor: BRAND.main, color: BRAND.main },
                     }}
                   >
                     {loadingMore ? (
-                      <CircularProgress size={18} sx={{ color: MAU.chinh }} />
+                      <CircularProgress size={18} sx={{ color: BRAND.main }} />
                     ) : (
-                      "Xem thêm"
+                      "Xem thêm câu hỏi cũ hơn"
                     )}
                   </Button>
                 )}
@@ -1115,172 +1403,299 @@ export default function QnAManagerContent() {
           </Box>
         </Box>
 
-        {/* ── Cột phải: Chi tiết câu hỏi ── */}
-        {cauHoiMo && (
+        {/* ── CỘT PHẢI: CHI TIẾT CÂU HỎI HOẶC TRANG TỔNG QUAN ── */}
+        {cauHoiMo ? (
           <Box
             sx={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
+              bgcolor: "#FFFFFF",
               overflow: "hidden",
             }}
           >
             {loadingChiTiet ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-                <CircularProgress sx={{ color: MAU.chinh }} />
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flex: 1,
+                  gap: 1.5,
+                }}
+              >
+                <CircularProgress size={38} sx={{ color: BRAND.main }} />
+                <Typography sx={{ fontSize: "0.88rem", color: "#64748B", fontWeight: 600 }}>
+                  Đang tải nội dung câu hỏi...
+                </Typography>
               </Box>
             ) : (
               <>
-                {/* Header chi tiết */}
+                {/* ── Top Header Chi Tiết ── */}
                 <Box
                   sx={{
-                    p: 2.5,
-                    borderBottom: `1px solid ${NEUTRAL.divider}`,
+                    p: { xs: 2.5, sm: 3 },
+                    borderBottom: "1px solid #F1F5F9",
                     flexShrink: 0,
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
+                    bgcolor: "#FAF8F6",
                   }}
                 >
-                  <Box sx={{ flex: 1, minWidth: 0, mr: 2 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      {cauHoiMo.daGhim && (
-                        <Chip
-                          label="📌 Được ghim"
-                          size="small"
-                          sx={{
-                            fontSize: 10,
-                            height: 18,
-                            bgcolor: "#FEF3C7",
-                            color: STATUS.warningDark,
-                          }}
-                        />
-                      )}
-                      {cauHoiMo.daDong && (
-                        <Chip
-                          label="🔒 Đã đóng"
-                          size="small"
-                          sx={{
-                            fontSize: 10,
-                            height: 18,
-                            bgcolor: "#FEE2E2",
-                            color: STATUS.error,
-                          }}
-                        />
-                      )}
-                    </Box>
-                    <Typography
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: 15,
-                        color: NEUTRAL.textPrimary,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {cauHoiMo.noiDung}
-                    </Typography>
-                    {cauHoiMo.tenBaiGiang && (
-                      <Typography
-                        sx={{ fontSize: 12, color: NEUTRAL.textMuted, mt: 0.5 }}
-                      >
-                        📹 {cauHoiMo.tenBaiGiang}
-                      </Typography>
-                    )}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.5,
-                        mt: 1,
-                      }}
-                    >
-                      <UserAvatar
-                        anh={cauHoiMo.nguoiHoiAnh}
-                        ten={cauHoiMo.nguoiHoiTen}
-                        size={22}
-                      />
-                      <Typography
-                        sx={{ fontSize: 12, color: NEUTRAL.textSecondary, fontWeight: 600 }}
-                      >
-                        {cauHoiMo.nguoiHoiTen}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11, color: NEUTRAL.grey }}>
-                        {thoiGianTuatoi(cauHoiMo.ngayTao)}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Actions giảng viên */}
-                  <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
-                    <Tooltip
-                      title={cauHoiMo.daGhim ? "Bỏ ghim" : "Ghim câu hỏi"}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          ghimCauHoi(cauHoiMo.id, !cauHoiMo.daGhim)
-                        }
-                        sx={{ color: cauHoiMo.daGhim ? STATUS.warningDark : NEUTRAL.grey }}
-                      >
-                        {cauHoiMo.daGhim ? (
-                          <PushPinIcon fontSize="small" />
-                        ) : (
-                          <PushPinOutlinedIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip
-                      title={cauHoiMo.daDong ? "Mở lại" : "Đóng câu hỏi"}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          dongCauHoi(cauHoiMo.id, !cauHoiMo.daDong)
-                        }
-                        sx={{ color: cauHoiMo.daDong ? STATUS.error : NEUTRAL.grey }}
-                      >
-                        {cauHoiMo.daDong ? (
-                          <LockOutlinedIcon fontSize="small" />
-                        ) : (
-                          <LockOpenOutlinedIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Xóa câu hỏi">
-                      <IconButton
-                        size="small"
-                        onClick={() => xoaCauHoi(cauHoiMo.id)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: 2,
+                    }}
+                  >
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box
                         sx={{
-                          color: NEUTRAL.grey,
-                          "&:hover": { color: STATUS.error },
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1.25,
+                          flexWrap: "wrap",
                         }}
                       >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <IconButton size="small" onClick={() => setCauHoiMo(null)}>
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
+                        {cauHoiMo.daGhim && (
+                          <Chip
+                            label="📌 Đã ghim câu hỏi"
+                            size="small"
+                            sx={{
+                              fontSize: "0.75rem",
+                              height: 22,
+                              bgcolor: "#FEF3C7",
+                              color: "#92400E",
+                              border: "1px solid #FDE68A",
+                              fontWeight: 800,
+                            }}
+                          />
+                        )}
+                        {cauHoiMo.daDong && (
+                          <Chip
+                            label="🔒 Đã đóng chủ đề"
+                            size="small"
+                            sx={{
+                              fontSize: "0.75rem",
+                              height: 22,
+                              bgcolor: "#FEE2E2",
+                              color: STATUS.error,
+                              fontWeight: 800,
+                            }}
+                          />
+                        )}
+                        {cauHoiMo.tenBaiGiang && (
+                          <Box
+                            sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.75,
+                              px: 1.25,
+                              py: 0.35,
+                              borderRadius: "8px",
+                              bgcolor: "#FFFFFF",
+                              border: "1px solid #E2E8F0",
+                            }}
+                          >
+                            <PlayCircleFilledWhiteOutlinedIcon
+                              sx={{ fontSize: 14, color: BRAND.main }}
+                            />
+                            <Typography
+                              sx={{
+                                fontSize: "0.76rem",
+                                color: "#334155",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {cauHoiMo.tenBaiGiang}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+
+                      <Typography
+                        sx={{
+                          fontWeight: 900,
+                          fontSize: { xs: "1.1rem", sm: "1.25rem" },
+                          color: "#0F172A",
+                          lineHeight: 1.4,
+                          letterSpacing: "-0.015em",
+                        }}
+                      >
+                        {cauHoiMo.noiDung}
+                      </Typography>
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          mt: 1.5,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <UserAvatar
+                          anh={cauHoiMo.nguoiHoiAnh}
+                          ten={cauHoiMo.nguoiHoiTen}
+                          size={28}
+                        />
+                        <Typography
+                          sx={{
+                            fontSize: "0.85rem",
+                            color: "#1E293B",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {cauHoiMo.nguoiHoiTen || "Học viên"}
+                        </Typography>
+                        <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+                          Đã hỏi {thoiGianTuatoi(cauHoiMo.ngayTao)}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Toolbar actions */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        flexShrink: 0,
+                        bgcolor: "#FFFFFF",
+                        p: 0.5,
+                        borderRadius: "12px",
+                        border: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <Tooltip
+                        title={
+                          cauHoiMo.daGhim
+                            ? "Bỏ ghim câu hỏi này"
+                            : "Ghim câu hỏi lên đầu danh sách"
+                        }
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            ghimCauHoi(cauHoiMo.id, !cauHoiMo.daGhim)
+                          }
+                          sx={{
+                            color: cauHoiMo.daGhim ? "#D97706" : "#64748B",
+                            bgcolor: cauHoiMo.daGhim ? "#FEF3C7" : "transparent",
+                            "&:hover": { bgcolor: "#FEF3C7", color: "#D97706" },
+                          }}
+                        >
+                          {cauHoiMo.daGhim ? (
+                            <PushPinIcon sx={{ fontSize: 18 }} />
+                          ) : (
+                            <PushPinOutlinedIcon sx={{ fontSize: 18 }} />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip
+                        title={
+                          cauHoiMo.daDong
+                            ? "Mở lại câu hỏi để thảo luận"
+                            : "Đóng câu hỏi (khóa bình luận mới)"
+                        }
+                      >
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            dongCauHoi(cauHoiMo.id, !cauHoiMo.daDong)
+                          }
+                          sx={{
+                            color: cauHoiMo.daDong ? STATUS.error : "#64748B",
+                            bgcolor: cauHoiMo.daDong ? "#FEE2E2" : "transparent",
+                            "&:hover": { bgcolor: "#FEE2E2", color: STATUS.error },
+                          }}
+                        >
+                          {cauHoiMo.daDong ? (
+                            <LockOutlinedIcon sx={{ fontSize: 18 }} />
+                          ) : (
+                            <LockOpenOutlinedIcon sx={{ fontSize: 18 }} />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Xóa toàn bộ câu hỏi và thảo luận">
+                        <IconButton
+                          size="small"
+                          onClick={() => xoaCauHoi(cauHoiMo.id)}
+                          sx={{
+                            color: "#64748B",
+                            "&:hover": { color: STATUS.error, bgcolor: "#FEE2E2" },
+                          }}
+                        >
+                          <DeleteOutlineIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+
+                      <Tooltip title="Đóng cửa sổ chi tiết">
+                        <IconButton size="small" onClick={() => setCauHoiMo(null)}>
+                          <CloseIcon sx={{ fontSize: 18, color: "#64748B" }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Box>
                 </Box>
 
-                {/* Danh sách trả lời — dạng thread có dây nối */}
-                <Box sx={{ flex: 1, overflowY: "auto", p: 2.5 }}>
+                {/* ── Thảo luận & Danh sách phản hồi ── */}
+                <Box sx={{ flex: 1, overflowY: "auto", p: { xs: 2.5, sm: 3 } }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2.5,
+                    }}
+                  >
+                    <ForumOutlinedIcon sx={{ fontSize: 18, color: BRAND.main }} />
+                    <Typography
+                      sx={{
+                        fontSize: "0.85rem",
+                        fontWeight: 800,
+                        color: "#334155",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      Các câu trả lời ({cauHoiMo.danhSachTraLoi.length})
+                    </Typography>
+                  </Box>
+
                   {cauHoiMo.danhSachTraLoi.length === 0 ? (
-                    <Box sx={{ textAlign: "center", py: 6 }}>
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 8,
+                        px: 3,
+                        borderRadius: "18px",
+                        bgcolor: "#FAF8F6",
+                        border: "1.5px dashed #E2E8F0",
+                      }}
+                    >
                       <QuestionAnswerOutlinedIcon
-                        sx={{ fontSize: 40, color: "#D1D5DB", mb: 1 }}
+                        sx={{ fontSize: 44, color: "#CBD5E1", mb: 1.5 }}
                       />
-                      <Typography sx={{ fontSize: 13, color: NEUTRAL.grey }}>
+                      <Typography
+                        sx={{
+                          fontSize: "0.95rem",
+                          fontWeight: 800,
+                          color: "#334155",
+                          mb: 0.5,
+                        }}
+                      >
                         Chưa có câu trả lời nào
+                      </Typography>
+                      <Typography sx={{ fontSize: "0.84rem", color: "#64748B" }}>
+                        Hãy là người đầu tiên giải đáp thắc mắc này cho học viên
+                        để tăng trải nghiệm học tập.
                       </Typography>
                     </Box>
                   ) : (
@@ -1290,9 +1705,7 @@ export default function QnAManagerContent() {
                       tenTheoId={tenTheoId}
                       soLuongHienMacDinh={5}
                       coDuongDoc={false}
-                      onLike={() => {
-                        /* like ở view giảng viên chưa dùng, giữ no-op để khớp signature */
-                      }}
+                      onLike={() => {}}
                       onToggleTopAnswer={toggleTopAnswer}
                       onXoa={xoaTraLoi}
                       onReply={(idTraLoi, tenNguoi) => {
@@ -1303,13 +1716,13 @@ export default function QnAManagerContent() {
                   )}
                 </Box>
 
-                {/* Form phản hồi */}
+                {/* ── Form phản hồi trực tiếp (Reply cụ thể) ── */}
                 {!cauHoiMo.daDong && replyingTo && (
                   <Box
                     sx={{
-                      px: 2.5,
-                      pt: 1.5,
-                      borderTop: `1px solid ${NEUTRAL.divider}`,
+                      p: 2.5,
+                      borderTop: "1px solid #F1F5F9",
+                      bgcolor: "#FAF8F6",
                       flexShrink: 0,
                     }}
                   >
@@ -1317,25 +1730,29 @@ export default function QnAManagerContent() {
                       sx={{
                         mb: 1.5,
                         px: 1.5,
-                        py: 1,
-                        bgcolor: `${MAU.chinh}08`,
-                        border: `1px solid ${MAU.chinh}22`,
-                        borderRadius: "8px",
+                        py: 0.75,
+                        bgcolor: "#FFFFFF",
+                        border: "1px solid rgba(139, 19, 19, 0.2)",
+                        borderRadius: "10px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                       }}
                     >
                       <Typography
-                        sx={{ fontSize: 12, fontWeight: 700, color: MAU.chinh }}
+                        sx={{
+                          fontSize: "0.82rem",
+                          fontWeight: 800,
+                          color: BRAND.main,
+                        }}
                       >
-                        ↩ Đang phản hồi @{replyingTo.tenNguoi}
+                        ↩ Đang trả lời phản hồi của @{replyingTo.tenNguoi}
                       </Typography>
                       <IconButton
                         size="small"
                         onClick={() => setReplyingTo(null)}
                       >
-                        <CloseIcon sx={{ fontSize: 14 }} />
+                        <CloseIcon sx={{ fontSize: 16 }} />
                       </IconButton>
                     </Box>
 
@@ -1344,29 +1761,34 @@ export default function QnAManagerContent() {
                       multiline
                       minRows={2}
                       maxRows={4}
-                      placeholder={`Phản hồi @${replyingTo.tenNguoi}...`}
+                      placeholder={`Nhập nội dung phản hồi cho @${replyingTo.tenNguoi}...`}
                       value={noiDungReply}
                       onChange={(e) => setNoiDungReply(e.target.value)}
                       disabled={dangReply || dangGoiY}
                       autoFocus
                       sx={{
-                        mb: 1,
+                        mb: 1.5,
                         "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                          fontSize: 14,
-                          "& fieldset": { borderColor: NEUTRAL.divider },
-                          "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+                          borderRadius: "14px",
+                          bgcolor: "#FFFFFF",
+                          fontSize: "0.9rem",
+                          "& fieldset": { borderColor: "#E2E8F0" },
+                          "&.Mui-focused fieldset": { borderColor: BRAND.main },
                         },
                       }}
                     />
 
                     {aiCoNoiDungBaiGiang === false && (
                       <Typography
-                        sx={{ fontSize: 11.5, color: STATUS.warningDark, mb: 1 }}
+                        sx={{
+                          fontSize: "0.78rem",
+                          color: STATUS.warningDark,
+                          mb: 1.25,
+                          fontWeight: 600,
+                        }}
                       >
-                        ⚠️ AI chưa đọc được tài liệu của bài giảng này (chưa có
-                        tài liệu hoặc chưa được duyệt), chỉ dựa vào thông tin
-                        khóa học.
+                        ⚠️ AI sử dụng thông tin tổng quan của khóa học do chưa
+                        tìm thấy tài liệu bài giảng.
                       </Typography>
                     )}
 
@@ -1375,7 +1797,6 @@ export default function QnAManagerContent() {
                         display: "flex",
                         justifyContent: "space-between",
                         alignItems: "center",
-                        pb: 1.5,
                       }}
                     >
                       <Button
@@ -1384,7 +1805,7 @@ export default function QnAManagerContent() {
                           dangGoiY ? (
                             <CircularProgress
                               size={14}
-                              sx={{ color: MAU.chinh }}
+                              sx={{ color: BRAND.main }}
                             />
                           ) : (
                             <AutoAwesomeIcon sx={{ fontSize: 16 }} />
@@ -1394,13 +1815,18 @@ export default function QnAManagerContent() {
                         disabled={dangGoiY || dangReply}
                         sx={{
                           textTransform: "none",
-                          fontWeight: 700,
-                          fontSize: 12.5,
-                          color: MAU.chinh,
-                          "&:hover": { bgcolor: `${MAU.chinh}0A` },
+                          fontWeight: 800,
+                          fontSize: "0.82rem",
+                          color: BRAND.main,
+                          bgcolor: "#FFFFFF",
+                          border: "1px solid rgba(139, 19, 19, 0.2)",
+                          borderRadius: "10px",
+                          px: 2,
+                          py: 0.6,
+                          "&:hover": { bgcolor: "rgba(139, 19, 19, 0.06)" },
                         }}
                       >
-                        {dangGoiY ? "Đang tạo gợi ý..." : "AI gợi ý"}
+                        {dangGoiY ? "Đang tạo gợi ý..." : "AI gợi ý phản hồi"}
                       </Button>
 
                       <Box sx={{ display: "flex", gap: 1 }}>
@@ -1409,8 +1835,9 @@ export default function QnAManagerContent() {
                           onClick={() => setReplyingTo(null)}
                           sx={{
                             textTransform: "none",
-                            color: "#6B7280",
-                            fontWeight: 600,
+                            color: "#64748B",
+                            fontWeight: 700,
+                            fontSize: "0.84rem",
                           }}
                         >
                           Hủy
@@ -1423,22 +1850,19 @@ export default function QnAManagerContent() {
                           }
                           onClick={reply}
                           sx={{
-                            bgcolor: MAU.chinh,
+                            bgcolor: BRAND.main,
                             textTransform: "none",
-                            fontWeight: 700,
-                            borderRadius: "8px",
-                            boxShadow: "none",
+                            fontWeight: 800,
+                            borderRadius: "10px",
+                            px: 3,
+                            boxShadow: `0 4px 12px ${BRAND.main}30`,
                             "&:hover": {
-                              bgcolor: MAU.chinhDam,
-                              boxShadow: "none",
+                              bgcolor: BRAND.dark,
                             },
                           }}
                         >
                           {dangReply ? (
-                            <CircularProgress
-                              size={14}
-                              sx={{ color: "#fff" }}
-                            />
+                            <CircularProgress size={14} sx={{ color: "#fff" }} />
                           ) : (
                             "Gửi phản hồi"
                           )}
@@ -1448,45 +1872,60 @@ export default function QnAManagerContent() {
                   </Box>
                 )}
 
-                {/* Form trả lời chính */}
+                {/* ── Form trả lời chính (Giảng viên trả lời) ── */}
                 {!cauHoiMo.daDong && !replyingTo && (
                   <Box
                     sx={{
-                      px: 2.5,
-                      pt: 1.5,
-                      pb: 2,
-                      borderTop: `1px solid ${NEUTRAL.divider}`,
+                      p: 2.5,
+                      borderTop: "1px solid #F1F5F9",
+                      bgcolor: "#FAF8F6",
                       flexShrink: 0,
                     }}
                   >
+                    {error && (
+                      <Alert
+                        severity="error"
+                        onClose={() => setError(null)}
+                        sx={{ mb: 1.5, borderRadius: "12px" }}
+                      >
+                        {error}
+                      </Alert>
+                    )}
                     <TextField
                       fullWidth
                       multiline
                       minRows={2}
                       maxRows={5}
-                      placeholder="Viết câu trả lời với tư cách giảng viên..."
+                      placeholder="Viết câu trả lời chi tiết và tận tình với tư cách giảng viên..."
                       value={noiDungTraLoi}
                       onChange={(e) => setNoiDungTraLoi(e.target.value)}
                       disabled={dangTraLoi || dangGoiY}
                       sx={{
-                        mb: 1,
+                        mb: 1.5,
                         "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                          fontSize: 14,
-                          "& fieldset": { borderColor: NEUTRAL.divider },
-                          "&.Mui-focused fieldset": { borderColor: MAU.chinh },
+                          borderRadius: "16px",
+                          bgcolor: "#FFFFFF",
+                          fontSize: "0.9rem",
+                          "& fieldset": { borderColor: "#E2E8F0" },
+                          "&.Mui-focused fieldset": {
+                            borderColor: BRAND.main,
+                            borderWidth: "1.5px",
+                          },
                         },
                       }}
                     />
 
-                    {/* Cảnh báo nếu AI thiếu context bài giảng */}
                     {aiCoNoiDungBaiGiang === false && (
                       <Typography
-                        sx={{ fontSize: 11.5, color: STATUS.warningDark, mb: 1 }}
+                        sx={{
+                          fontSize: "0.78rem",
+                          color: STATUS.warningDark,
+                          mb: 1.25,
+                          fontWeight: 600,
+                        }}
                       >
-                        ⚠️ AI chưa đọc được tài liệu của bài giảng này (chưa có
-                        tài liệu hoặc chưa được duyệt), chỉ dựa vào thông tin
-                        khóa học.
+                        ⚠️ AI sử dụng thông tin tổng quan của khóa học do chưa
+                        tìm thấy tài liệu bài giảng.
                       </Typography>
                     )}
 
@@ -1498,53 +1937,67 @@ export default function QnAManagerContent() {
                       }}
                     >
                       <Button
-                        size="small"
+                        size="medium"
                         startIcon={
                           dangGoiY ? (
                             <CircularProgress
-                              size={14}
-                              sx={{ color: MAU.chinh }}
+                              size={15}
+                              sx={{ color: BRAND.main }}
                             />
                           ) : (
-                            <AutoAwesomeIcon sx={{ fontSize: 16 }} />
+                            <AutoAwesomeIcon sx={{ fontSize: 18 }} />
                           )
                         }
                         onClick={goiYTraLoi}
                         disabled={dangGoiY || dangTraLoi}
                         sx={{
                           textTransform: "none",
-                          fontWeight: 700,
-                          fontSize: 12.5,
-                          color: MAU.chinh,
-                          "&:hover": { bgcolor: `${MAU.chinh}0A` },
+                          fontWeight: 800,
+                          fontSize: "0.85rem",
+                          color: BRAND.main,
+                          bgcolor: "#FFFFFF",
+                          border: "1.5px solid rgba(139, 19, 19, 0.2)",
+                          borderRadius: "12px",
+                          px: 2.5,
+                          py: 0.75,
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+                          "&:hover": {
+                            bgcolor: "rgba(139, 19, 19, 0.06)",
+                            borderColor: BRAND.main,
+                          },
                         }}
                       >
-                        {dangGoiY ? "Đang tạo gợi ý..." : "AI gợi ý"}
+                        {dangGoiY ? "Đang tạo gợi ý..." : "✨ AI gợi ý câu trả lời"}
                       </Button>
 
                       <Button
                         variant="contained"
-                        size="small"
+                        size="medium"
                         disabled={
                           dangTraLoi || dangGoiY || !noiDungTraLoi.trim()
                         }
                         onClick={traLoi}
                         sx={{
-                          bgcolor: MAU.chinh,
+                          bgcolor: BRAND.main,
                           textTransform: "none",
-                          fontWeight: 700,
-                          borderRadius: "8px",
-                          boxShadow: "none",
+                          fontWeight: 800,
+                          fontSize: "0.88rem",
+                          borderRadius: "12px",
+                          px: 4,
+                          py: 0.85,
+                          boxShadow: `0 4px 14px ${BRAND.main}35`,
+                          background: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
+                          color: "#FFFFFF",
                           "&:hover": {
-                            bgcolor: MAU.chinhDam,
-                            boxShadow: "none",
+                            background: `linear-gradient(135deg, ${BRAND.dark} 0%, ${BRAND.darker} 100%)`,
+                            boxShadow: `0 8px 20px ${BRAND.main}45`,
                           },
                         }}
                       >
                         {dangTraLoi ? (
                           <CircularProgress size={16} sx={{ color: "#fff" }} />
                         ) : (
-                          "Trả lời"
+                          "Gửi câu trả lời"
                         )}
                       </Button>
                     </Box>
@@ -1557,23 +2010,215 @@ export default function QnAManagerContent() {
                       p: 2,
                       m: 2.5,
                       bgcolor: "#FEE2E2",
-                      borderRadius: "10px",
+                      border: "1px solid #FECACA",
+                      borderRadius: "14px",
                       textAlign: "center",
                       flexShrink: 0,
                     }}
                   >
                     <Typography
-                      sx={{ fontSize: 13, color: STATUS.error, fontWeight: 600 }}
+                      sx={{
+                        fontSize: "0.88rem",
+                        color: STATUS.error,
+                        fontWeight: 700,
+                      }}
                     >
-                      🔒 Câu hỏi này đã bị đóng
+                      🔒 Câu hỏi này đã bị đóng. Học viên và giảng viên không thể gửi thêm phản hồi.
                     </Typography>
                   </Box>
                 )}
               </>
             )}
           </Box>
+        ) : (
+          /* ── TRẠNG THÁI CHƯA CHỌN CÂU HỎI (COMMAND CENTER STATS) ── */
+          <Box
+            sx={{
+              flex: 1,
+              display: { xs: "none", md: "flex" },
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 6,
+              bgcolor: "#FFFFFF",
+              textAlign: "center",
+            }}
+          >
+            <Box
+              sx={{
+                width: 90,
+                height: 90,
+                borderRadius: "28px",
+                background: `linear-gradient(135deg, ${BRAND.main}18 0%, ${BRAND.main}06 100%)`,
+                border: `2px solid ${BRAND.main}25`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: BRAND.main,
+                mb: 3,
+                boxShadow: `0 10px 24px ${BRAND.main}15`,
+              }}
+            >
+              <ForumOutlinedIcon sx={{ fontSize: 48 }} />
+            </Box>
+
+            <Typography
+              sx={{
+                fontWeight: 900,
+                fontSize: "1.35rem",
+                color: "#0F172A",
+                mb: 1,
+                letterSpacing: "-0.015em",
+              }}
+            >
+              Trung tâm Giải đáp & Thảo luận
+            </Typography>
+
+            <Typography
+              sx={{
+                fontSize: "0.92rem",
+                color: "#64748B",
+                maxWidth: 460,
+                lineHeight: 1.6,
+                mb: 4,
+              }}
+            >
+              Chọn một câu hỏi từ danh sách bên trái để xem nội dung chi tiết,
+              sử dụng AI gợi ý và phản hồi giải đáp cho học viên.
+            </Typography>
+
+            {/* Quick Overview Metric Cards */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 2,
+                width: "100%",
+                maxWidth: 540,
+                mb: 4,
+              }}
+            >
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: "16px",
+                  bgcolor: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "1.4rem",
+                    fontWeight: 900,
+                    color: "#0F172A",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {totalQuestions}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    color: "#64748B",
+                    mt: 0.5,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Tổng câu hỏi
+                </Typography>
+              </Paper>
+
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: "16px",
+                  bgcolor: unansweredCount > 0 ? "#FEF2F2" : "#F8FAFC",
+                  border: `1px solid ${
+                    unansweredCount > 0 ? "#FECACA" : "#E2E8F0"
+                  }`,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "1.4rem",
+                    fontWeight: 900,
+                    color: unansweredCount > 0 ? BRAND.main : "#0F172A",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {unansweredCount}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    color: unansweredCount > 0 ? BRAND.main : "#64748B",
+                    mt: 0.5,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Chưa trả lời
+                </Typography>
+              </Paper>
+
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: "16px",
+                  bgcolor: "#FFFDF5",
+                  border: "1px solid #FDE68A",
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "1.4rem",
+                    fontWeight: 900,
+                    color: "#D97706",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {pinnedCount}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    color: "#92400E",
+                    mt: 0.5,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Đã ghim
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* AI Assistant Hint Box */}
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: "14px",
+                bgcolor: "#FAF8F6",
+                border: "1px solid rgba(139, 19, 19, 0.12)",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                maxWidth: 540,
+                textAlign: "left",
+              }}
+            >
+              <TipsAndUpdatesOutlinedIcon sx={{ color: BRAND.main, fontSize: 22 }} />
+              <Typography sx={{ fontSize: "0.82rem", color: "#475569", lineHeight: 1.5 }}>
+                <strong>Mẹo giảng viên:</strong> Sử dụng nút <strong>✨ AI gợi ý</strong> khi xem chi tiết câu hỏi để tạo câu trả lời mẫu nhanh chóng dựa trên tài liệu bài giảng!
+              </Typography>
+            </Box>
+          </Box>
         )}
-      </Box>
+      </Paper>
     </AuthGuard>
   );
 }

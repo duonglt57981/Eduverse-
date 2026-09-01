@@ -286,25 +286,6 @@ export default function DuyetKhoaHocPage() {
             spacing={2}
             sx={{ alignItems: "center", mb: 0.5 }}
           >
-            {/* Nút quay lại */}
-            <Tooltip title="Quay lại danh sách khóa học">
-              <IconButton
-                onClick={handleGoBack}
-                sx={{
-                  bgcolor: alpha(COLORS.primary, 0.06),
-                  borderRadius: 2,
-                  flexShrink: 0,
-                  width: 40,
-                  height: 40,
-                  "&:hover": {
-                    bgcolor: alpha(COLORS.primary, 0.12),
-                  },
-                }}
-              >
-                <ArrowBackRoundedIcon sx={{ color: COLORS.primary }} />
-              </IconButton>
-            </Tooltip>
-
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 sx={{

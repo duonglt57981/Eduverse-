@@ -22,10 +22,10 @@ import {
   Tab,
   Tabs,
   Typography,
-  Avatar,
   Portal,
   Tooltip,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import Grid from "@mui/material/Grid";
 import {
   StarRounded,
@@ -1806,26 +1806,17 @@ export default function StudentHomeContent() {
           direction="row"
           sx={{ alignItems: "center", gap: 3, flex: 1, minWidth: 280 }}
         >
-          <Avatar
+          <EduAvatar
             src={
               userAvatar ||
               user?.anhDaiDien ||
-              welcomeStats?.avatarUrl ||
-              undefined
+              welcomeStats?.avatarUrl
             }
-            sx={{
-              width: 72,
-              height: 72,
-              bgcolor: C.primary,
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: 22,
-              border: `3px solid ${C.white}`,
-              boxShadow: `0 4px 12px rgba(139,19,19,0.1)`,
-            }}
-          >
-            {initialsOf(user?.hoTen || welcomeStats?.userName)}
-          </Avatar>
+            name={user?.hoTen || welcomeStats?.userName || "Học viên"}
+            size={72}
+            border="3px solid #FFFFFF"
+            shadow="0 4px 12px rgba(139,19,19,0.1)"
+          />
           <Box>
             <Typography
               sx={{

@@ -27,13 +27,13 @@ import {
   MenuItem,
   ListItemIcon,
   Divider,
-  Avatar,
   Popover,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import { alpha } from "@mui/material/styles";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
@@ -558,28 +558,11 @@ export default function StudentHomeHeader() {
             </IconButton>
 
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 0.5, p: 0.25 }}>
-              <Avatar
-                src={userAvatar || user?.anhDaiDien || undefined}
-                sx={{
-                  width: 38,
-                  height: 38,
-                  bgcolor: RED,
-                  color: "#fff",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  border: "2px solid",
-                  borderColor: "background.paper",
-                  boxShadow: `0 0 0 2px rgba(153, 27, 27, 0.15), 0 4px 8px rgba(0,0,0,0.06)`,
-                  transition: "all 200ms ease",
-                  cursor: "pointer",
-                  "&:hover": {
-                    boxShadow: `0 0 0 2px rgba(153, 27, 27, 0.4), 0 6px 14px rgba(153, 27, 27, 0.15)`,
-                    transform: "scale(1.05)",
-                  },
-                }}
-              >
-                {userInitials}
-              </Avatar>
+              <EduAvatar
+                src={userAvatar || user?.anhDaiDien}
+                name={hoTen}
+                size={38}
+              />
             </IconButton>
           </Stack>
         </Stack>

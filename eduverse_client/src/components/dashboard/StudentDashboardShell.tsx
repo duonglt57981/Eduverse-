@@ -23,7 +23,7 @@ export default function StudentDashboardShell({
     setAuthChecked(true);
   }, []);
 
-  const headerOffset = "86px";
+  const headerOffset = "74px";
 
   if (!authChecked) {
     return (

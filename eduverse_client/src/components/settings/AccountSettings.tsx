@@ -8,7 +8,6 @@ import {
   Grid,
   TextField,
   Button,
-  Avatar,
   Typography,
   Stack,
   CircularProgress,
@@ -52,6 +51,8 @@ import {
   BadgeRounded,
   DeleteOutlineRounded,
 } from "@mui/icons-material";
+import { EduAvatar, getAvatarInitials } from "@/src/components/common/EduAvatar";
+import { AvatarCropModal } from "@/src/components/common/AvatarCropModal";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
@@ -290,6 +291,8 @@ export default function AccountSettings() {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   const [verifyOpen, setVerifyOpen] = useState(false);
   const [verifyStep, setVerifyStep] = useState<1 | 2>(1);
@@ -483,17 +486,42 @@ export default function AccountSettings() {
     }));
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      showNotification("Ảnh tải lên không được vượt quá 5MB", "error");
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const fileExt = file.name.split(".").pop()?.toLowerCase();
+    const isValidExt = ["jpg", "jpeg", "png", "webp"].includes(fileExt || "");
+
+    if (!validTypes.includes(file.type) && !isValidExt) {
+      showNotification("Vui lòng chọn ảnh JPG, JPEG, PNG hoặc WEBP.", "error");
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      showNotification("Ảnh tải lên không được vượt quá 10MB", "error");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result as string);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so user can pick the same file again if desired
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSaveCroppedAvatar = async (croppedBlob: Blob) => {
     setAvatarUploading(true);
     try {
+      const file = new File([croppedBlob], "avatar.jpg", { type: "image/jpeg" });
       const formData = new FormData();
       formData.append("file", file);
 
@@ -512,6 +540,8 @@ export default function AccountSettings() {
         setProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
         setTempProfile((prev) => ({ ...prev, anhDaiDien: newUrl }));
         showNotification("Cập nhật ảnh đại diện thành công!", "success");
+        setCropModalOpen(false);
+        setCropImageSrc(null);
       } else {
         showNotification(res.message || "Không thể tải ảnh lên", "error");
       }
@@ -526,8 +556,10 @@ export default function AccountSettings() {
           setProfile((prev) => ({ ...prev, anhDaiDien: base64 }));
         }
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(croppedBlob);
       showNotification("Đã lưu ảnh tạm thời (chưa upload lên server)", "error");
+      setCropModalOpen(false);
+      setCropImageSrc(null);
     } finally {
       setAvatarUploading(false);
     }
@@ -626,15 +658,7 @@ export default function AccountSettings() {
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .slice(-2)
-      .join("")
-      .toUpperCase();
-  };
+  const getInitials = (name: string) => getAvatarInitials(name);
 
   if (fetchLoading) {
     return (
@@ -708,6 +732,17 @@ export default function AccountSettings() {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      <AvatarCropModal
+        open={cropModalOpen}
+        imageSrc={cropImageSrc}
+        onClose={() => {
+          setCropModalOpen(false);
+          setCropImageSrc(null);
+        }}
+        onSave={handleSaveCroppedAvatar}
+        loading={avatarUploading}
+      />
 
       <Dialog
         open={verifyOpen}
@@ -836,27 +871,18 @@ export default function AccountSettings() {
             }}
           >
             <Box sx={{ position: "relative", display: "inline-flex" }}>
-              <Avatar
+              <EduAvatar
                 src={isEditing ? tempProfile.anhDaiDien : profile.anhDaiDien}
-                sx={{
-                  width: 110,
-                  height: 110,
-                  fontSize: 34,
-                  fontWeight: 900,
-                  border: "4px solid",
-                  borderColor: "background.paper",
-                  boxShadow: "0 8px 24px rgba(17,17,17,0.12)",
-                  background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                  color: "#fff",
-                }}
-              >
-                {getInitials(isEditing ? tempProfile.hoTen : profile.hoTen)}
-              </Avatar>
+                name={isEditing ? tempProfile.hoTen : profile.hoTen}
+                size={110}
+                border="4px solid #FFFFFF"
+                shadow="0 8px 24px rgba(17,17,17,0.12)"
+              />
               <input
                 type="file"
                 ref={fileInputRef}
                 onChange={handleAvatarChange}
-                accept="image/*"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
                 style={{ display: "none" }}
               />
               <Tooltip title="Tải ảnh đại diện mới" arrow>

@@ -19,6 +19,8 @@ export interface KhoaHocMiniDto {
   id: string;
   tieuDe: string;
   hinhAnhKhoaHoc?: string | null;
+  gia?: number | null;
+  loaiKhoaHoc?: string | null;
 }
 
 export default class KhoaHocService {

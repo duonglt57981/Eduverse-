@@ -33,17 +33,12 @@ import {
 import {
   SectionHeading,
 } from './landing-shared';
+import { EduAvatar, getAvatarInitials } from "@/src/components/common/EduAvatar";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TextFieldAny = TextField as any;
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('');
-}
+const getInitials = (name: string) => getAvatarInitials(name);
 
 function SocialIcon({ label }: { label: string }) {
   if (label === 'LinkedIn') return <LinkedIn sx={{ fontSize: 18 }} />;
@@ -553,9 +548,7 @@ export default function InstructorsPage() {
                   {`"` + item.quote + `"`}
                 </Typography>
                 <Stack direction="row" spacing={1.2} sx={{ mt: 2.2, alignItems: 'center' }}>
-                  <Avatar sx={{ bgcolor: '#7f1212', width: 42, height: 42 }}>
-                    {getInitials(item.name)}
-                  </Avatar>
+                  <EduAvatar name={item.name} size={42} />
                   <Box>
                     <Typography sx={{ fontSize: 14.5, fontWeight: 900 }}>{item.name}</Typography>
                     <Typography sx={{ fontSize: 12.5, color: 'var(--ev-text-muted, rgba(24,24,27,0.54))' }}>

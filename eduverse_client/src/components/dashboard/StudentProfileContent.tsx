@@ -24,7 +24,6 @@ import {
   Tab,
   Tabs,
   Typography,
-  Avatar,
   TextField,
   Switch,
   FormControlLabel,
@@ -35,6 +34,8 @@ import {
   Tooltip,
   Checkbox,
 } from '@mui/material';
+import { EduAvatar, AvatarEditButton } from "@/src/components/common/EduAvatar";
+import { AvatarCropModal } from "@/src/components/common/AvatarCropModal";
 import {
   CameraAltRounded,
   CheckCircleRounded,
@@ -127,6 +128,8 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [showCropDialog, setShowCropDialog] = useState(false);
+  const [avatarCropModalOpen, setAvatarCropModalOpen] = useState(false);
+  const [avatarCropImageSrc, setAvatarCropImageSrc] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -149,7 +152,8 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
         setProfile(d);
         setFullName(d.hoTen || '');
         setEmail(d.email || '');
-        setPhoneNumber(d.phoneNumber || '');
+        // Keep draft phone number if user already typed one
+        setPhoneNumber((prev) => prev || d.phoneNumber || '');
         setDateOfBirth(d.ngaySinh || '');
         setBio(d.tieuSu || '');
         setAddress(d.diaChi || '');
@@ -178,20 +182,87 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
     }
   };
 
+  const isDraftLoadedRef = useRef(false);
+
   const fetchUpgradeRequest = async () => {
     try {
       const res = await apiService.get<any>('/profile/upgrade-request');
       if (res.status && res.data) {
         setInstructorRequest(res.data);
-        setSpecialty(res.data.chuyenMon || '');
-        setExperience(res.data.kinhNghiem || '');
-        setBangCap(res.data.bangCap || '');
-        setMotivation(res.data.lyDo || '');
+        const draftStr = typeof window !== 'undefined' ? localStorage.getItem("eduverse_become_instructor_draft") : null;
+        if (!draftStr) {
+          setSpecialty(res.data.chuyenMon || '');
+          setExperience(res.data.kinhNghiem || '');
+          setBangCap(res.data.bangCap || '');
+          setMotivation(res.data.lyDo || '');
+        }
       }
     } catch (err) {
       console.log('Error fetching upgrade request:', err);
     }
   };
+
+  // Khôi phục bản nháp từ localStorage khi vào trang
+  useEffect(() => {
+    if (typeof window === "undefined" || isDraftLoadedRef.current) return;
+    try {
+      const stored =
+        localStorage.getItem("eduverse_become_instructor_draft") ||
+        (profile?.email
+          ? localStorage.getItem(`eduverse_become_instructor_draft_${profile.email}`)
+          : null);
+      if (stored) {
+        const draft = JSON.parse(stored);
+        if (draft) {
+          if (draft.phoneNumber) setPhoneNumber(draft.phoneNumber);
+          if (draft.specialty) setSpecialty(draft.specialty);
+          if (draft.experience) setExperience(draft.experience);
+          if (draft.bangCap) setBangCap(draft.bangCap);
+          if (draft.motivation) setMotivation(draft.motivation);
+          if (typeof draft.agreedToTerms === "boolean") setAgreedToTerms(draft.agreedToTerms);
+        }
+      }
+    } catch (e) {
+      console.error("Error reading instructor draft:", e);
+    } finally {
+      isDraftLoadedRef.current = true;
+    }
+  }, [profile?.email]);
+
+  // Tự động lưu bản nháp vào localStorage mỗi khi người dùng nhập dữ liệu
+  useEffect(() => {
+    if (typeof window === "undefined" || !isDraftLoadedRef.current) return;
+    if (instructorRequest && (instructorRequest.status === 0 || instructorRequest.status === 1)) {
+      return;
+    }
+
+    if (
+      phoneNumber.trim() ||
+      specialty.trim() ||
+      experience.trim() ||
+      bangCap.trim() ||
+      motivation.trim() ||
+      agreedToTerms
+    ) {
+      const draftData = {
+        phoneNumber,
+        specialty,
+        experience,
+        bangCap,
+        motivation,
+        agreedToTerms,
+        updatedAt: Date.now(),
+      };
+      try {
+        localStorage.setItem("eduverse_become_instructor_draft", JSON.stringify(draftData));
+        if (profile?.email) {
+          localStorage.setItem(`eduverse_become_instructor_draft_${profile.email}`, JSON.stringify(draftData));
+        }
+      } catch (e) {
+        console.error("Error saving instructor draft:", e);
+      }
+    }
+  }, [phoneNumber, specialty, experience, bangCap, motivation, agreedToTerms, instructorRequest, profile?.email]);
 
   const handleSubmitUpgrade = async () => {
     if (!phoneNumber.trim() || !specialty.trim() || !experience.trim() || !bangCap.trim() || !motivation.trim()) {
@@ -221,6 +292,12 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
 
       if (res.status) {
         showToast('Gửi yêu cầu nâng cấp thành công!', 'success');
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("eduverse_become_instructor_draft");
+          if (profile?.email) {
+            localStorage.removeItem(`eduverse_become_instructor_draft_${profile.email}`);
+          }
+        }
         fetchUpgradeRequest();
       } else {
         showToast(res.message || 'Lỗi khi gửi yêu cầu', 'error');
@@ -404,6 +481,34 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
+
+      if (type === 'avatar') {
+        const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+        const fileExt = file.name.split(".").pop()?.toLowerCase();
+        const isValidExt = ["jpg", "jpeg", "png", "webp"].includes(fileExt || "");
+
+        if (!validTypes.includes(file.type) && !isValidExt) {
+          showToast("Vui lòng chọn ảnh JPG, JPEG, PNG hoặc WEBP.", "error");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          showToast("Ảnh tải lên không được vượt quá 10MB", "error");
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          setAvatarCropImageSrc(reader.result as string);
+          setAvatarCropModalOpen(true);
+        };
+        reader.readAsDataURL(file);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
       setSelectedFile(file);
       setCropType(type);
 
@@ -415,6 +520,35 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
         setShowCropDialog(true);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveCroppedAvatar = async (croppedBlob: Blob) => {
+    const file = new File([croppedBlob], 'avatar.jpg', { type: 'image/jpeg' });
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setSaveLoading(true);
+      const res = await apiService.post<any>('/profile/avatar', formData);
+
+      if (res.status && res.data) {
+        showToast('Ảnh đại diện đã được lưu', 'success');
+        localStorage.setItem(`user_avatar_${email}`, res.data.url);
+        window.dispatchEvent(new Event("avatar_updated"));
+        setProfile((prev: any) => ({
+          ...prev,
+          anhDaiDien: res.data.url,
+        }));
+        setAvatarCropModalOpen(false);
+        setAvatarCropImageSrc(null);
+      } else {
+        showToast(res.message || 'Lỗi khi lưu ảnh', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Lỗi hệ thống khi tải ảnh lên', 'error');
+    } finally {
+      setSaveLoading(false);
     }
   };
 
@@ -685,41 +819,17 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           <Grid size={{ xs: 12, md: 6 }}>
             <Stack direction="row" spacing={3.5} sx={{ alignItems: 'center' }}>
               <Box sx={{ position: 'relative' }}>
-                <Avatar
-                  src={profile.anhDaiDien || undefined}
-                  sx={{
-                    width: 110,
-                    height: 110,
-                    border: '5px solid #fff',
-                    borderRadius: '20px',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
-                    bgcolor: COLORS.primary,
-                    color: '#fff',
-                    fontSize: 32,
-                    fontWeight: 900,
-                  }}
-                >
-                  {profile.hoTen.split(' ').pop()?.substring(0, 2).toUpperCase()}
-                </Avatar>
-                <Tooltip title="Tải ảnh đại diện mới" arrow>
-                  <IconButton
-                    size="small"
-                    onClick={() => fileInputRef.current?.click()}
-                    sx={{
-                      position: 'absolute',
-                      bottom: -5,
-                      right: -5,
-                      bgcolor: COLORS.primary,
-                      color: '#fff',
-                      border: '2px solid #fff',
-                      boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-                      '&:hover': { bgcolor: COLORS.primaryDark, transform: 'scale(1.08)' },
-                      transition: 'all 150ms ease',
-                    }}
-                  >
-                    <CameraAltRounded sx={{ fontSize: 16 }} />
-                  </IconButton>
-                </Tooltip>
+                <EduAvatar
+                  src={profile.anhDaiDien}
+                  name={profile.hoTen}
+                  size={110}
+                  border="4px solid #FFFFFF"
+                  shadow="0 8px 24px rgba(0,0,0,0.1)"
+                />
+                <AvatarEditButton
+                  onClick={() => fileInputRef.current?.click()}
+                  tooltip="Tải ảnh đại diện mới"
+                />
                 {Boolean(profile.anhDaiDien) && (
                   <Tooltip title="Xóa ảnh đại diện (về mặc định)" arrow>
                     <IconButton
@@ -745,7 +855,7 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
                   type="file"
                   ref={fileInputRef}
                   style={{ display: 'none' }}
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
                   onChange={(e) => handleFileChange(e, 'avatar')}
                 />
               </Box>
@@ -2231,6 +2341,17 @@ export default function StudentProfileContent({ onlyBecomeInstructor = false }: 
           </Grid>
         )}
       </Grid>
+      <AvatarCropModal
+        open={avatarCropModalOpen}
+        imageSrc={avatarCropImageSrc}
+        onClose={() => {
+          setAvatarCropModalOpen(false);
+          setAvatarCropImageSrc(null);
+        }}
+        onSave={handleSaveCroppedAvatar}
+        loading={saveLoading}
+      />
+
 {/* dialog for crop modal */}
       <Dialog open={showCropDialog} onClose={() => setShowCropDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

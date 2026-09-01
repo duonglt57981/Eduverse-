@@ -2,6 +2,7 @@
 "use client";
 
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSelector } from "@/src/store/hook";
@@ -891,7 +892,7 @@ function CourseRegistrationContent() {
                             borderRadius: "14px",
                             p: 1.5,
                             boxShadow: "0 14px 32px rgba(0, 0, 0, 0.45)",
-                            maxWidth: 240,
+                            maxWidth: 260,
                           },
                         },
                         arrow: {
@@ -906,30 +907,22 @@ function CourseRegistrationContent() {
                       title={
                         <Box sx={{ p: 0.25 }}>
                           <Stack direction="row" spacing={1.25} sx={{ alignItems: "center", mb: 0.75 }}>
-                            <Avatar
+                            <EduAvatar
                               src={gv.anhDaiDien}
-                              sx={{
-                                width: 32,
-                                height: 32,
-                                fontSize: 13,
-                                fontWeight: 800,
-                                bgcolor: RED,
-                                border: "1.5px solid rgba(255,255,255,0.3)",
-                              }}
-                            >
-                              {gv.hoTen.charAt(0).toUpperCase()}
-                            </Avatar>
+                              name={gv.hoTen}
+                              size={34}
+                            />
                             <Box sx={{ minWidth: 0 }}>
                               <Typography
                                 sx={{
-                                  fontSize: 13,
+                                  fontSize: 13.5,
                                   fontWeight: 800,
                                   color: "#FFFFFF",
                                   lineHeight: 1.25,
                                   letterSpacing: "-0.01em",
                                 }}
                               >
-                                {gv.hoTen}
+                                {gv.hoTen || "Giảng viên"}
                               </Typography>
                               <Typography
                                 sx={{
@@ -948,7 +941,7 @@ function CourseRegistrationContent() {
                             <Typography
                               sx={{
                                 fontSize: 11,
-                                color: "rgba(255, 255, 255, 0.7)",
+                                color: "rgba(255, 255, 255, 0.75)",
                                 mb: 0.75,
                                 lineHeight: 1.4,
                               }}
@@ -976,29 +969,33 @@ function CourseRegistrationContent() {
                         </Box>
                       }
                     >
-                      <Avatar
-                        src={gv.anhDaiDien}
+                      <Box
+                        component="span"
                         onClick={() => goToInstructorProfile(gv.id)}
                         sx={{
-                          width: 30,
-                          height: 30,
-                          background: `linear-gradient(135deg, #EF4444 0%, ${RED} 100%)`,
-                          fontSize: 12.5,
-                          fontWeight: 800,
-                          color: "#FFFFFF",
-                          border: "1.5px solid rgba(255, 255, 255, 0.85)",
-                          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
+                          display: "inline-flex",
                           cursor: gv.id ? "pointer" : "default",
+                          borderRadius: "50%",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           "&:hover": {
                             transform: "scale(1.12) translateY(-1px)",
-                            borderColor: "#FFFFFF",
-                            boxShadow: "0 4px 14px rgba(255, 255, 255, 0.4)",
                           },
                         }}
                       >
-                        {gv.hoTen.charAt(0).toUpperCase()}
-                      </Avatar>
+                        <EduAvatar
+                          src={gv.anhDaiDien}
+                          name={gv.hoTen}
+                          size={30}
+                          sx={{
+                            border: "1.5px solid rgba(255, 255, 255, 0.85)",
+                            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.25)",
+                            "&:hover": {
+                              borderColor: "#FFFFFF",
+                              boxShadow: "0 4px 14px rgba(255, 255, 255, 0.4)",
+                            },
+                          }}
+                        />
+                      </Box>
                     </Tooltip>
                   );
                 })}
@@ -1673,20 +1670,11 @@ function CourseRegistrationContent() {
                                 bgcolor: "rgba(0,0,0,0.01)",
                               }}
                             >
-                              <Avatar
+                              <EduAvatar
                                 src={dg.anhNguoiDung}
-                                sx={{
-                                  width: 44,
-                                  height: 44,
-                                  bgcolor: RED,
-                                  fontSize: 16,
-                                  fontWeight: 700,
-                                  flexShrink: 0,
-                                  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-                                }}
-                              >
-                                {(dg.hoTenNguoiDung ?? "?").charAt(0).toUpperCase()}
-                              </Avatar>
+                                name={dg.hoTenNguoiDung}
+                                size={44}
+                              />
                               <Box sx={{ flex: 1 }}>
                                 <Stack
                                   direction="row"
@@ -1738,18 +1726,11 @@ function CourseRegistrationContent() {
                                       spacing={1}
                                       sx={{ alignItems: "center", mb: 0.75 }}
                                     >
-                                      <Avatar
+                                      <EduAvatar
                                         src={dg.phanHoi.anhGV}
-                                        sx={{
-                                          width: 26,
-                                          height: 26,
-                                          fontSize: 12,
-                                          bgcolor: RED,
-                                          fontWeight: 700,
-                                        }}
-                                      >
-                                        {(dg.phanHoi.hoTenGV ?? "GV").charAt(0).toUpperCase()}
-                                      </Avatar>
+                                        name={dg.phanHoi.hoTenGV}
+                                        size={26}
+                                      />
                                       <Typography sx={{ fontSize: 13, fontWeight: 700, color: RED }}>
                                         {dg.phanHoi.hoTenGV ?? "Giảng viên"}
                                       </Typography>
@@ -2153,10 +2134,18 @@ function CourseRegistrationContent() {
                 gv.chucDanh ||
                 stats?.chucDanh ||
                 (isOwner ? giangVienInfo?.chucDanh : undefined);
-              const bioHtml =
+              const rawBio =
                 gv.tieuSu ||
                 stats?.moTa ||
-                (isOwner ? giangVienInfo?.moTa : undefined);
+                (isOwner ? giangVienInfo?.moTa : undefined) || "";
+              const cleanBio =
+                typeof rawBio === "string"
+                  ? rawBio.replace(/<[^>]*>/g, "").trim()
+                  : "";
+              const bioHtml =
+                cleanBio.length > 0
+                  ? rawBio
+                  : "Giảng viên chính thức tại hệ thống EduVerse, chuyên nghiên cứu và chia sẻ kiến thức chuyên môn chất lượng cao.";
               const isExpanded = !!bioExpandedMap[key];
 
               return (
@@ -2185,31 +2174,11 @@ function CourseRegistrationContent() {
                         onClick={() => goToInstructorProfile(gv.id)}
                         sx={{ cursor: gv.id ? "pointer" : "default", flexShrink: 0 }}
                       >
-                        {gv.anhDaiDien ? (
-                          <Avatar
-                            src={gv.anhDaiDien}
-                            sx={{
-                              width: 64,
-                              height: 64,
-                              border: `2.5px solid ${RED}`,
-                              boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                            }}
-                          />
-                        ) : (
-                          <Avatar
-                            sx={{
-                              width: 64,
-                              height: 64,
-                              background: `linear-gradient(135deg, ${RED}, ${RED_DARK})`,
-                              color: "#fff",
-                              fontSize: 24,
-                              fontWeight: 800,
-                              boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            {gv.hoTen.charAt(0).toUpperCase()}
-                          </Avatar>
-                        )}
+                        <EduAvatar
+                          src={gv.anhDaiDien}
+                          name={gv.hoTen}
+                          size={64}
+                        />
                       </Box>
 
                       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -2363,8 +2332,18 @@ function CourseRegistrationContent() {
             {danhSachGiangVienDetail.map((gv: any, idx: number) => {
               const key = gv.id ?? `gv-${idx}`;
               const isExpanded = !!bioExpandedMap[key];
+              const rawBio =
+                gv.tieuSu ||
+                (idx === 0 ? giangVienInfo?.moTa : undefined) ||
+                "";
+              const cleanBio =
+                typeof rawBio === "string"
+                  ? rawBio.replace(/<[^>]*>/g, "").trim()
+                  : "";
               const bioHtml =
-                gv.tieuSu || (idx === 0 ? giangVienInfo?.moTa : undefined);
+                cleanBio.length > 0
+                  ? rawBio
+                  : "Giảng viên chính thức tại hệ thống EduVerse, chuyên nghiên cứu và chia sẻ kiến thức chuyên môn chất lượng cao.";
 
               return (
                 <Box key={key}>

@@ -482,8 +482,48 @@ function MyCoursesContent() {
     userId ? null : AUTH_ERROR,
   );
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [overallStats, setOverallStats] = useState<{
+    total: number;
+    inProgress: number;
+    completed: number;
+    avg: number;
+  }>({
+    total: 0,
+    inProgress: 0,
+    completed: 0,
+    avg: 0,
+  });
 
   const khoaHocService = useMemo(() => new KhoaHocService(), []);
+
+  // ── fetch overall stats (all enrolled courses) ──────────────────────────────
+  const fetchOverallStats = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const response = await khoaHocService.GetListDangKi({
+        pageIndex: 1,
+        pageSize: 1000,
+      });
+      const allItems = extractCourseItems(response);
+      const total = allItems.length;
+      const inProgress = allItems.filter(
+        (c) => (c.phanTramHoanThanh ?? 0) > 0 && (c.phanTramHoanThanh ?? 0) < 100,
+      ).length;
+      const completed = allItems.filter(
+        (c) => (c.phanTramHoanThanh ?? 0) >= 100,
+      ).length;
+      const avg =
+        total > 0
+          ? Math.round(
+              allItems.reduce((s, c) => s + (c.phanTramHoanThanh ?? 0), 0) /
+                total,
+            )
+          : 0;
+      setOverallStats({ total, inProgress, completed, avg });
+    } catch (err) {
+      console.error("Error fetching overall course stats:", err);
+    }
+  }, [khoaHocService, userId]);
 
   // ── fetch function ──────────────────────────────────────────────────────────
   const fetchCourses = useCallback(async () => {
@@ -596,18 +636,21 @@ function MyCoursesContent() {
     let isMounted = true;
     const load = async () => {
       if (!isMounted) return;
-      await fetchCourses();
+      await Promise.all([fetchCourses(), fetchOverallStats()]);
     };
     load();
     return () => {
       isMounted = false;
     };
-  }, [userId, fetchCourses]);
+  }, [userId, fetchCourses, fetchOverallStats]);
 
   // ── online/offline listeners ──────────────────────────────────────────────
   useEffect(() => {
     const handleOnline = () => {
-      if (errorDetail?.type === "network" && userId) fetchCourses();
+      if (errorDetail?.type === "network" && userId) {
+        fetchCourses();
+        fetchOverallStats();
+      }
     };
     const handleOffline = () => {
       setErrorDetail({
@@ -622,25 +665,7 @@ function MyCoursesContent() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [errorDetail?.type, fetchCourses, userId]);
-
-  // ── stats ──────────────────────────────────────────────────────────────────
-  const stats = useMemo(() => {
-    const total = courses.length;
-    const inProgress = courses.filter(
-      (c) => (c.phanTramHoanThanh ?? 0) > 0 && (c.phanTramHoanThanh ?? 0) < 100,
-    ).length;
-    const completed = courses.filter(
-      (c) => (c.phanTramHoanThanh ?? 0) >= 100,
-    ).length;
-    const avg =
-      total > 0
-        ? Math.round(
-            courses.reduce((s, c) => s + (c.phanTramHoanThanh ?? 0), 0) / total,
-          )
-        : 0;
-    return { total, inProgress, completed, avg };
-  }, [courses]);
+  }, [errorDetail?.type, fetchCourses, fetchOverallStats, userId]);
 
   // ── handlers ────────────────────────────────────────────────────────────────
   const handleCourseClick = (registrationId?: string) => {
@@ -655,6 +680,7 @@ function MyCoursesContent() {
       return;
     }
     fetchCourses();
+    fetchOverallStats();
   };
 
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -695,28 +721,28 @@ function MyCoursesContent() {
     const statItems = [
       {
         icon: <SchoolIcon sx={{ fontSize: 22 }} />,
-        val: stats.total,
+        val: overallStats.total,
         lbl: "Đã đăng ký",
         bg: "rgba(153, 27, 27, 0.06)",
         color: RED,
       },
       {
         icon: <TrendingUpIcon sx={{ fontSize: 22 }} />,
-        val: stats.inProgress,
+        val: overallStats.inProgress,
         lbl: "Đang học",
         bg: "rgba(217, 119, 6, 0.06)",
         color: STATUS.warningDark,
       },
       {
         icon: <CheckCircleIcon sx={{ fontSize: 22 }} />,
-        val: stats.completed,
+        val: overallStats.completed,
         lbl: "Hoàn thành",
         bg: "rgba(22, 163, 74, 0.06)",
         color: "#16A34A",
       },
       {
         icon: <VideoLibraryIcon sx={{ fontSize: 22 }} />,
-        val: `${stats.avg}%`,
+        val: `${overallStats.avg}%`,
         lbl: "Tiến độ TB",
         bg: "rgba(37, 99, 235, 0.06)",
         color: "#2563EB",

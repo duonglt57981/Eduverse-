@@ -5,7 +5,6 @@ import {
   Box,
   Typography,
   Paper,
-  Avatar,
   Rating,
   LinearProgress,
   CircularProgress,
@@ -34,6 +33,7 @@ import DanhGiaService, {
 } from "@/src/services/DanhGiaService";
 import { useQuyenCuaToi } from "@/src/hook/useQuyenCuaToi";
 import { CSSVAR, STATUS } from "@/src/theme/tokens";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 
 function thoiGian(ngay: string) {
   try {
@@ -53,19 +53,11 @@ function UserAvatar({
   size?: number;
 }) {
   return (
-    <Avatar
-      src={anh || ""}
-      sx={{
-        width: size,
-        height: size,
-        bgcolor: `${MAU.chinh}22`,
-        color: MAU.chinh,
-        fontWeight: 700,
-        fontSize: size * 0.4,
-      }}
-    >
-      {ten?.[0] || "?"}
-    </Avatar>
+    <EduAvatar
+      src={anh}
+      name={ten}
+      size={size}
+    />
   );
 }
 

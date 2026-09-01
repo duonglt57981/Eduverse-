@@ -53,13 +53,13 @@ import {
   Stack,
   ThemeProvider,
   Typography,
-  Avatar,
   TextField,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import Swal from "sweetalert2";
 import { logout } from "@/src/store/auth/AuthSlice";
 import { useDispatch, useSelector } from "@/src/store/hook";
@@ -506,22 +506,11 @@ export default function LearningPathsPage() {
 
             {/* User Avatar */}
             <Stack direction="row" sx={{ alignItems: "center", pl: 0.5 }}>
-              <Avatar
-                src={userAvatar || undefined}
-                sx={{
-                  width: 38,
-                  height: 38,
-                  fontSize: 13.5,
-                  fontWeight: 800,
-                  bgcolor: "#111827",
-                  color: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                {userName
-                  ? userName.split(" ").pop()?.substring(0, 2).toUpperCase()
-                  : "HV"}
-              </Avatar>
+              <EduAvatar
+                src={userAvatar}
+                name={userName || "Học viên"}
+                size={38}
+              />
             </Stack>
           </Stack>
         </Box>

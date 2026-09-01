@@ -25,7 +25,6 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  Avatar,
   Table,
   TableHead,
   TableBody,
@@ -33,6 +32,7 @@ import {
   TableCell,
   TableContainer,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import {
   TrendingUpRounded,
   TrendingFlatRounded,
@@ -1440,19 +1440,11 @@ export default function AdminDashboardContent() {
                             spacing={2}
                             sx={{ alignItems: "center" }}
                           >
-                            <Avatar
-                              src={req.anhDaiDien || undefined}
-                              sx={{
-                                width: 44,
-                                height: 44,
-                                bgcolor: COLORS.primary,
-                                fontWeight: 800,
-                                fontSize: 15,
-                                color: "#FFFFFF",
-                              }}
-                            >
-                              {initial}
-                            </Avatar>
+                            <EduAvatar
+                              src={req.anhDaiDien}
+                              name={req.hoTen || req.userName}
+                              size="md"
+                            />
                             <Box>
                               <Typography
                                 sx={{

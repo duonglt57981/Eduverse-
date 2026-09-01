@@ -23,8 +23,8 @@ import {
   Paper,
   Chip,
   LinearProgress,
-  Avatar,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import {
   ChevronRight as ChevronRightIcon,
   ChevronLeft as ChevronLeftIcon,
@@ -297,7 +297,15 @@ function InstructorInfo({
       <Stack spacing={3}>
         {list.map((gv, idx) => {
           const { hoTen, anhDaiDien, tieuSu, gioiThieu, id, chucVu } = gv;
-          const bioHtml = tieuSu || gioiThieu || "";
+          const rawBio = tieuSu || gioiThieu || "";
+          const cleanBio =
+            typeof rawBio === "string"
+              ? rawBio.replace(/<[^>]*>/g, "").trim()
+              : "";
+          const bioHtml =
+            cleanBio.length > 0
+              ? rawBio
+              : "Giảng viên chính thức tại hệ thống EduVerse, chuyên nghiên cứu và chia sẻ kiến thức chuyên môn chất lượng cao.";
           const handleClick = () => {
             if (id) window.location.href = `/instructor/profile/${id}`;
           };
@@ -307,21 +315,16 @@ function InstructorInfo({
               key={id ?? idx}
               sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}
             >
-              <Avatar
+              <EduAvatar
                 src={anhDaiDien}
-                alt={hoTen}
+                name={hoTen}
+                size={72}
+                onClick={handleClick}
                 sx={{
-                  width: 72,
-                  height: 72,
-                  bgcolor: PRIMARY_RED,
-                  fontSize: 28,
-                  fontWeight: 700,
-                  flexShrink: 0,
-                  border: `3px solid ${alpha(PRIMARY_RED, 0.15)}`,
+                  cursor: id ? "pointer" : "default",
+                  "&:hover": id ? { transform: "scale(1.05)" } : {},
                 }}
-              >
-                {hoTen?.charAt(0).toUpperCase()}
-              </Avatar>
+              />
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
@@ -1557,37 +1560,58 @@ export default function KhoaHocLearningPage() {
             <Box
               sx={{
                 display: "flex",
-                alignItems: "flex-start",
+                alignItems: "center",
                 justifyContent: "space-between",
-                mb: 3,
-                pb: 2,
+                mb: 2,
+                pb: 1.75,
                 borderBottom: `1px solid ${CSSVAR.divider}`,
               }}
             >
-              <Box>
-                <Typography
-                  sx={{ fontWeight: 900, fontSize: 17, color: CSSVAR.textPrimary }}
-                >
-                  Hỏi đáp bài giảng
-                </Typography>
-                <Typography
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+                <Box
                   sx={{
-                    fontSize: 13,
-                    color: CSSVAR.textMuted,
-                    mt: 0.5,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    maxWidth: 340,
+                    width: 36,
+                    height: 36,
+                    borderRadius: "10px",
+                    bgcolor: "rgba(139,19,19,0.08)",
+                    color: "primary.main",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
-                  📹 {qnaDrawerBaiGiang.tieuDe}
-                </Typography>
+                  <QuestionAnswerOutlinedIcon sx={{ fontSize: 20 }} />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    sx={{ fontWeight: 800, fontSize: 16, color: CSSVAR.textPrimary, lineHeight: 1.25 }}
+                  >
+                    Hỏi đáp bài giảng
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      color: CSSVAR.textMuted,
+                      mt: 0.25,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      maxWidth: { xs: 240, sm: 340 },
+                    }}
+                  >
+                    {qnaDrawerBaiGiang.tieuDe}
+                  </Typography>
+                </Box>
               </Box>
               <IconButton
                 size="small"
                 onClick={() => setQnaDrawerBaiGiang(null)}
-                sx={{ mt: -0.5 }}
+                sx={{
+                  color: "text.secondary",
+                  borderRadius: "8px",
+                  "&:hover": { bgcolor: "action.hover", color: "text.primary" },
+                }}
               >
                 <CloseIcon fontSize="small" />
               </IconButton>

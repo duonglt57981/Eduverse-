@@ -1,19 +1,16 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import {
   Box,
   Typography,
   Paper,
-  Avatar,
   Chip,
   Button,
   CircularProgress,
   Alert,
   Snackbar,
-  Divider,
   TextField,
   InputAdornment,
   Dialog,
@@ -40,6 +37,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
@@ -47,6 +45,9 @@ import PercentIcon from "@mui/icons-material/Percent";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import PieChartOutlinedIcon from "@mui/icons-material/PieChartOutlined";
+import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import ClearIcon from "@mui/icons-material/Clear";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import AuthGuard from "@/src/components/AuthGuard";
 import DashboardShell from "@/src/components/dashboard/DashboardShell";
@@ -101,6 +102,21 @@ const DANH_SACH_QUYEN_HIEN_THI = [
     mota: "Tạo và theo dõi các mã giảm giá",
   },
 ];
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+}
 
 // Badge trạng thái thiết kế sắc nét
 function TrangThaiChip({ trangThai }: { trangThai: string }) {
@@ -166,248 +182,503 @@ function TrangThaiChip({ trangThai }: { trangThai: string }) {
   );
 }
 
-// ── THIẾT KẾ MỚI: Card Yêu cầu Áp dụng Khuyến mại ──────────────────────────
+// ── CARD YÊU CẦU ÁP DỤNG KHUYẾN MÃI TỪ ADMIN (ĐỒNG BỘ NGUYÊN BẢN VỚI LỜI MỜI) ──────────────────────────
 function LoiMoiKhuyenMaiCard({
   loiMoi,
   dangXuLy,
-  onPhanHoi,
+  onOpenConfirm,
 }: {
   loiMoi: LoiMoiKhuyenMaiChoXacNhanDto;
   dangXuLy: boolean;
-  onPhanHoi: (id: string, dongY: boolean) => void;
+  onOpenConfirm: (loiMoi: LoiMoiKhuyenMaiChoXacNhanDto, dongY: boolean) => void;
 }) {
   const isPending = loiMoi.trangThai === "Pending";
+  const hasDateRange = Boolean(loiMoi.ngayBatDauKM || loiMoi.ngayKetThucKM);
 
   return (
     <Paper
       elevation={0}
       sx={{
-        borderRadius: "20px",
-        border: `1px solid ${isPending ? "rgba(139, 19, 19, 0.2)" : "#E2E8F0"}`,
+        borderRadius: "24px",
+        border: isPending
+          ? "1.5px solid rgba(139, 19, 19, 0.28)"
+          : "1px solid #E2E8F0",
         bgcolor: "#FFFFFF",
         overflow: "hidden",
-        p: { xs: 2.5, sm: 3 },
         position: "relative",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         boxShadow: isPending
-          ? "0 10px 25px -8px rgba(139, 19, 19, 0.08)"
-          : "0 2px 8px rgba(0, 0, 0, 0.02)",
-        transition: "all 0.25s ease",
+          ? "0 12px 32px -8px rgba(139, 19, 19, 0.10), 0 4px 12px rgba(0, 0, 0, 0.03)"
+          : "0 4px 16px rgba(0, 0, 0, 0.03)",
         "&:hover": {
           borderColor: isPending ? BRAND.main : "#CBD5E1",
-          transform: isPending ? "translateY(-2px)" : "none",
+          transform: "translateY(-3px)",
           boxShadow: isPending
-            ? "0 14px 30px -8px rgba(139, 19, 19, 0.14)"
-            : "0 4px 12px rgba(0, 0, 0, 0.04)",
+            ? "0 18px 40px -10px rgba(139, 19, 19, 0.18), 0 6px 18px rgba(0, 0, 0, 0.04)"
+            : "0 10px 24px -4px rgba(0, 0, 0, 0.06)",
         },
       }}
     >
-      {isPending && (
+      {/* ── Top Header Banner ── */}
+      {isPending ? (
         <Box
           sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: 4,
-            height: "100%",
-            bgcolor: BRAND.main,
-          }}
-        />
-      )}
-
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2.5,
-          alignItems: { xs: "flex-start", sm: "center" },
-          flexDirection: { xs: "column", sm: "row" },
-        }}
-      >
-        {/* Course Thumbnail */}
-        <Box
-          sx={{
-            width: { xs: "100%", sm: 72 },
-            height: { xs: 120, sm: 72 },
-            borderRadius: "16px",
-            flexShrink: 0,
-            bgcolor: "#F8FAFC",
-            overflow: "hidden",
-            position: "relative",
-            border: "1px solid #E2E8F0",
+            background:
+              "linear-gradient(90deg, #8B1313 0%, #A81B1B 45%, #6D0F0F 100%)",
+            px: { xs: 2.5, sm: 3.5 },
+            py: 1,
+            color: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {loiMoi.hinhAnhKhoaHoc ? (
-            <Image
-              src={loiMoi.hinhAnhKhoaHoc}
-              alt={loiMoi.tenKhoaHoc || "Khóa học"}
-              fill
-              style={{ objectFit: "cover" }}
-              unoptimized
-            />
-          ) : (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box
               sx={{
-                width: "100%",
-                height: "100%",
+                width: 22,
+                height: 22,
+                borderRadius: "50%",
+                bgcolor: "rgba(255, 255, 255, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "#F1F5F9",
               }}
             >
-              <SchoolOutlinedIcon sx={{ color: "#94A3B8", fontSize: 32 }} />
+              <LocalOfferIcon sx={{ fontSize: 13, color: "#FEF08A" }} />
             </Box>
-          )}
-        </Box>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: "0.78rem",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              Yêu cầu áp dụng mã giảm giá từ Quản trị viên
+            </Typography>
+          </Box>
 
-        {/* Content */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 1.25,
-              mb: 0.75,
-              flexWrap: "wrap",
+              gap: 0.75,
+              opacity: 0.95,
+              fontSize: "0.78rem",
+              fontWeight: 500,
             }}
           >
-            {/* Voucher code badge */}
+            <CalendarTodayOutlinedIcon sx={{ fontSize: 13 }} />
+            <span>Ngày gửi: {formatDate(loiMoi.ngayMoi)}</span>
+          </Box>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            px: { xs: 2.5, sm: 3.5 },
+            py: 0.9,
+            bgcolor: "#F8FAFC",
+            borderBottom: "1px solid #F1F5F9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <LocalOfferIcon sx={{ fontSize: 14, color: "#64748B" }} />
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: "0.76rem",
+                color: "#64748B",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Lịch sử yêu cầu khuyến mãi
+            </Typography>
+          </Box>
+          <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+            Ngày gửi: {formatDate(loiMoi.ngayMoi)}
+          </Typography>
+        </Box>
+      )}
+
+      {/* ── Main Body ── */}
+      <Box sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+        {/* Course Info & Details */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 3,
+            alignItems: "flex-start",
+            flexDirection: { xs: "column", md: "row" },
+          }}
+        >
+          {/* Course Thumbnail */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: 160 },
+              height: { xs: 170, md: 105 },
+              borderRadius: "18px",
+              flexShrink: 0,
+              bgcolor: "#F1F5F9",
+              overflow: "hidden",
+              position: "relative",
+              border: "1px solid #E2E8F0",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+            }}
+          >
+            {loiMoi.hinhAnhKhoaHoc ? (
+              <Image
+                src={loiMoi.hinhAnhKhoaHoc}
+                alt={loiMoi.tenKhoaHoc || "Khóa học"}
+                fill
+                style={{ objectFit: "cover" }}
+                unoptimized
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: "#F8FAFC",
+                  gap: 0.5,
+                }}
+              >
+                <SchoolOutlinedIcon sx={{ color: "#94A3B8", fontSize: 36 }} />
+                <Typography
+                  sx={{
+                    fontSize: "0.72rem",
+                    color: "#94A3B8",
+                    fontWeight: 600,
+                  }}
+                >
+                  EduVerse Course
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          {/* Details */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 2,
+                mb: 1.25,
+                flexWrap: "wrap",
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: "1.08rem", sm: "1.2rem" },
+                  color: "#0F172A",
+                  lineHeight: 1.35,
+                  letterSpacing: "-0.015em",
+                }}
+              >
+                {loiMoi.tenKhoaHoc || "Khóa học"}
+              </Typography>
+              <TrangThaiChip trangThai={loiMoi.trangThai} />
+            </Box>
+
+            {/* Admin / Sender Info */}
             <Box
               sx={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 0.75,
-                px: 1.5,
-                py: 0.4,
-                borderRadius: "8px",
-                bgcolor: "#FEF2F2",
-                border: "1px dashed #F87171",
-                color: BRAND.main,
-                fontWeight: 800,
-                fontSize: "0.82rem",
-                letterSpacing: "0.03em",
+                gap: 1.25,
+                p: "4px 12px 4px 4px",
+                borderRadius: "999px",
+                bgcolor: "#F8FAFC",
+                border: "1px solid #E2E8F0",
               }}
             >
-              <LocalOfferIcon sx={{ fontSize: 14 }} />
-              <span>{loiMoi.maGiamGia || "DEAL"}</span>
+              <EduAvatar
+                src={loiMoi.anhNguoiMoi}
+                name={loiMoi.tenNguoiMoi || "Admin EduVerse"}
+                size={30}
+              />
+              <Typography sx={{ fontSize: "0.84rem", color: "#64748B" }}>
+                Người gửi yêu cầu:{" "}
+                <strong style={{ color: "#0F172A", fontWeight: 700 }}>
+                  {loiMoi.tenNguoiMoi || "Admin EduVerse"}
+                </strong>
+              </Typography>
             </Box>
-
-            {/* Discount percentage */}
-            <Chip
-              label={`GIẢM ${loiMoi.phanTramGiam}%`}
-              size="small"
-              sx={{
-                backgroundColor: BRAND.main,
-                color: "#FFFFFF",
-                fontWeight: 800,
-                fontSize: "0.75rem",
-                borderRadius: "6px",
-                height: 24,
-              }}
-            />
-
-            {!isPending && <TrangThaiChip trangThai={loiMoi.trangThai} />}
           </Box>
-
-          <Typography
-            sx={{
-              fontWeight: 800,
-              fontSize: "1.02rem",
-              color: "#0F172A",
-              lineHeight: 1.4,
-              mb: 0.5,
-            }}
-          >
-            {loiMoi.tenKhoaHoc}
-          </Typography>
-
-          <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
-            Quản trị viên{" "}
-            <strong style={{ color: "#1E293B", fontWeight: 700 }}>
-              {loiMoi.tenNguoiMoi || "EduVerse Admin"}
-            </strong>{" "}
-            muốn áp dụng chương trình khuyến mãi này cho khóa học của bạn.
-          </Typography>
         </Box>
 
-        {/* Actions */}
-        {isPending ? (
+        {/* ── Key Highlights: Discount Deal & Duration ── */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+            gap: 2,
+            mt: 3,
+          }}
+        >
+          {/* Voucher Code & Discount Value */}
           <Box
             sx={{
+              p: 2,
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)",
+              border: "1px solid #FECACA",
               display: "flex",
-              gap: 1.5,
-              alignSelf: { xs: "stretch", sm: "center" },
-              justifyContent: { xs: "flex-end", sm: "flex-start" },
+              alignItems: "center",
+              gap: 2,
+              boxShadow: "0 2px 8px rgba(220, 38, 38, 0.04)",
             }}
           >
-            <Button
-              variant="outlined"
-              size="medium"
-              startIcon={
-                dangXuLy ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <CloseIcon />
-                )
-              }
-              disabled={dangXuLy}
-              onClick={() => onPhanHoi(loiMoi.id, false)}
+            <Box
               sx={{
-                textTransform: "none",
-                fontWeight: 700,
-                borderRadius: "12px",
-                borderColor: "#FECACA",
-                color: STATUS.error,
-                bgcolor: "#FFFFFF",
-                px: 2.5,
-                "&:hover": {
-                  bgcolor: "#FEF2F2",
-                  borderColor: "#EF4444",
-                },
-              }}
-            >
-              Từ chối
-            </Button>
-            <Button
-              variant="contained"
-              size="medium"
-              startIcon={
-                dangXuLy ? (
-                  <CircularProgress size={16} sx={{ color: "#fff" }} />
-                ) : (
-                  <CheckIcon />
-                )
-              }
-              disabled={dangXuLy}
-              onClick={() => onPhanHoi(loiMoi.id, true)}
-              sx={{
-                textTransform: "none",
-                fontWeight: 800,
+                width: 44,
+                height: 44,
                 borderRadius: "12px",
                 bgcolor: BRAND.main,
-                px: 3,
-                boxShadow: `0 4px 14px ${BRAND.main}30`,
-                "&:hover": {
-                  bgcolor: BRAND.dark,
-                  boxShadow: `0 6px 18px ${BRAND.main}45`,
-                },
+                color: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                boxShadow: `0 4px 10px ${BRAND.main}30`,
               }}
             >
-              Đồng ý
-            </Button>
+              <LocalOfferIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "#991B1B",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Mã giảm giá áp dụng
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                  mt: 0.25,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: "1.25rem",
+                    fontWeight: 900,
+                    color: BRAND.main,
+                    lineHeight: 1.2,
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  {loiMoi.maGiamGia || "DEAL"}
+                </Typography>
+                <Chip
+                  label={`GIẢM ${loiMoi.phanTramGiam}%`}
+                  size="small"
+                  sx={{
+                    bgcolor: BRAND.main,
+                    color: "#FFFFFF",
+                    fontWeight: 800,
+                    fontSize: "0.74rem",
+                    height: 22,
+                    borderRadius: "6px",
+                  }}
+                />
+              </Box>
+            </Box>
           </Box>
-        ) : (
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Typography sx={{ fontSize: "0.8rem", color: "#94A3B8" }}>
-              Đã xử lý
-            </Typography>
+
+          {/* Timeframe & Campaign details */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: "16px",
+              background: "linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)",
+              border: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: "12px",
+                bgcolor: "#0284C7",
+                color: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                boxShadow: "0 4px 10px rgba(2, 132, 199, 0.25)",
+              }}
+            >
+              <AccessTimeOutlinedIcon sx={{ fontSize: 22 }} />
+            </Box>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "#0369A1",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Thời hạn chương trình
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.95rem",
+                  fontWeight: 800,
+                  color: "#0F172A",
+                  lineHeight: 1.3,
+                  mt: 0.25,
+                }}
+              >
+                {hasDateRange
+                  ? `${formatDate(loiMoi.ngayBatDauKM)} — ${formatDate(loiMoi.ngayKetThucKM)}`
+                  : "Theo chiến dịch khuyến mãi của EduVerse"}
+              </Typography>
+            </Box>
           </Box>
-        )}
+        </Box>
+
+        {/* ── Request Context Note ── */}
+        <Box
+          sx={{
+            mt: 2.5,
+            p: 2,
+            borderRadius: "14px",
+            bgcolor: "#F8FAFC",
+            border: "1px solid #E2E8F0",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 1.5,
+          }}
+        >
+          <InfoOutlinedIcon
+            sx={{ fontSize: 18, color: BRAND.main, mt: 0.2, flexShrink: 0 }}
+          />
+          <Typography
+            sx={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.55 }}
+          >
+            Quản trị viên{" "}
+            <strong style={{ color: "#0F172A", fontWeight: 700 }}>
+              {loiMoi.tenNguoiMoi || "Admin EduVerse"}
+            </strong>{" "}
+            muốn áp dụng chương trình khuyến mãi mã{" "}
+            <strong style={{ color: BRAND.main, fontWeight: 800 }}>
+              {loiMoi.maGiamGia}
+            </strong>{" "}
+            (giảm <strong>{loiMoi.phanTramGiam}%</strong>) cho khóa học này nhằm
+            thúc đẩy chiến dịch quảng bá và gia tăng số lượng học viên đăng ký.
+          </Typography>
+        </Box>
       </Box>
+
+      {/* ── Action Footer for Pending ── */}
+      {isPending && (
+        <Box
+          sx={{
+            px: { xs: 2.5, sm: 3.5 },
+            py: 2,
+            bgcolor: "#FAF8F6",
+            borderTop: "1px solid rgba(139, 19, 19, 0.12)",
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+            justifyContent: "flex-end",
+            flexWrap: "wrap",
+          }}
+        >
+          <Button
+            variant="outlined"
+            size="medium"
+            startIcon={
+              dangXuLy ? (
+                <CircularProgress size={16} sx={{ color: STATUS.error }} />
+              ) : (
+                <CloseIcon />
+              )
+            }
+            disabled={dangXuLy}
+            onClick={() => onOpenConfirm(loiMoi, false)}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              fontSize: "0.88rem",
+              borderRadius: "12px",
+              px: 3,
+              py: 1,
+              borderColor: "#FECACA",
+              color: STATUS.error,
+              bgcolor: "#FFFFFF",
+              "&:hover": {
+                bgcolor: "#FEE2E2",
+                borderColor: "#EF4444",
+              },
+            }}
+          >
+            Từ chối
+          </Button>
+
+          <Button
+            variant="contained"
+            size="medium"
+            startIcon={
+              dangXuLy ? (
+                <CircularProgress size={16} sx={{ color: "#fff" }} />
+              ) : (
+                <CheckIcon />
+              )
+            }
+            disabled={dangXuLy}
+            onClick={() => onOpenConfirm(loiMoi, true)}
+            sx={{
+              textTransform: "none",
+              fontWeight: 800,
+              fontSize: "0.9rem",
+              borderRadius: "12px",
+              px: 4,
+              py: 1.1,
+              boxShadow: `0 4px 14px ${BRAND.main}35`,
+              background: `linear-gradient(135deg, ${BRAND.main} 0%, ${BRAND.dark} 100%)`,
+              color: "#FFFFFF",
+              "&:hover": {
+                background: `linear-gradient(135deg, ${BRAND.dark} 0%, ${BRAND.darker} 100%)`,
+                boxShadow: `0 8px 20px ${BRAND.main}45`,
+                transform: "translateY(-1px)",
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            Đồng ý áp dụng
+          </Button>
+        </Box>
+      )}
     </Paper>
   );
 }
 
-// ── THIẾT KẾ MỚI: Card Lời Mời Cộng Tác Giảng Dạy ─────────────────────────
+// ── CARD LỜI MỜI CỘNG TÁC GIẢNG DẠY ─────────────────────────────────────────
 function LoiMoiCard({
   loiMoi,
   dangXuLy,
@@ -446,7 +717,7 @@ function LoiMoiCard({
         },
       }}
     >
-      {/* ── Top Header Banner for Pending Invites ── */}
+      {/* ── Top Header Banner ── */}
       {isPending ? (
         <Box
           sx={{
@@ -482,7 +753,7 @@ function LoiMoiCard({
                 textTransform: "uppercase",
               }}
             >
-              Lời mời hợp tác mới chờ bạn phản hồi
+              Lời mời hợp tác giảng dạy mới chờ bạn phản hồi
             </Typography>
           </Box>
 
@@ -497,7 +768,7 @@ function LoiMoiCard({
             }}
           >
             <CalendarTodayOutlinedIcon sx={{ fontSize: 13 }} />
-            <span>{new Date(loiMoi.ngayMoi).toLocaleDateString("vi-VN")}</span>
+            <span>Ngày mời: {formatDate(loiMoi.ngayMoi)}</span>
           </Box>
         </Box>
       ) : (
@@ -512,19 +783,22 @@ function LoiMoiCard({
             justifyContent: "space-between",
           }}
         >
-          <Typography
-            sx={{
-              fontWeight: 700,
-              fontSize: "0.76rem",
-              color: "#64748B",
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Lịch sử lời mời cộng tác
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <HandshakeOutlinedIcon sx={{ fontSize: 14, color: "#64748B" }} />
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: "0.76rem",
+                color: "#64748B",
+                textTransform: "uppercase",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Lịch sử lời mời cộng tác giảng dạy
+            </Typography>
+          </Box>
           <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
-            Ngày mời: {new Date(loiMoi.ngayMoi).toLocaleDateString("vi-VN")}
+            Ngày mời: {formatDate(loiMoi.ngayMoi)}
           </Typography>
         </Box>
       )}
@@ -627,19 +901,11 @@ function LoiMoiCard({
                 border: "1px solid #E2E8F0",
               }}
             >
-              <Avatar
-                src={loiMoi.anhNguoiMoi || ""}
-                sx={{
-                  width: 30,
-                  height: 30,
-                  fontSize: 13,
-                  fontWeight: 800,
-                  bgcolor: BRAND.main,
-                  color: "#FFFFFF",
-                }}
-              >
-                {loiMoi.tenNguoiMoi?.[0]?.toUpperCase() || "G"}
-              </Avatar>
+              <EduAvatar
+                src={loiMoi.anhNguoiMoi}
+                name={loiMoi.tenNguoiMoi || "Giảng viên chính"}
+                size={30}
+              />
               <Typography sx={{ fontSize: "0.84rem", color: "#64748B" }}>
                 Giảng viên mời:{" "}
                 <strong style={{ color: "#0F172A", fontWeight: 700 }}>
@@ -979,7 +1245,7 @@ function LoiMoiCard({
   );
 }
 
-// ── THIẾT KẾ MỚI: Modal Xác nhận phản hồi lời mời ──────────────────────────
+// ── MODAL XÁC NHẬN PHẢN HỒI LỜI MỜI GIẢNG DẠY ──────────────────────────
 function ConfirmActionDialog({
   open,
   loiMoi,
@@ -1187,8 +1453,217 @@ function ConfirmActionDialog({
   );
 }
 
-// ── THIẾT KẾ MỚI: Empty State và Hướng Dẫn Cộng Tác ────────────────────────
-function EmptyState() {
+// ── MODAL XÁC NHẬN PHẢN HỒI YÊU CẦU KHUYẾN MÃI TỪ ADMIN ───────────────────────
+function ConfirmPromoDialog({
+  open,
+  loiMoi,
+  dongY,
+  loading,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  loiMoi: LoiMoiKhuyenMaiChoXacNhanDto | null;
+  dongY: boolean;
+  loading: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  if (!loiMoi) return null;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={loading ? undefined : onClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: "24px",
+            p: 1,
+            boxShadow: "0 24px 48px -12px rgba(0, 0, 0, 0.2)",
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pb: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: "14px",
+              bgcolor: dongY
+                ? "rgba(22, 163, 74, 0.12)"
+                : "rgba(220, 38, 38, 0.12)",
+              color: dongY ? "#16A34A" : STATUS.error,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {dongY ? (
+              <LocalOfferIcon sx={{ fontSize: 24 }} />
+            ) : (
+              <CloseIcon sx={{ fontSize: 24 }} />
+            )}
+          </Box>
+          <Box>
+            <Typography
+              sx={{ fontWeight: 800, fontSize: "1.15rem", color: "#0F172A" }}
+            >
+              {dongY
+                ? "Đồng ý áp dụng mã giảm giá"
+                : "Từ chối áp dụng mã giảm giá"}
+            </Typography>
+            <Typography sx={{ fontSize: "0.82rem", color: "#64748B" }}>
+              {dongY
+                ? "Khóa học của bạn sẽ được kích hoạt khuyến mãi theo chiến dịch"
+                : "Thông báo từ chối sẽ được gửi đến Quản trị viên"}
+            </Typography>
+          </Box>
+        </Box>
+        {!loading && (
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon sx={{ fontSize: 20 }} />
+          </IconButton>
+        )}
+      </DialogTitle>
+
+      <DialogContent sx={{ py: 2 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2.5,
+            borderRadius: "18px",
+            bgcolor: "#F8FAFC",
+            border: "1px solid #E2E8F0",
+            mb: 2.5,
+          }}
+        >
+          <Typography
+            sx={{
+              fontWeight: 800,
+              fontSize: "1rem",
+              color: "#0F172A",
+              mb: 1.2,
+            }}
+          >
+            {loiMoi.tenKhoaHoc}
+          </Typography>
+
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
+                Mã giảm giá:
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.85rem", fontWeight: 800, color: BRAND.main }}
+              >
+                {loiMoi.maGiamGia}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
+                Mức giảm giá:
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.85rem", fontWeight: 800, color: "#C2410C" }}
+              >
+                {loiMoi.phanTramGiam}%
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
+                Quản trị viên yêu cầu:
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}
+              >
+                {loiMoi.tenNguoiMoi || "Admin EduVerse"}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+
+        {dongY ? (
+          <Alert
+            severity="success"
+            sx={{ borderRadius: "12px", fontSize: "0.85rem" }}
+          >
+            Khi đồng ý, học viên có thể nhập mã giảm giá này khi thanh toán khóa
+            học để nhận ưu đãi.
+          </Alert>
+        ) : (
+          <Alert
+            severity="warning"
+            sx={{ borderRadius: "12px", fontSize: "0.85rem" }}
+          >
+            Bạn có chắc chắn không muốn áp dụng mã giảm giá này cho khóa học?
+          </Alert>
+        )}
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1.5 }}>
+        <Button
+          variant="outlined"
+          onClick={onClose}
+          disabled={loading}
+          sx={{
+            textTransform: "none",
+            fontWeight: 700,
+            borderRadius: "12px",
+            px: 3,
+            borderColor: "#CBD5E1",
+            color: "#475569",
+          }}
+        >
+          Hủy
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onConfirm}
+          disabled={loading}
+          startIcon={
+            loading ? <CircularProgress size={16} color="inherit" /> : null
+          }
+          sx={{
+            textTransform: "none",
+            fontWeight: 800,
+            borderRadius: "12px",
+            px: 3.5,
+            bgcolor: dongY ? BRAND.main : STATUS.error,
+            color: "#FFFFFF",
+            "&:hover": {
+              bgcolor: dongY ? BRAND.dark : STATUS.errorDark,
+            },
+          }}
+        >
+          {dongY ? "Xác nhận đồng ý" : "Xác nhận từ chối"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ── EMPTY STATE & HƯỚNG DẪN ───────────────────────────────────────────────
+function EmptyState({
+  category,
+}: {
+  category: "all" | "invites" | "promotions";
+}) {
+  const isPromoOnly = category === "promotions";
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
       <Paper
@@ -1218,7 +1693,6 @@ function EmptyState() {
           }}
         />
 
-        {/* Icon Circle */}
         <Box
           sx={{
             width: 88,
@@ -1234,7 +1708,11 @@ function EmptyState() {
             boxShadow: `0 8px 24px ${BRAND.main}15`,
           }}
         >
-          <HandshakeOutlinedIcon sx={{ fontSize: 44 }} />
+          {isPromoOnly ? (
+            <LocalOfferIcon sx={{ fontSize: 44 }} />
+          ) : (
+            <HandshakeOutlinedIcon sx={{ fontSize: 44 }} />
+          )}
         </Box>
 
         <Typography
@@ -1246,25 +1724,27 @@ function EmptyState() {
             letterSpacing: "-0.015em",
           }}
         >
-          Chưa có lời mời cộng tác nào
+          {isPromoOnly
+            ? "Chưa có yêu cầu khuyến mãi nào"
+            : "Chưa có lời mời cộng tác hay yêu cầu nào"}
         </Typography>
 
         <Typography
           sx={{
             fontSize: "0.92rem",
             color: "#64748B",
-            maxWidth: 480,
+            maxWidth: 520,
             mx: "auto",
             lineHeight: 1.6,
           }}
         >
-          Khi có giảng viên khác mời bạn cùng hợp tác giảng dạy hoặc quản lý
-          khóa học, thông tin lời mời và tỷ lệ chia sẻ doanh thu sẽ hiển thị tại
-          đây.
+          {isPromoOnly
+            ? "Khi Quản trị viên EduVerse đề xuất chiến dịch khuyến mãi hoặc áp dụng mã giảm giá đặc biệt cho khóa học của bạn, thông tin chi tiết sẽ hiển thị tại đây."
+            : "Khi có giảng viên khác mời bạn cùng hợp tác giảng dạy hoặc Quản trị viên đề xuất chương trình khuyến mãi cho khóa học của bạn, toàn bộ yêu cầu sẽ hiển thị tập trung tại đây."}
         </Typography>
       </Paper>
 
-      {/* Collaboration Benefits Showcase */}
+      {/* Value Proposition Showcase */}
       <Paper
         elevation={0}
         sx={{
@@ -1287,7 +1767,7 @@ function EmptyState() {
           }}
         >
           <InfoOutlinedIcon sx={{ color: BRAND.main, fontSize: 22 }} />
-          Lợi ích vượt trội khi cộng tác giảng dạy trên EduVerse
+          Lợi ích vượt trội từ Lời mời cộng tác & Chương trình khuyến mãi
         </Typography>
 
         <Box
@@ -1328,13 +1808,13 @@ function EmptyState() {
                 mb: 0.5,
               }}
             >
-              Chia sẻ doanh thu tự động
+              Doanh thu phân chia tự động
             </Typography>
             <Typography
               sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}
             >
-              Thu nhập từ mỗi đơn hàng được ghi nhận và phân chia minh bạch theo
-              tỷ lệ đã thỏa thuận.
+              Thu nhập từ mỗi đơn hàng được ghi nhận và phân bổ minh bạch theo tỷ
+              lệ thỏa thuận chính xác.
             </Typography>
           </Box>
 
@@ -1359,7 +1839,7 @@ function EmptyState() {
                 mb: 1.5,
               }}
             >
-              <VerifiedUserOutlinedIcon sx={{ fontSize: 22 }} />
+              <LocalOfferIcon sx={{ fontSize: 22 }} />
             </Box>
             <Typography
               sx={{
@@ -1369,13 +1849,13 @@ function EmptyState() {
                 mb: 0.5,
               }}
             >
-              Phân quyền linh hoạt
+              Tối ưu hóa chuyển đổi
             </Typography>
             <Typography
               sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}
             >
-              Kiểm soát chi tiết quyền quản lý tài liệu, bài giảng, hỏi đáp,
-              chấm bài và khuyến mãi.
+              Tham gia các chiến dịch khuyến mãi của Admin giúp khóa học tiếp
+              cận hàng ngàn học viên tiềm năng.
             </Typography>
           </Box>
 
@@ -1400,7 +1880,7 @@ function EmptyState() {
                 mb: 1.5,
               }}
             >
-              <VisibilityOutlinedIcon sx={{ fontSize: 22 }} />
+              <VerifiedUserOutlinedIcon sx={{ fontSize: 22 }} />
             </Box>
             <Typography
               sx={{
@@ -1410,13 +1890,13 @@ function EmptyState() {
                 mb: 0.5,
               }}
             >
-              Xây dựng uy tín cá nhân
+              Quyền hạn rõ ràng
             </Typography>
             <Typography
               sx={{ fontSize: "0.82rem", color: "#64748B", lineHeight: 1.5 }}
             >
-              Được vinh danh và hiển thị đồng tác giả công khai trên trang chi
-              tiết khóa học.
+              Kiểm soát chi tiết quyền biên tập, thống kê, hỏi đáp, tài liệu và
+              hiển thị đồng tác giả.
             </Typography>
           </Box>
         </Box>
@@ -1428,14 +1908,25 @@ function EmptyState() {
 // ── COMPONENT CHÍNH ────────────────────────────────────────────────────────
 export default function InvitesPage() {
   const [danhSach, setDanhSach] = useState<LoiMoiChoXacNhanDto[]>([]);
+  const [dsKhuyenMai, setDsKhuyenMai] = useState<
+    LoiMoiKhuyenMaiChoXacNhanDto[]
+  >([]);
   const [loading, setLoading] = useState(true);
-  const [dangXuLyId, setDangXuLyId] = useState<string | null>(null);
+
+  // Filter states
+  const [selectedCategory, setSelectedCategory] = useState<
+    "all" | "invites" | "promotions"
+  >("all");
   const [tabFilter, setTabFilter] = useState<"all" | "pending" | "resolved">(
     "all",
   );
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Dialog State
+  // Process States
+  const [dangXuLyId, setDangXuLyId] = useState<string | null>(null);
+  const [dangXuLyKM, setDangXuLyKM] = useState<string | null>(null);
+
+  // Dialog State for Teaching Collaboration
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     loiMoi: LoiMoiChoXacNhanDto | null;
@@ -1446,12 +1937,18 @@ export default function InvitesPage() {
     dongY: true,
   });
 
-  // State cho lời mời khuyến mãi
-  const [dsKhuyenMai, setDsKhuyenMai] = useState<
-    LoiMoiKhuyenMaiChoXacNhanDto[]
-  >([]);
-  const [dangXuLyKM, setDangXuLyKM] = useState<string | null>(null);
+  // Dialog State for Promotion Application
+  const [confirmPromoDialog, setConfirmPromoDialog] = useState<{
+    open: boolean;
+    loiMoi: LoiMoiKhuyenMaiChoXacNhanDto | null;
+    dongY: boolean;
+  }>({
+    open: false,
+    loiMoi: null,
+    dongY: true,
+  });
 
+  // Toast State
   const [toast, setToast] = useState<{
     open: boolean;
     message: string;
@@ -1462,15 +1959,19 @@ export default function InvitesPage() {
     severity: "success",
   });
 
-  const loadDanhSach = useCallback(async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await LoiMoiGiangVienService.GetLoiMoiCuaToi();
-      setDanhSach(data);
+      const [invitesData, promosData] = await Promise.all([
+        LoiMoiGiangVienService.GetLoiMoiCuaToi(),
+        LoiMoiGiangVienService.GetLoiMoiKhuyenMaiCuaToi(),
+      ]);
+      setDanhSach(invitesData || []);
+      setDsKhuyenMai(promosData || []);
     } catch (err: any) {
       setToast({
         open: true,
-        message: err.message || "Lỗi tải dữ liệu lời mời cộng tác",
+        message: err.message || "Lỗi tải dữ liệu lời mời & yêu cầu",
         severity: "error",
       });
     } finally {
@@ -1478,21 +1979,15 @@ export default function InvitesPage() {
     }
   }, []);
 
-  const loadKhuyenMai = useCallback(async () => {
-    try {
-      const data = await LoiMoiGiangVienService.GetLoiMoiKhuyenMaiCuaToi();
-      setDsKhuyenMai(data);
-    } catch (err: any) {
-      console.error("Lỗi tải lời mời khuyến mãi:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    loadDanhSach();
-    loadKhuyenMai();
-  }, [loadDanhSach, loadKhuyenMai]);
+    loadData();
+  }, [loadData]);
 
-  const handleOpenConfirm = (loiMoi: LoiMoiChoXacNhanDto, dongY: boolean) => {
+  // Handle Teaching Collaboration Invites
+  const handleOpenConfirmInvite = (
+    loiMoi: LoiMoiChoXacNhanDto,
+    dongY: boolean,
+  ) => {
     setConfirmDialog({
       open: true,
       loiMoi,
@@ -1500,11 +1995,11 @@ export default function InvitesPage() {
     });
   };
 
-  const handleCloseConfirm = () => {
+  const handleCloseConfirmInvite = () => {
     setConfirmDialog((prev) => ({ ...prev, open: false }));
   };
 
-  const handleExecutePhanHoi = async () => {
+  const handleExecutePhanHoiInvite = async () => {
     if (!confirmDialog.loiMoi) return;
     const { id } = confirmDialog.loiMoi;
     const dongY = confirmDialog.dongY;
@@ -1519,8 +2014,8 @@ export default function InvitesPage() {
           : "Đã từ chối lời mời cộng tác.",
         severity: "success",
       });
-      handleCloseConfirm();
-      await loadDanhSach();
+      handleCloseConfirmInvite();
+      await loadData();
     } catch (err: any) {
       setToast({
         open: true,
@@ -1532,18 +2027,39 @@ export default function InvitesPage() {
     }
   };
 
-  const handlePhanHoiKhuyenMai = async (id: string, dongY: boolean) => {
+  // Handle Promo Application Invites
+  const handleOpenConfirmPromo = (
+    loiMoi: LoiMoiKhuyenMaiChoXacNhanDto,
+    dongY: boolean,
+  ) => {
+    setConfirmPromoDialog({
+      open: true,
+      loiMoi,
+      dongY,
+    });
+  };
+
+  const handleCloseConfirmPromo = () => {
+    setConfirmPromoDialog((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleExecutePhanHoiPromo = async () => {
+    if (!confirmPromoDialog.loiMoi) return;
+    const { id } = confirmPromoDialog.loiMoi;
+    const dongY = confirmPromoDialog.dongY;
+
     setDangXuLyKM(id);
     try {
       await LoiMoiGiangVienService.PhanHoiKhuyenMai(id, dongY);
       setToast({
         open: true,
         message: dongY
-          ? "Đã đồng ý áp dụng chương trình khuyến mãi!"
+          ? "Đã đồng ý áp dụng chương trình khuyến mãi thành công!"
           : "Đã từ chối chương trình khuyến mãi.",
         severity: "success",
       });
-      await loadKhuyenMai();
+      handleCloseConfirmPromo();
+      await loadData();
     } catch (err: any) {
       setToast({
         open: true,
@@ -1555,47 +2071,142 @@ export default function InvitesPage() {
     }
   };
 
-  const pendingList = useMemo(
+  // Memoized Counts
+  const pendingInvites = useMemo(
     () => danhSach.filter((x) => x.trangThai === "Pending"),
     [danhSach],
   );
-  const resolvedList = useMemo(
+  const resolvedInvites = useMemo(
     () => danhSach.filter((x) => x.trangThai !== "Pending"),
     [danhSach],
   );
-  const pendingKhuyenMai = useMemo(
+
+  const pendingPromos = useMemo(
     () => dsKhuyenMai.filter((x) => x.trangThai === "Pending"),
     [dsKhuyenMai],
   );
+  const resolvedPromos = useMemo(
+    () => dsKhuyenMai.filter((x) => x.trangThai !== "Pending"),
+    [dsKhuyenMai],
+  );
 
-  const filteredList = useMemo(() => {
-    let list =
-      tabFilter === "pending"
-        ? pendingList
-        : tabFilter === "resolved"
-          ? resolvedList
-          : danhSach;
+  const totalPending = pendingInvites.length + pendingPromos.length;
 
+  // Unified items list
+  type UnifiedItem =
+    | { type: "invite"; data: LoiMoiChoXacNhanDto; date: string }
+    | { type: "promo"; data: LoiMoiKhuyenMaiChoXacNhanDto; date: string };
+
+  const allItems: UnifiedItem[] = useMemo(() => {
+    const invites: UnifiedItem[] = danhSach.map((item) => ({
+      type: "invite",
+      data: item,
+      date: item.ngayMoi,
+    }));
+    const promos: UnifiedItem[] = dsKhuyenMai.map((item) => ({
+      type: "promo",
+      data: item,
+      date: item.ngayMoi,
+    }));
+    return [...invites, ...promos].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
+  }, [danhSach, dsKhuyenMai]);
+
+  // Filtered List calculation
+  const filteredItems = useMemo(() => {
+    let items = allItems;
+
+    // 1. Filter by category
+    if (selectedCategory === "invites") {
+      items = items.filter((x) => x.type === "invite");
+    } else if (selectedCategory === "promotions") {
+      items = items.filter((x) => x.type === "promo");
+    }
+
+    // 2. Filter by status
+    if (tabFilter === "pending") {
+      items = items.filter((x) => x.data.trangThai === "Pending");
+    } else if (tabFilter === "resolved") {
+      items = items.filter((x) => x.data.trangThai !== "Pending");
+    }
+
+    // 3. Filter by search term
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase();
-      list = list.filter(
-        (item) =>
-          item.tenKhoaHoc?.toLowerCase().includes(q) ||
-          item.tenNguoiMoi?.toLowerCase().includes(q),
-      );
+      items = items.filter((item) => {
+        if (item.type === "invite") {
+          return (
+            item.data.tenKhoaHoc?.toLowerCase().includes(q) ||
+            item.data.tenNguoiMoi?.toLowerCase().includes(q)
+          );
+        } else {
+          return (
+            item.data.tenKhoaHoc?.toLowerCase().includes(q) ||
+            item.data.tenNguoiMoi?.toLowerCase().includes(q) ||
+            item.data.maGiamGia?.toLowerCase().includes(q) ||
+            `${item.data.phanTramGiam}%`.includes(q)
+          );
+        }
+      });
     }
-    return list;
-  }, [tabFilter, pendingList, resolvedList, danhSach, searchTerm]);
 
-  // Tab definitions with fixed label width and consistent font weight
-  const tabsConfig = [
-    { key: "all" as const, label: "Tất cả", count: danhSach.length },
+    return items;
+  }, [allItems, selectedCategory, tabFilter, searchTerm]);
+
+  // Dynamic counts for status pills based on current category
+  const currentCategoryPool = useMemo(() => {
+    if (selectedCategory === "invites") return allItems.filter((x) => x.type === "invite");
+    if (selectedCategory === "promotions") return allItems.filter((x) => x.type === "promo");
+    return allItems;
+  }, [allItems, selectedCategory]);
+
+  const countAllInCat = currentCategoryPool.length;
+  const countPendingInCat = currentCategoryPool.filter(
+    (x) => x.data.trangThai === "Pending",
+  ).length;
+  const countResolvedInCat = currentCategoryPool.filter(
+    (x) => x.data.trangThai !== "Pending",
+  ).length;
+
+  // Category Configuration
+  const categoryConfig = [
+    {
+      key: "all" as const,
+      label: "Tất cả yêu cầu",
+      icon: AutoAwesomeIcon,
+      totalCount: allItems.length,
+      pendingCount: totalPending,
+    },
+    {
+      key: "invites" as const,
+      label: "Lời mời giảng dạy",
+      icon: HandshakeOutlinedIcon,
+      totalCount: danhSach.length,
+      pendingCount: pendingInvites.length,
+    },
+    {
+      key: "promotions" as const,
+      label: "Yêu cầu mã giảm giá",
+      icon: LocalOfferIcon,
+      totalCount: dsKhuyenMai.length,
+      pendingCount: pendingPromos.length,
+    },
+  ];
+
+  // Status Filter Tabs
+  const statusTabsConfig = [
+    { key: "all" as const, label: "Tất cả", count: countAllInCat },
     {
       key: "pending" as const,
       label: "Chờ xác nhận",
-      count: pendingList.length,
+      count: countPendingInCat,
     },
-    { key: "resolved" as const, label: "Đã xử lý", count: resolvedList.length },
+    {
+      key: "resolved" as const,
+      label: "Đã xử lý",
+      count: countResolvedInCat,
+    },
   ];
 
   return (
@@ -1609,7 +2220,6 @@ export default function InvitesPage() {
             minHeight: "calc(100vh - 120px)",
             width: "100%",
             boxSizing: "border-box",
-            // scrollbarGutter ensures centered layout never shifts horizontally when content expands/contracts
             scrollbarGutter: "stable",
           }}
         >
@@ -1622,7 +2232,7 @@ export default function InvitesPage() {
               background: "linear-gradient(135deg, #FFFFFF 0%, #FAF8F6 100%)",
               border: "1px solid #ECE7E4",
               boxShadow: "0 12px 30px -10px rgba(0, 0, 0, 0.04)",
-              mb: 4,
+              mb: 3.5,
               position: "relative",
               overflow: "hidden",
             }}
@@ -1680,21 +2290,26 @@ export default function InvitesPage() {
                       lineHeight: 1.25,
                     }}
                   >
-                    Lời mời cộng tác
+                    Lời mời & Yêu cầu
                   </Typography>
                   <Typography
                     sx={{ fontSize: "0.92rem", color: "#64748B", mt: 0.5 }}
                   >
-                    Quản lý lời mời tham gia giảng dạy và phân chia doanh thu từ
-                    các giảng viên khác
+                    Quản lý lời mời tham gia giảng dạy và yêu cầu áp dụng mã
+                    giảm giá từ Quản trị viên
                   </Typography>
                 </Box>
               </Box>
 
-              {/* Quick Status Pill */}
+              {/* Quick Status Chips */}
               <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-                {pendingList.length > 0 && (
+                {pendingInvites.length > 0 && (
                   <Chip
+                    clickable
+                    onClick={() => {
+                      setSelectedCategory("invites");
+                      setTabFilter("pending");
+                    }}
                     icon={
                       <AutoAwesomeIcon
                         sx={{
@@ -1703,7 +2318,7 @@ export default function InvitesPage() {
                         }}
                       />
                     }
-                    label={`${pendingList.length} lời mời cần xử lý`}
+                    label={`${pendingInvites.length} lời mời giảng dạy`}
                     sx={{
                       fontWeight: 800,
                       fontSize: "0.84rem",
@@ -1713,11 +2328,21 @@ export default function InvitesPage() {
                       py: 1,
                       height: "auto",
                       boxShadow: "0 2px 8px rgba(245, 158, 11, 0.15)",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "#FDE68A",
+                      },
                     }}
                   />
                 )}
-                {pendingKhuyenMai.length > 0 && (
+
+                {pendingPromos.length > 0 && (
                   <Chip
+                    clickable
+                    onClick={() => {
+                      setSelectedCategory("promotions");
+                      setTabFilter("pending");
+                    }}
                     icon={
                       <LocalOfferIcon
                         sx={{
@@ -1726,7 +2351,7 @@ export default function InvitesPage() {
                         }}
                       />
                     }
-                    label={`${pendingKhuyenMai.length} deal khuyến mãi`}
+                    label={`${pendingPromos.length} deal khuyến mãi`}
                     sx={{
                       fontWeight: 800,
                       fontSize: "0.84rem",
@@ -1735,6 +2360,33 @@ export default function InvitesPage() {
                       py: 1,
                       height: "auto",
                       boxShadow: `0 2px 10px ${BRAND.main}30`,
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: BRAND.dark,
+                      },
+                    }}
+                  />
+                )}
+
+                {totalPending === 0 && (
+                  <Chip
+                    icon={
+                      <CheckCircleOutlinedIcon
+                        sx={{
+                          fontSize: "16px !important",
+                          color: "#15803D !important",
+                        }}
+                      />
+                    }
+                    label="Đã xử lý tất cả yêu cầu"
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: "0.84rem",
+                      bgcolor: "#DCFCE7",
+                      color: "#15803D",
+                      border: "1px solid #BBF7D0",
+                      py: 1,
+                      height: "auto",
                     }}
                   />
                 )}
@@ -1742,195 +2394,272 @@ export default function InvitesPage() {
             </Box>
           </Paper>
 
-          {/* ── Section: Yêu cầu áp dụng khuyến mãi ── */}
-          {pendingKhuyenMai.length > 0 && (
-            <Box sx={{ mb: 4.5 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  mb: 2,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+          {/* ── Main Category Selector (Segmented Cards) ── */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(3, 1fr)",
+              },
+              gap: 1.5,
+              mb: 3,
+            }}
+          >
+            {categoryConfig.map((cat) => {
+              const isActive = selectedCategory === cat.key;
+              const IconComp = cat.icon;
+
+              return (
+                <Paper
+                  key={cat.key}
+                  component="button"
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.key)}
+                  elevation={0}
+                  sx={{
+                    border: "none",
+                    outline: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    p: 2,
+                    borderRadius: "18px",
+                    bgcolor: isActive ? "#FFFFFF" : "#FAF8F6",
+                    borderWidth: 1.5,
+                    borderStyle: "solid",
+                    borderColor: isActive ? BRAND.main : "#E2E8F0",
+                    boxShadow: isActive
+                      ? `0 8px 20px -6px ${BRAND.main}20, 0 2px 6px rgba(0,0,0,0.04)`
+                      : "none",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1.5,
+                    "&:hover": {
+                      bgcolor: "#FFFFFF",
+                      borderColor: isActive ? BRAND.main : "#CBD5E1",
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
                   <Box
                     sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: "8px",
-                      bgcolor: "rgba(139, 19, 19, 0.1)",
-                      color: BRAND.main,
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
+                      gap: 1.5,
+                      minWidth: 0,
                     }}
                   >
-                    <LocalOfferIcon sx={{ fontSize: 16 }} />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontWeight: 800,
-                      fontSize: "1.1rem",
-                      color: "#0F172A",
-                    }}
-                  >
-                    Yêu cầu áp dụng khuyến mãi
-                  </Typography>
-                </Box>
-
-                <Chip
-                  label={`${pendingKhuyenMai.length} yêu cầu`}
-                  size="small"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: "0.76rem",
-                    bgcolor: "#FEF2F2",
-                    color: BRAND.main,
-                    border: "1px solid #FECACA",
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {pendingKhuyenMai.map((km) => (
-                  <LoiMoiKhuyenMaiCard
-                    key={km.id}
-                    loiMoi={km}
-                    dangXuLy={dangXuLyKM === km.id}
-                    onPhanHoi={handlePhanHoiKhuyenMai}
-                  />
-                ))}
-              </Box>
-
-              <Divider sx={{ mt: 4, borderColor: "#E2E8F0" }} />
-            </Box>
-          )}
-
-          {/* ── Stable Filter Bar & Search (No layout shift) ── */}
-          {danhSach.length > 0 && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2,
-                mb: 3.5,
-                borderRadius: "20px",
-                bgcolor: "#FFFFFF",
-                border: "1px solid #E2E8F0",
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                alignItems: { xs: "stretch", sm: "center" },
-                justifyContent: "space-between",
-                gap: 2,
-              }}
-            >
-              {/* Segmented Tab Buttons (Zero width jitter: constant font-weight 700) */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  flexWrap: "wrap",
-                }}
-              >
-                {tabsConfig.map((tab) => {
-                  const isActive = tabFilter === tab.key;
-                  return (
                     <Box
-                      key={tab.key}
-                      component="button"
-                      type="button"
-                      onClick={() => setTabFilter(tab.key)}
                       sx={{
-                        border: "none",
-                        outline: "none",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 1,
-                        py: "10px",
-                        px: "18px",
-                        height: 46,
-                        boxSizing: "border-box",
-                        borderRadius: "14px",
-                        fontWeight: 700,
-                        fontSize: "0.9rem",
-                        fontFamily: "inherit",
-                        bgcolor: isActive ? BRAND.main : "transparent",
+                        width: 38,
+                        height: 38,
+                        borderRadius: "12px",
+                        bgcolor: isActive ? BRAND.main : "#F1F5F9",
                         color: isActive ? "#FFFFFF" : "#64748B",
-                        transition:
-                          "background-color 0.15s ease, color 0.15s ease",
-                        "&:hover": {
-                          bgcolor: isActive ? BRAND.dark : "#F1F5F9",
-                          color: isActive ? "#FFFFFF" : "#1E293B",
-                        },
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        transition: "all 0.2s ease",
                       }}
                     >
-                      <span>{tab.label}</span>
-                      <Box
-                        component="span"
+                      <IconComp sx={{ fontSize: 20 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
                         sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          px: 1,
-                          py: 0.25,
-                          borderRadius: "999px",
-                          fontSize: "0.76rem",
+                          fontSize: "0.88rem",
                           fontWeight: 800,
-                          bgcolor: isActive
-                            ? "rgba(255, 255, 255, 0.25)"
-                            : "#E2E8F0",
-                          color: isActive ? "#FFFFFF" : "#475569",
-                          minWidth: 22,
-                          lineHeight: 1.2,
+                          color: isActive ? "#0F172A" : "#475569",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
-                        {tab.count}
-                      </Box>
+                        {cat.label}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: "0.76rem",
+                          color: "#94A3B8",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {cat.totalCount} mục tổng cộng
+                      </Typography>
                     </Box>
-                  );
-                })}
-              </Box>
+                  </Box>
 
-              {/* Search Box - Enhanced Height & Padding */}
-              <TextField
-                placeholder="Tìm khóa học hoặc giảng viên..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ color: "#94A3B8", fontSize: 22 }} />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-                sx={{
-                  maxWidth: { xs: "100%", sm: 300 },
-                  "& .MuiOutlinedInput-root": {
-                    height: 46,
-                    borderRadius: "14px",
-                    bgcolor: "#F8FAFC",
-                    fontSize: "0.9rem",
-                    "& input": {
-                      py: "11px",
-                      px: "4px",
-                    },
-                    "& fieldset": { borderColor: "#E2E8F0" },
-                    "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": {
-                      borderColor: BRAND.main,
-                      borderWidth: "1.5px",
-                    },
-                  },
-                }}
-              />
-            </Paper>
-          )}
+                  {cat.pendingCount > 0 ? (
+                    <Chip
+                      label={`${cat.pendingCount} chờ`}
+                      size="small"
+                      sx={{
+                        bgcolor: isActive ? "#FEF2F2" : "#FEF3C7",
+                        color: isActive ? BRAND.main : "#92400E",
+                        border: `1px solid ${isActive ? "#FECACA" : "#FDE68A"}`,
+                        fontWeight: 800,
+                        fontSize: "0.72rem",
+                        height: 22,
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: "999px",
+                        bgcolor: "#F1F5F9",
+                        color: "#64748B",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {cat.totalCount}
+                    </Box>
+                  )}
+                </Paper>
+              );
+            })}
+          </Box>
 
-          {/* ── Main List Content (Fixed alignment) ── */}
+          {/* ── Status Filter Bar & Search Box ── */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 3.5,
+              borderRadius: "20px",
+              bgcolor: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "stretch", sm: "center" },
+              justifyContent: "space-between",
+              gap: 2,
+            }}
+          >
+            {/* Status Pills */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                flexWrap: "wrap",
+              }}
+            >
+              {statusTabsConfig.map((tab) => {
+                const isActive = tabFilter === tab.key;
+                return (
+                  <Box
+                    key={tab.key}
+                    component="button"
+                    type="button"
+                    onClick={() => setTabFilter(tab.key)}
+                    sx={{
+                      border: "none",
+                      outline: "none",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 1,
+                      py: "10px",
+                      px: "18px",
+                      height: 44,
+                      boxSizing: "border-box",
+                      borderRadius: "14px",
+                      fontWeight: 700,
+                      fontSize: "0.88rem",
+                      fontFamily: "inherit",
+                      bgcolor: isActive ? BRAND.main : "transparent",
+                      color: isActive ? "#FFFFFF" : "#64748B",
+                      transition:
+                        "background-color 0.15s ease, color 0.15s ease",
+                      "&:hover": {
+                        bgcolor: isActive ? BRAND.dark : "#F1F5F9",
+                        color: isActive ? "#FFFFFF" : "#1E293B",
+                      },
+                    }}
+                  >
+                    <span>{tab.label}</span>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        px: 0.9,
+                        py: 0.2,
+                        borderRadius: "999px",
+                        fontSize: "0.74rem",
+                        fontWeight: 800,
+                        bgcolor: isActive
+                          ? "rgba(255, 255, 255, 0.25)"
+                          : "#E2E8F0",
+                        color: isActive ? "#FFFFFF" : "#475569",
+                        minWidth: 20,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {tab.count}
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {/* Search Box */}
+            <TextField
+              placeholder="Tìm theo khóa học, người gửi, mã..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "#94A3B8", fontSize: 20 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchTerm ? (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={() => setSearchTerm("")}
+                        sx={{ p: 0.5 }}
+                      >
+                        <ClearIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ) : null,
+                },
+              }}
+              sx={{
+                maxWidth: { xs: "100%", sm: 320 },
+                "& .MuiOutlinedInput-root": {
+                  height: 44,
+                  borderRadius: "14px",
+                  bgcolor: "#F8FAFC",
+                  fontSize: "0.88rem",
+                  "& input": {
+                    py: "10px",
+                    px: "4px",
+                  },
+                  "& fieldset": { borderColor: "#E2E8F0" },
+                  "&:hover fieldset": { borderColor: "#CBD5E1" },
+                  "&.Mui-focused fieldset": {
+                    borderColor: BRAND.main,
+                    borderWidth: "1.5px",
+                  },
+                },
+              }}
+            />
+          </Paper>
+
+          {/* ── Main List Content ── */}
           {loading ? (
             <Box
               sx={{
@@ -1947,14 +2676,12 @@ export default function InvitesPage() {
               <Typography
                 sx={{ fontSize: "0.92rem", color: "#64748B", fontWeight: 600 }}
               >
-                Đang tải danh sách lời mời cộng tác...
+                Đang tải danh sách lời mời & yêu cầu...
               </Typography>
             </Box>
-          ) : danhSach.length === 0 ? (
-            pendingKhuyenMai.length === 0 ? (
-              <EmptyState />
-            ) : null
-          ) : filteredList.length === 0 ? (
+          ) : allItems.length === 0 ? (
+            <EmptyState category={selectedCategory} />
+          ) : filteredItems.length === 0 ? (
             <Paper
               elevation={0}
               sx={{
@@ -1979,35 +2706,74 @@ export default function InvitesPage() {
                   mb: 0.5,
                 }}
               >
-                Không tìm thấy lời mời nào
+                Không tìm thấy yêu cầu phù hợp
               </Typography>
-              <Typography sx={{ fontSize: "0.86rem", color: "#94A3B8" }}>
+              <Typography sx={{ fontSize: "0.86rem", color: "#94A3B8", mb: 2 }}>
                 {searchTerm
-                  ? "Không có lời mời nào khớp với từ khóa tìm kiếm"
-                  : "Chưa có lời mời nào trong mục này"}
+                  ? `Không có lời mời hoặc yêu cầu nào khớp với "${searchTerm}"`
+                  : "Chưa có dữ liệu trong mục lọc này"}
               </Typography>
+              {searchTerm && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => setSearchTerm("")}
+                  sx={{
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: 700,
+                    color: BRAND.main,
+                    borderColor: BRAND.main,
+                  }}
+                >
+                  Xóa từ khóa tìm kiếm
+                </Button>
+              )}
             </Paper>
           ) : (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
-              {filteredList.map((lm) => (
-                <LoiMoiCard
-                  key={lm.id}
-                  loiMoi={lm}
-                  dangXuLy={dangXuLyId === lm.id}
-                  onOpenConfirm={handleOpenConfirm}
-                />
-              ))}
+              {filteredItems.map((item) => {
+                if (item.type === "invite") {
+                  return (
+                    <LoiMoiCard
+                      key={`invite-${item.data.id}`}
+                      loiMoi={item.data}
+                      dangXuLy={dangXuLyId === item.data.id}
+                      onOpenConfirm={handleOpenConfirmInvite}
+                    />
+                  );
+                } else {
+                  return (
+                    <LoiMoiKhuyenMaiCard
+                      key={`promo-${item.data.id}`}
+                      loiMoi={item.data}
+                      dangXuLy={dangXuLyKM === item.data.id}
+                      onOpenConfirm={handleOpenConfirmPromo}
+                    />
+                  );
+                }
+              })}
             </Box>
           )}
 
-          {/* ── Confirmation Dialog ── */}
+          {/* ── Confirmation Dialog for Teaching Collaboration ── */}
           <ConfirmActionDialog
             open={confirmDialog.open}
             loiMoi={confirmDialog.loiMoi}
             dongY={confirmDialog.dongY}
             loading={Boolean(dangXuLyId)}
-            onClose={handleCloseConfirm}
-            onConfirm={handleExecutePhanHoi}
+            onClose={handleCloseConfirmInvite}
+            onConfirm={handleExecutePhanHoiInvite}
+          />
+
+          {/* ── Confirmation Dialog for Promotion Application ── */}
+          <ConfirmPromoDialog
+            open={confirmPromoDialog.open}
+            loiMoi={confirmPromoDialog.loiMoi}
+            dongY={confirmPromoDialog.dongY}
+            loading={Boolean(dangXuLyKM)}
+            onClose={handleCloseConfirmPromo}
+            onConfirm={handleExecutePhanHoiPromo}
           />
 
           {/* ── Toast Notification ── */}

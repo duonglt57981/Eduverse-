@@ -1,4 +1,4 @@
-﻿using Eduverse.Model;
+using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.BaiGiangRepository;
 using Eduverse.Repository.DangKyKhoaHocRepository;
@@ -76,39 +76,43 @@ namespace Eduverse.Service.HoiDapService
             return userId;
         }
 
-        // ── Kiểm tra user có trong khóa học không (đăng ký hoặc là GV) ──────
+        // ── Kiểm tra user có trong khóa học không (đăng ký hoặc là GV / Admin / Creator) ──────
         private async Task<bool> CoTrongKhoaHoc(Guid idKhoaHoc, Guid userId)
         {
+            if (_httpContextAccessor.HttpContext?.User?.IsInRole("Admin") == true)
+                return true;
 
-            Console.WriteLine("========== HOI DAP CHECK ==========");
-            Console.WriteLine($"CourseId: {idKhoaHoc}");
-            Console.WriteLine($"UserId:   {userId}");
+            var khoaHoc = await _khoaHocRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => (x.Id == idKhoaHoc || x.IdBanGhiTruoc == idKhoaHoc) && !x.IsDeleted);
+            if (khoaHoc?.CreatedId == userId) return true;
+
             var laGV = await _khoaHocGVRepo.GetQueryable()
-                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                .AnyAsync(x => (x.IdKhoaHoc == idKhoaHoc || (khoaHoc != null && (x.IdKhoaHoc == khoaHoc.Id || x.IdKhoaHoc == khoaHoc.IdBanGhiTruoc)))
                             && x.IdGiangVien == userId
                             && !x.IsDeleted);
             if (laGV) return true;
-            Console.WriteLine($"LaGiangVien = {laGV}");
 
             var daDangKy = await _dangKyRepo.GetQueryable()
-        .AnyAsync(x =>
-            x.IdKhoaHoc == idKhoaHoc &&
-            x.IdNguoiDangKi == userId &&
-            !x.IsDeleted);
+                .AnyAsync(x =>
+                    (x.IdKhoaHoc == idKhoaHoc || (khoaHoc != null && (x.IdKhoaHoc == khoaHoc.Id || x.IdKhoaHoc == khoaHoc.IdBanGhiTruoc))) &&
+                    x.IdNguoiDangKi == userId &&
+                    !x.IsDeleted);
 
-            Console.WriteLine($"DaDangKy = {daDangKy}");
-
-            Console.WriteLine($"CoQuyen = {laGV || daDangKy}");
-            Console.WriteLine("========================================");
-
-            return laGV || daDangKy;
+            return daDangKy;
         }
 
         // ── Kiểm tra là giảng viên của khóa học ─────────────────────────────
         private async Task<bool> LaGiangVien(Guid idKhoaHoc, Guid userId)
         {
+            if (_httpContextAccessor.HttpContext?.User?.IsInRole("Admin") == true)
+                return true;
+
+            var khoaHoc = await _khoaHocRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => (x.Id == idKhoaHoc || x.IdBanGhiTruoc == idKhoaHoc) && !x.IsDeleted);
+            if (khoaHoc?.CreatedId == userId) return true;
+
             return await _khoaHocGVRepo.GetQueryable()
-                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                .AnyAsync(x => (x.IdKhoaHoc == idKhoaHoc || (khoaHoc != null && (x.IdKhoaHoc == khoaHoc.Id || x.IdKhoaHoc == khoaHoc.IdBanGhiTruoc)))
                             && x.IdGiangVien == userId
                             && !x.IsDeleted);
         }
@@ -171,7 +175,14 @@ namespace Eduverse.Service.HoiDapService
             // Chỉ báo cho người hỏi nếu người trả lời là giảng viên VÀ không phải tự trả lời câu hỏi của chính mình
             if (laGV && cauHoi.IdNguoiDung.HasValue && cauHoi.IdNguoiDung.Value != userId)
             {
-                await ThongBaoTraLoiMoi(cauHoi, traLoi);
+                try
+                {
+                    await ThongBaoTraLoiMoi(cauHoi, traLoi);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[HoiDap] Lỗi gửi thông báo: {ex.Message}");
+                }
             }
 
             return await MapTraLoiDto(traLoi, userId);
@@ -733,8 +744,15 @@ namespace Eduverse.Service.HoiDapService
 
         private async Task<bool> CoQuyenQnA(Guid idKhoaHoc, Guid userId)
         {
+            if (_httpContextAccessor.HttpContext?.User?.IsInRole("Admin") == true)
+                return true;
+
+            var khoaHoc = await _khoaHocRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => (x.Id == idKhoaHoc || x.IdBanGhiTruoc == idKhoaHoc) && !x.IsDeleted);
+            if (khoaHoc?.CreatedId == userId) return true;
+
             var gv = await _khoaHocGVRepo.GetQueryable()
-                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                .FirstOrDefaultAsync(x => (x.IdKhoaHoc == idKhoaHoc || (khoaHoc != null && (x.IdKhoaHoc == khoaHoc.Id || x.IdKhoaHoc == khoaHoc.IdBanGhiTruoc)))
                                        && x.IdGiangVien == userId
                                        && !x.IsDeleted);
             if (gv == null) return false;

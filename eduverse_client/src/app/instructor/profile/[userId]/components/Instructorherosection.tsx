@@ -4,11 +4,11 @@
 import React from "react";
 import {
   Box,
-  Avatar,
   Typography,
   Stack,
   Chip,
 } from "@mui/material";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 import GroupsOutlinedIcon from "@mui/icons-material/GroupsOutlined";
 import HowToRegOutlinedIcon from "@mui/icons-material/HowToRegOutlined";
@@ -109,21 +109,13 @@ export default function InstructorHeroSection({
               flexShrink: 0,
             }}
           >
-            <Avatar
+            <EduAvatar
               src={giangVien.anhDaiDien}
-              alt={tenHienThi}
-              sx={{
-                width: { xs: 115, md: 145 },
-                height: { xs: 115, md: 145 },
-                fontSize: { xs: 44, md: 56 },
-                bgcolor: BRAND.main,
-                color: "#FFFFFF",
-                fontWeight: 900,
-                border: "4px solid #1C0909",
-              }}
-            >
-              {tenHienThi.charAt(0).toUpperCase()}
-            </Avatar>
+              name={tenHienThi}
+              size={135}
+              border="4px solid #FFFFFF"
+              shadow="none"
+            />
           </Box>
 
           {/* Details Column */}

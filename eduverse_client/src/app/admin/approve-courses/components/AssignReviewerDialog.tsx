@@ -4,7 +4,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Avatar,
   Box,
   Button,
   Chip,
@@ -34,6 +33,7 @@ import {
   PhanCongKiemDuyetResultDto,
 } from "@/src/types/KiemDuyet/Dto/dto";
 import { COLORS, FONTS } from "../types/constants";
+import { EduAvatar } from "@/src/components/common/EduAvatar";
 
 const service = new KiemDuyetService();
 const PAGE_SIZE = 8;
@@ -261,9 +261,11 @@ export default function AssignReviewerDialog({
                       },
                     }}
                   >
-                    <Avatar src={reviewer.anhDaiDien || undefined} alt={reviewer.hoTen} sx={{ width: 44, height: 44, bgcolor: COLORS.primary }}>
-                      {reviewer.hoTen?.trim().charAt(0).toUpperCase() || "C"}
-                    </Avatar>
+                    <EduAvatar
+                      src={reviewer.anhDaiDien}
+                      name={reviewer.hoTen}
+                      size={44}
+                    />
                     <ListItemText
                       primary={reviewer.hoTen || "Chuyên viên"}
                       secondary={`${reviewer.role} · ${reviewer.soLuongKhoaHocDuyet} khóa học đang xử lý`}

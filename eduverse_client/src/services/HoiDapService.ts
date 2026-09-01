@@ -163,53 +163,87 @@ class HoiDapService {
   }
 
   async GhimTopAnswer(idTraLoi: string, ghim: boolean): Promise<void> {
-    await apiService.put(`/HoiDap/${idTraLoi}/top-answer?ghim=${ghim}`);
+    const res = await apiService.put(`/HoiDap/${idTraLoi}/top-answer?ghim=${ghim}`);
+    if ((res as any)?.status === false) {
+      throw new Error((res as any)?.message || "Không thể đổi trạng thái ghim");
+    }
   }
 
   async GetChiTiet(idCauHoi: string): Promise<HoiDapDto> {
     const res = await apiService.get(`/HoiDap/${idCauHoi}`);
-    console.log("🔎 res (chưa .data):", res);
-    return (res as { data: HoiDapDto }).data;
+    const data = (res as any)?.data !== undefined ? (res as any).data : res;
+    if ((res as any)?.status === false && !data) {
+      throw new Error((res as any)?.message || "Không tìm thấy câu hỏi");
+    }
+    return data as HoiDapDto;
   }
 
   async DatCauHoi(request: DatCauHoiRequest): Promise<HoiDapDto> {
     const res = await apiService.post("/HoiDap/dat-cau-hoi", request);
-    return (res as { data: HoiDapDto }).data;
+    const data = (res as any)?.data !== undefined ? (res as any).data : res;
+    if ((res as any)?.status === false && !data) {
+      throw new Error((res as any)?.message || "Không thể đặt câu hỏi");
+    }
+    return data as HoiDapDto;
   }
 
   async TraLoi(request: TraLoiRequest): Promise<TraLoiDto> {
     const res = await apiService.post("/HoiDap/tra-loi", request);
-    return (res as { data: TraLoiDto }).data;
+    const data = (res as any)?.data !== undefined ? (res as any).data : res;
+    if ((res as any)?.status === false && !data) {
+      throw new Error((res as any)?.message || "Không thể gửi câu trả lời");
+    }
+    return data as TraLoiDto;
   }
 
   async ToggleLike(idTraLoi: string): Promise<number> {
     const res = await apiService.post(`/HoiDap/${idTraLoi}/like`);
-    return (res as { data: number }).data ?? 0;
+    const data = (res as any)?.data !== undefined ? (res as any).data : res;
+    return typeof data === "number" ? data : (data?.soLike ?? 0);
   }
 
   async Reply(request: ReplyRequest): Promise<TraLoiDto> {
     const res = await apiService.post("/HoiDap/reply", request);
-    return (res as { data: TraLoiDto }).data;
+    const data = (res as any)?.data !== undefined ? (res as any).data : res;
+    if ((res as any)?.status === false && !data) {
+      throw new Error((res as any)?.message || "Không thể gửi phản hồi");
+    }
+    return data as TraLoiDto;
   }
 
   async GhimCauHoi(idCauHoi: string, ghim: boolean): Promise<void> {
-    await apiService.put(`/HoiDap/${idCauHoi}/ghim?ghim=${ghim}`);
+    const res = await apiService.put(`/HoiDap/${idCauHoi}/ghim?ghim=${ghim}`);
+    if ((res as any)?.status === false) {
+      throw new Error((res as any)?.message || "Không thể ghim câu hỏi");
+    }
   }
 
   async GhimTraLoi(idTraLoi: string, ghim: boolean): Promise<void> {
-    await apiService.put(`/HoiDap/${idTraLoi}/ghim-tra-loi?ghim=${ghim}`);
+    const res = await apiService.put(`/HoiDap/${idTraLoi}/ghim-tra-loi?ghim=${ghim}`);
+    if ((res as any)?.status === false) {
+      throw new Error((res as any)?.message || "Không thể ghim câu trả lời");
+    }
   }
 
   async DongCauHoi(idCauHoi: string, dong: boolean): Promise<void> {
-    await apiService.put(`/HoiDap/${idCauHoi}/dong?dong=${dong}`);
+    const res = await apiService.put(`/HoiDap/${idCauHoi}/dong?dong=${dong}`);
+    if ((res as any)?.status === false) {
+      throw new Error((res as any)?.message || "Không thể đóng câu hỏi");
+    }
   }
 
   async XoaCauHoi(idCauHoi: string): Promise<void> {
-    await apiService.delete(`/HoiDap/cau-hoi/${idCauHoi}`);
+    const res = await apiService.delete(`/HoiDap/cau-hoi/${idCauHoi}`);
+    if ((res as any)?.status === false) {
+      throw new Error((res as any)?.message || "Không thể xóa câu hỏi");
+    }
   }
 
   async XoaTraLoi(idTraLoi: string): Promise<void> {
-    await apiService.delete(`/HoiDap/tra-loi/${idTraLoi}`);
+    const res = await apiService.delete(`/HoiDap/tra-loi/${idTraLoi}`);
+    if ((res as any)?.status === false) {
+      throw new Error((res as any)?.message || "Không thể xóa câu trả lời");
+    }
   }
 
   async GoiYTraLoi(
@@ -219,15 +253,15 @@ class HoiDapService {
     const params = idTraLoiDuocReply
       ? `?idTraLoiDuocReply=${idTraLoiDuocReply}`
       : "";
-    console.log("📤 GoiYTraLoi request:", { idCauHoi, idTraLoiDuocReply }); // ✅ thêm
     const res = await apiService.post(
       `/HoiDap/${idCauHoi}/goi-y-tra-loi${params}`,
     );
-    console.log("📥 GoiYTraLoi response:", res.data); // ✅ thêm
-    return (res as { data: AISuggestionDto }).data;
+    const data = (res as any)?.data !== undefined ? (res as any).data : res;
+    if ((res as any)?.status === false && !data) {
+      throw new Error((res as any)?.message || "Không thể tạo gợi ý AI");
+    }
+    return data as AISuggestionDto;
   }
-
-  // Y la khoa hoc noi chung X la bai giang noi rieng
 }
 
 export default new HoiDapService();
