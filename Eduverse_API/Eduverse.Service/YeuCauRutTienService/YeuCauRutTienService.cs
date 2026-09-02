@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.AppUserRepository;
 using Eduverse.Repository.Common;
 using Eduverse.Repository.KetQuaBaiThiRepository;
@@ -241,7 +241,7 @@ namespace Eduverse.Service.YeuCauRutTienService
                 TieuDe = "Đã gửi yêu cầu rút tiền",
                 NoiDung = $"Yêu cầu rút {dto.SoTienRut:N0}đ đã được gửi và đang chờ quản trị viên xử lý.",
                 LoaiThongBao = "GuiYeuCauRutTien",
-                Link = "/instructor/revenue",
+                Link = "/instructor/money",
                 ItemId = entity.Id,
                 ItemName = $"{dto.SoTienRut:N0}đ"
             });
@@ -300,7 +300,7 @@ namespace Eduverse.Service.YeuCauRutTienService
                     TieuDe = "Yêu cầu rút tiền được duyệt",
                     NoiDung = $"Yêu cầu rút {yeuCau.SoTienRut:N0}đ đã được duyệt và chuyển vào tài khoản {nganHang.SoTaiKhoan}.",
                     LoaiThongBao = "RutTienThanhCong",
-                    Link = "/instructor/revenue",
+                    Link = "/instructor/money",
                     ItemId = yeuCau.Id,
                     ItemName = $"{yeuCau.SoTienRut:N0}đ"
                 });
@@ -320,7 +320,7 @@ namespace Eduverse.Service.YeuCauRutTienService
                     TieuDe = "Yêu cầu rút tiền bị từ chối",
                     NoiDung = $"Yêu cầu rút {yeuCau.SoTienRut:N0}đ đã bị từ chối. Lý do: {dto.GhiChu}. Số tiền đã được hoàn lại vào số dư.",
                     LoaiThongBao = "RutTienTuChoi",
-                    Link = "/instructor/revenue",
+                    Link = "/instructor/money",
                     ItemId = yeuCau.Id,
                     ItemName = $"{yeuCau.SoTienRut:N0}đ"
                 });

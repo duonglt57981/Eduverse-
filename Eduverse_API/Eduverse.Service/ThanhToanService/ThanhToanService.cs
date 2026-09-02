@@ -465,7 +465,7 @@ namespace Eduverse.Service.ThanhToanService
                                     TieuDe = "Bạn vừa nhận được doanh thu mới",
                                     NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. Bạn nhận được {instructorRevenue:N0}đ.",
                                     LoaiThongBao = "DoanhThu",
-                                    Link = "/instructor/revenue",
+                                    Link = "/instructor/money",
                                     ItemId = khoaHoc.Id,
                                     ItemName = khoaHoc.TieuDe
                                 }));
@@ -540,7 +540,7 @@ namespace Eduverse.Service.ThanhToanService
                                 NoiDung = $"Học viên vừa mua khóa học '{khoaHoc.TieuDe}'. " +
                                                $"Bạn nhận được {phanChia:N0}đ ({tv.TyLeChiaDoanhThu}% doanh thu giảng viên).",
                                 LoaiThongBao = "DoanhThu",
-                                Link = "/instructor/revenue",
+                                Link = "/instructor/money",
                                 ItemId = khoaHoc.Id,
                                 ItemName = khoaHoc.TieuDe
                             }));

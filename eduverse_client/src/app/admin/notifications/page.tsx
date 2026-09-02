@@ -84,49 +84,10 @@ const loaiLabel: Record<string, string> = {
   Khac: "Khác",
 };
 
+import { resolveNotificationUrl } from "@/src/utils/notificationUrlResolver";
+
 const getAdminNotificationTarget = (notification: ThongBao) => {
-  const rawLink = notification.link?.trim();
-  if (rawLink && !/^https?:\/\//i.test(rawLink)) {
-    const normalizedLink = rawLink.startsWith("/") ? rawLink : `/${rawLink}`;
-    if (normalizedLink.startsWith("/admin")) return normalizedLink;
-  }
-
-  const searchableText = [
-    notification.type,
-    notification.loaiThongBao,
-    notification.tieuDe,
-    notification.noiDung,
-    notification.message,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLocaleLowerCase("vi-VN");
-
-  if (/rút tiền|rut tien|withdraw/.test(searchableText)) {
-    return "/admin/withdrawal-request";
-  }
-  if (/thanh toán|thanh toan|payment/.test(searchableText)) {
-    return "/admin/payments";
-  }
-  if (/nâng cấp giảng viên|nang cap giang vien|instructor request/.test(searchableText)) {
-    return "/admin/dashboard?tab=instructor-requests";
-  }
-  if (/phê duyệt khóa học|phe duyet khoa hoc|khóa học chờ duyệt|khoa hoc cho duyet/.test(searchableText)) {
-    return notification.itemId
-      ? `/admin/approve-courses/${notification.itemId}`
-      : "/admin/approve-courses";
-  }
-  if (/khuyến mãi|khuyen mai|promotion/.test(searchableText)) {
-    return "/admin/promotions";
-  }
-  if (/khóa học|khoa hoc|course/.test(searchableText)) {
-    return "/admin/courses";
-  }
-  if (/người dùng|nguoi dung|user|tài khoản|tai khoan/.test(searchableText)) {
-    return "/admin/users";
-  }
-
-  return null;
+  return resolveNotificationUrl(notification, "/admin", ["Admin"]);
 };
 
 export default function AdminThongBaoPage() {

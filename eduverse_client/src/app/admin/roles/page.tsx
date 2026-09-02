@@ -158,6 +158,76 @@ const PERMISSION_GROUPS: PermissionGroup[] = [
     ],
   },
 ];
+const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
+  Admin: [
+    "User.View",
+    "User.Edit",
+    "User.Delete",
+    "Course.View",
+    "Course.Create",
+    "Course.Edit",
+    "Course.Delete",
+    "Category.View",
+    "Category.Manage",
+    "Category.Delete",
+    "Course.Approve",
+    "Test.Manage",
+    "Payment.View",
+    "Withdrawal.Approve",
+    "Role.Manage",
+    "System.Settings",
+  ],
+  GiaoVien: [
+    "Course.View",
+    "Course.Create",
+    "Course.Edit",
+    "Course.Delete",
+    "Test.Manage",
+    "Payment.View",
+    "Category.View",
+  ],
+  Instructor: [
+    "Course.View",
+    "Course.Create",
+    "Course.Edit",
+    "Course.Delete",
+    "Test.Manage",
+    "Payment.View",
+    "Category.View",
+  ],
+  HocVien: [
+    "Course.View",
+    "Category.View",
+    "Payment.View",
+  ],
+  Student: [
+    "Course.View",
+    "Category.View",
+    "Payment.View",
+  ],
+  Personnel: [
+    "Course.View",
+    "Course.Approve",
+    "Test.Manage",
+    "Category.View",
+    "User.View",
+  ],
+  NhanVien: [
+    "Course.View",
+    "Course.Approve",
+    "Test.Manage",
+    "Category.View",
+    "User.View",
+  ],
+  KiemDuyet: [
+    "Course.View",
+    "Course.Approve",
+    "Test.Manage",
+    "Category.View",
+    "User.View",
+  ],
+};
+
 const TOTAL_PERMISSIONS = PERMISSION_GROUPS.reduce(
   (sum, g) => sum + g.permissions.length,
   0,
@@ -177,10 +247,9 @@ export default function AdminRolesPage() {
     mostPopularRole: "Chưa có",
   });
 
-  // Selected role for permissions matrix
+  // Selected role for permissions matrix (read-only)
   const [selectedRole, setSelectedRole] = useState<RoleItem | null>(null);
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [savingPermissions, setSavingPermissions] = useState(false);
 
   // Dialog Add/Edit states
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -207,7 +276,7 @@ export default function AdminRolesPage() {
               fetchedItems[0]
             : fetchedItems[0];
           setSelectedRole(toSelect);
-          fetchRolePermissions(toSelect.id);
+          fetchRolePermissions(toSelect.id, toSelect.name);
         } else {
           setSelectedRole(null);
         }
@@ -225,17 +294,23 @@ export default function AdminRolesPage() {
     }
   };
 
-  const fetchRolePermissions = async (roleId: string) => {
+  const fetchRolePermissions = async (roleId: string, roleName?: string) => {
     try {
       const res = await apiService.get<any>(`/roles/${roleId}/permissions`);
-      if (res.status && res.data) {
+      if (res.status && Array.isArray(res.data) && res.data.length > 0) {
         setPermissions(res.data);
+      } else if (roleName && DEFAULT_ROLE_PERMISSIONS[roleName]) {
+        setPermissions(DEFAULT_ROLE_PERMISSIONS[roleName]);
       } else {
         setPermissions([]);
       }
     } catch (err) {
       console.error(err);
-      setPermissions([]);
+      if (roleName && DEFAULT_ROLE_PERMISSIONS[roleName]) {
+        setPermissions(DEFAULT_ROLE_PERMISSIONS[roleName]);
+      } else {
+        setPermissions([]);
+      }
     }
   };
 
@@ -246,7 +321,7 @@ export default function AdminRolesPage() {
 
   const handleSelectRole = (role: RoleItem) => {
     setSelectedRole(role);
-    fetchRolePermissions(role.id);
+    fetchRolePermissions(role.id, role.name);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -414,64 +489,6 @@ export default function AdminRolesPage() {
     }
   };
 
-  // Toggle user permissions
-  const handleTogglePermission = (permissionCode: string) => {
-    if (selectedRole?.name === "Admin") return; // Admin has all permissions, cannot toggle
-    setPermissions((prev) =>
-      prev.includes(permissionCode)
-        ? prev.filter((p) => p !== permissionCode)
-        : [...prev, permissionCode],
-    );
-  };
-
-  const handleSavePermissions = async () => {
-    if (!selectedRole) return;
-    if (selectedRole.name === "Admin") {
-      Swal.fire({
-        icon: "info",
-        title: "Quản trị viên",
-        text: "Vai trò Admin mặc định sở hữu toàn bộ quyền hạn trong hệ thống.",
-        confirmButtonColor: COLORS.primary,
-      });
-      return;
-    }
-
-    setSavingPermissions(true);
-    try {
-      const res = await apiService.post<any>(
-        `/roles/${selectedRole.id}/permissions`,
-        permissions,
-      );
-      if (res.status) {
-        Swal.fire({
-          icon: "success",
-          title: "Đã lưu thay đổi",
-          text: "Ma trận phân quyền đã được cập nhật thành công",
-          timer: 1500,
-          showConfirmButton: false,
-        });
-        fetchRoles(selectedRole.id);
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi lưu trữ",
-          text: res.message || "Có lỗi xảy ra",
-          confirmButtonColor: COLORS.primary,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: "Không thể kết nối đến máy chủ",
-        confirmButtonColor: COLORS.primary,
-      });
-    } finally {
-      setSavingPermissions(false);
-    }
-  };
-
   const getRoleBadgeColor = (prefix: string) => {
     switch (prefix) {
       case "AD":
@@ -555,7 +572,7 @@ export default function AdminRolesPage() {
           {/* Statistics Cards */}
           <Grid container spacing={3.5} sx={{ width: "100%", m: 0, mb: 4 }}>
             {/* Card 1: Total Roles */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -566,6 +583,10 @@ export default function AdminRolesPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
+                  transition: "all 200ms ease",
+                  "&:hover": {
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+                  },
                 }}
               >
                 <Box
@@ -605,7 +626,7 @@ export default function AdminRolesPage() {
             </Grid>
 
             {/* Card 2: Active Roles */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -616,6 +637,10 @@ export default function AdminRolesPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
+                  transition: "all 200ms ease",
+                  "&:hover": {
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+                  },
                 }}
               >
                 <Box
@@ -653,7 +678,7 @@ export default function AdminRolesPage() {
             </Grid>
 
             {/* Card 3: Total Claims/Permissions */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Paper
                 elevation={0}
                 sx={{
@@ -664,6 +689,10 @@ export default function AdminRolesPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 2.5,
+                  transition: "all 200ms ease",
+                  "&:hover": {
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.04)",
+                  },
                 }}
               >
                 <Box
@@ -695,56 +724,6 @@ export default function AdminRolesPage() {
                     sx={{ fontWeight: 800, color: COLORS.textDark, mt: 0.5 }}
                   >
                     {TOTAL_PERMISSIONS}
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid>
-
-            {/* Card 4: Users Assigned */}
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: "16px",
-                  bgcolor: COLORS.white,
-                  border: `1.5px solid ${CSSVAR.paperAlt}`,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2.5,
-                }}
-              >
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: "12px",
-                    bgcolor: COLORS.redBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <AssignmentIndRounded
-                    sx={{ color: COLORS.primaryLight, fontSize: 28 }}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: COLORS.textSecondary,
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Người dùng đã gán
-                  </Typography>
-                  <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 800, color: COLORS.textDark, mt: 0.5 }}
-                  >
-                    {stats.totalUsersAssigned}
                   </Typography>
                 </Box>
               </Paper>
@@ -1100,77 +1079,48 @@ export default function AdminRolesPage() {
                 overflow: "hidden",
               }}
             >
-              {/* Header section with Hủy và Lưu */}
+              {/* Header section (Chỉ xem) */}
               <Box
                 sx={{
-                  p: 3,
+                  p: { xs: 2.5, sm: 3 },
                   bgcolor: BRAND.main,
                   color: COLORS.white,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: 2,
                 }}
               >
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                    Ma trận phân quyền: {getRoleDisplayNameVi(selectedRole.displayName || selectedRole.name)}
-                  </Typography>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", mb: 0.5 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                      Ma trận phân quyền: {getRoleDisplayNameVi(selectedRole.displayName || selectedRole.name)}
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label="Chỉ xem"
+                      sx={{
+                        bgcolor: "rgba(255,255,255,0.18)",
+                        color: "#FFFFFF",
+                        fontWeight: 700,
+                        fontSize: "0.75rem",
+                        height: 24,
+                        borderRadius: "6px",
+                      }}
+                    />
+                  </Stack>
                   <Typography
                     variant="body2"
-                    sx={{ color: "rgba(255,255,255,0.8)", fontWeight: 500 }}
+                    sx={{ color: "rgba(255,255,255,0.85)", fontWeight: 500 }}
                   >
-                    Đang xem cấu hình quyền hạn cho vai trò{" "}
+                    Danh sách quyền hạn được gán mặc định cho vai trò{" "}
                     {getRoleDisplayNameVi(selectedRole.name)}.
                   </Typography>
                 </Box>
-                <Stack direction="row" spacing={2}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => fetchRolePermissions(selectedRole.id)}
-                    sx={{
-                      color: COLORS.white,
-                      borderColor: "rgba(255,255,255,0.3)",
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: "8px",
-                      px: 3,
-                      "&:hover": {
-                        borderColor: COLORS.white,
-                        bgcolor: "rgba(255,255,255,0.08)",
-                      },
-                    }}
-                  >
-                    Hủy bỏ
-                  </Button>
-                  <Button
-                    variant="contained"
-                    disabled={
-                      savingPermissions || selectedRole.name === "Admin"
-                    }
-                    onClick={handleSavePermissions}
-                    sx={{
-                      bgcolor: COLORS.white,
-                      color: COLORS.primary,
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: "8px",
-                      px: 3,
-                      boxShadow: "none",
-                      "&:hover": {
-                        bgcolor: "#FFF5F5",
-                      },
-                      "&:disabled": {
-                        bgcolor: "rgba(255,255,255,0.3)",
-                        color: "rgba(255,255,255,0.6)",
-                      },
-                    }}
-                  >
-                    {savingPermissions ? "Đang lưu..." : "Lưu thay đổi"}
-                  </Button>
-                </Stack>
               </Box>
 
-              {/* Ma trận quyền — render data-driven từ PERMISSION_GROUPS */}
+              {/* Ma trận quyền (Chỉ xem) — render data-driven từ PERMISSION_GROUPS */}
               <Box sx={{ p: { xs: 2.5, md: 4 } }}>
                 <Grid container spacing={3} sx={{ width: "100%", m: 0 }}>
                   {PERMISSION_GROUPS.map((group) => {
@@ -1204,10 +1154,6 @@ export default function AdminRolesPage() {
                               return (
                                 <Box
                                   key={item.code}
-                                  onClick={() => {
-                                    if (!isAdmin)
-                                      handleTogglePermission(item.code);
-                                  }}
                                   sx={{
                                     px: 2,
                                     py: 1.5,
@@ -1218,18 +1164,13 @@ export default function AdminRolesPage() {
                                     bgcolor: isChecked
                                       ? COLORS.primaryBgLight
                                       : COLORS.white,
-                                    cursor: isAdmin ? "not-allowed" : "pointer",
-                                    opacity: isAdmin ? 0.9 : 1,
+                                    cursor: "default",
+                                    userSelect: "none",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "space-between",
                                     gap: 1.5,
                                     transition: "all 150ms ease",
-                                    "&:hover": {
-                                      borderColor: isAdmin
-                                        ? undefined
-                                        : COLORS.primary,
-                                    },
                                   }}
                                 >
                                   <Box sx={{ minWidth: 0 }}>
@@ -1270,6 +1211,7 @@ export default function AdminRolesPage() {
                                         color: COLORS.textSecondary,
                                         fontSize: 22,
                                         flexShrink: 0,
+                                        opacity: 0.6,
                                       }}
                                     />
                                   )}

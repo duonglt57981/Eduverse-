@@ -90,13 +90,51 @@ const PRIMARY_BORDER = "#FECACA";
 function StatusChip({
   batDau,
   ketThuc,
+  danhSachKhoaHoc,
+  danhSachDangCho,
 }: {
   batDau?: string;
   ketThuc?: string;
+  danhSachKhoaHoc?: KhoaHocMiniDto[];
+  danhSachDangCho?: LoiMoiApDungKhuyenMaiDto[];
 }) {
   const now = new Date();
   const start = batDau ? new Date(batDau) : null;
   const end = ketThuc ? new Date(ketThuc) : null;
+
+  const countApproved = danhSachKhoaHoc?.length ?? 0;
+  const countPending = danhSachDangCho?.length ?? 0;
+
+  // Nếu toàn bộ khóa học đều đang chờ giảng viên duyệt (chưa có khóa nào được chấp nhận)
+  if (countApproved === 0 && countPending > 0) {
+    return (
+      <Chip
+        label="Chờ duyệt"
+        size="small"
+        sx={{
+          bgcolor: "#FEF3C7",
+          color: "#B45309",
+          border: "1px solid #FDE68A",
+          fontWeight: 700,
+        }}
+      />
+    );
+  }
+
+  // Nếu không có khóa học nào áp dụng
+  if (countApproved === 0 && countPending === 0) {
+    return (
+      <Chip
+        label="Chưa áp dụng"
+        size="small"
+        sx={{
+          bgcolor: CSSVAR.paperAlt,
+          color: CSSVAR.textMuted,
+          fontWeight: 700,
+        }}
+      />
+    );
+  }
 
   if (!start || !end)
     return (
@@ -690,6 +728,8 @@ function PromotionsContent() {
                       <StatusChip
                         batDau={km.ngayBatDau}
                         ketThuc={km.ngayKetThuc}
+                        danhSachKhoaHoc={km.danhSachKhoaHoc}
+                        danhSachDangCho={km.danhSachDangCho}
                       />
                     </TableCell>
                     <TableCell align="right">

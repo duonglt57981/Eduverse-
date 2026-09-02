@@ -210,7 +210,7 @@ function RevenueLineChart({
           viewBox={`0 0 ${width} ${height}`}
           width="100%"
           height="auto"
-          style={{ minWidth: 720 }}
+          style={{ minWidth: 720, outline: "none" }}
         >
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -564,172 +564,6 @@ function StudentGrowthChart({ data }: { data: number[] }) {
   );
 }
 
-// GitHub-like heatmap contribution grid
-function LearningActivityHeatmap({ data }: { data: number[] }) {
-  const days = [
-    "Thứ 2",
-    "Thứ 3",
-    "Thứ 4",
-    "Thứ 5",
-    "Thứ 6",
-    "Thứ 7",
-    "Chủ Nhật",
-  ];
-
-  // Reshape data into 7 rows (days) by 20 columns (weeks)
-  const grid = useMemo(() => {
-    const rows: number[][] = Array.from({ length: 7 }, () => []);
-    data.forEach((val, idx) => {
-      const rowIdx = idx % 7;
-      rows[rowIdx].push(val);
-    });
-    return rows;
-  }, [data]);
-
-  const getColor = (val: number) => {
-    if (val === 0) return "rgba(141,19,19,0.02)";
-    if (val === 1) return "rgba(141,19,19,0.1)";
-    if (val === 2) return "rgba(141,19,19,0.25)";
-    if (val === 3) return "rgba(141,19,19,0.5)";
-    return COLORS.primary; // 4+
-  };
-
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 3.5,
-        borderRadius: "24px",
-        border: "1px solid rgba(141,19,19,0.06)",
-        bgcolor: COLORS.white,
-        height: "100%",
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{ fontWeight: 800, color: COLORS.textDark, mb: 1 }}
-      >
-        Hoạt động học tập (Heatmap)
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: 13,
-          color: "var(--ev-text-muted, rgba(31,41,55,0.5))",
-          mb: 3,
-        }}
-      >
-        Tần suất hoạt động học tập và tương tác của hệ thống.
-      </Typography>
-
-      <Box sx={{ display: "flex", gap: 2, overflowX: "auto", pb: 1 }}>
-        {/* Day labels */}
-        <Stack
-          spacing={1}
-          sx={{ justifyContent: "space-around", pr: 1, py: 0.5 }}
-        >
-          {days.map((day, idx) => (
-            <Typography
-              key={idx}
-              sx={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                height: 14,
-              }}
-            >
-              {idx % 2 === 0 ? day : ""}
-            </Typography>
-          ))}
-        </Stack>
-
-        {/* Grid cells */}
-        <Stack spacing={0.8} sx={{ flex: 1 }}>
-          {grid.map((row, rIdx) => (
-            <Stack key={rIdx} direction="row" spacing={0.8}>
-              {row.map((val, cIdx) => (
-                <Box
-                  key={cIdx}
-                  sx={{
-                    width: 14,
-                    height: 14,
-                    borderRadius: "3px",
-                    bgcolor: getColor(val),
-                    border: "1px solid rgba(0,0,0,0.02)",
-                    transition: "transform 100ms",
-                    "&:hover": {
-                      transform: "scale(1.18)",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                      borderColor: "var(--ev-divider, rgba(0,0,0,0.1))",
-                    },
-                  }}
-                  title={`Hoạt động: ${val}`}
-                />
-              ))}
-            </Stack>
-          ))}
-        </Stack>
-      </Box>
-
-      {/* Legend */}
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{
-          mt: 3,
-          alignItems: "center",
-          justifyContent: "flex-end",
-          fontSize: 11,
-          fontWeight: 700,
-          color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-        }}
-      >
-        <Typography variant="caption">Ít</Typography>
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "2px",
-            bgcolor: "rgba(141,19,19,0.02)",
-          }}
-        />
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "2px",
-            bgcolor: "rgba(141,19,19,0.1)",
-          }}
-        />
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "2px",
-            bgcolor: "rgba(141,19,19,0.25)",
-          }}
-        />
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "2px",
-            bgcolor: "rgba(141,19,19,0.5)",
-          }}
-        />
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "2px",
-            bgcolor: COLORS.primary,
-          }}
-        />
-        <Typography variant="caption">Nhiều</Typography>
-      </Stack>
-    </Paper>
-  );
-}
-
 // Main component
 export default function AdminDashboardContent() {
   const searchParams = useSearchParams();
@@ -934,7 +768,6 @@ export default function AdminDashboardContent() {
     revenueLabels,
     studentGrowth,
     bestSellingCourses,
-    heatmap,
     recentActivities,
   } = dashboardData;
 
@@ -993,7 +826,7 @@ export default function AdminDashboardContent() {
           variant="h4"
           sx={{ fontSize: 28, fontWeight: 900, color: COLORS.textDark }}
         >
-          Báo cáo & Thống kê
+          Tổng quan & Thống kê
         </Typography>
         <Typography
           sx={{ mt: 0.5, fontSize: 14.5, color: COLORS.textSecondary }}
@@ -1256,80 +1089,73 @@ export default function AdminDashboardContent() {
             </Grid>
           </Grid>
 
-          {/* 5. Split Row: Heatmap & Recent activity */}
-          <Grid container spacing={3.5} sx={{ width: "100%", m: 0 }}>
-            <Grid size={{ xs: 12, md: 7 }} sx={{ p: 0 }}>
-              <LearningActivityHeatmap data={heatmap} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }} sx={{ p: 0 }}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3.5,
-                  borderRadius: "24px",
-                  border: "1px solid rgba(141,19,19,0.06)",
-                  bgcolor: COLORS.white,
-                  height: "100%",
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}
-                >
-                  Hoạt động trực tuyến
-                </Typography>
+          {/* 5. Recent activity */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3.5,
+              borderRadius: "24px",
+              border: "1px solid rgba(141,19,19,0.06)",
+              bgcolor: COLORS.white,
+              width: "100%",
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}
+            >
+              Hoạt động trực tuyến
+            </Typography>
 
-                <Stack spacing={2.5}>
-                  {recentActivities.map((act: any, idx: number) => {
-                    const getIconColor = () => {
-                      if (act.type === "registration") return COLORS.green;
-                      if (act.type === "quiz") return "#3B82F6";
-                      return STATUS.warning;
-                    };
-                    return (
-                      <Stack
-                        key={idx}
-                        direction="row"
-                        spacing={2}
-                        sx={{ alignItems: "flex-start" }}
+            <Stack spacing={2.5}>
+              {recentActivities.map((act: any, idx: number) => {
+                const getIconColor = () => {
+                  if (act.type === "registration") return COLORS.green;
+                  if (act.type === "quiz") return "#3B82F6";
+                  return STATUS.warning;
+                };
+                return (
+                  <Stack
+                    key={idx}
+                    direction="row"
+                    spacing={2}
+                    sx={{ alignItems: "flex-start" }}
+                  >
+                    <FiberManualRecordRounded
+                      sx={{
+                        color: getIconColor(),
+                        fontSize: 12,
+                        mt: 0.5,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          fontSize: 13.5,
+                          fontWeight: 700,
+                          color: COLORS.textDark,
+                          lineHeight: 1.3,
+                        }}
                       >
-                        <FiberManualRecordRounded
-                          sx={{
-                            color: getIconColor(),
-                            fontSize: 12,
-                            mt: 0.5,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            sx={{
-                              fontSize: 13.5,
-                              fontWeight: 700,
-                              color: COLORS.textDark,
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {act.title}
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: 11.5,
-                              color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                              mt: 0.5,
-                              fontWeight: 600,
-                            }}
-                          >
-                            {act.time} • {act.subtitle}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    );
-                  })}
-                </Stack>
-              </Paper>
-            </Grid>
-          </Grid>
+                        {act.title}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: 11.5,
+                          color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                          mt: 0.5,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {act.time} • {act.subtitle}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                );
+              })}
+            </Stack>
+          </Paper>
         </>
       )}
 

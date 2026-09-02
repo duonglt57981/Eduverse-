@@ -25,7 +25,7 @@ import {
   DapAnReviewDto,
   isMultiChoice,
 } from "../../hooks/useQuiz";
-import { cleanHtmlContent, isHtmlContent } from "@/src/utils/htmlHelpers";
+import { cleanHtmlContent, isHtmlContent, stripHtml } from "@/src/utils/htmlHelpers";
 
 // ── Design tokens — đồng bộ với QuizContainer / QuizView / QuizResult ──
 const RED = BRAND.main;
@@ -80,6 +80,20 @@ function CauHoiReviewItem({
       : alpha(RED, 0.025)
     : "#fafafa";
 
+  const rawTitle = cauHoi.tenCauHoi || cauHoi.noiDungCauHoi || `Câu hỏi ${stt}`;
+  const rawNoiDung =
+    cauHoi.noiDungCauHoi && cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi
+      ? cauHoi.noiDungCauHoi
+      : "";
+  const cleanedTitle = cleanHtmlContent(rawTitle);
+  const cleanedNoiDung = cleanHtmlContent(rawNoiDung);
+  const isTitleHtml = isHtmlContent(cleanedTitle);
+  const isNoiDungHtml = isHtmlContent(cleanedNoiDung);
+  const hasDistinctNoiDung =
+    Boolean(cleanedNoiDung) &&
+    cleanedNoiDung !== cleanedTitle &&
+    stripHtml(cleanedNoiDung) !== stripHtml(cleanedTitle);
+
   return (
     <Box
       sx={{
@@ -133,6 +147,7 @@ function CauHoiReviewItem({
             <HelpOutlineIcon sx={{ color: SUB, fontSize: 17 }} />
           )}
         </Box>
+
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Stack
             direction="row"
@@ -147,7 +162,7 @@ function CauHoiReviewItem({
                 lineHeight: 1.5,
               }}
             >
-              Câu {stt}. {cauHoi.tenCauHoi}
+              Câu {stt}. {isTitleHtml ? stripHtml(cleanedTitle) : cleanedTitle}
             </Typography>
             {isMulti && (
               <Chip
@@ -164,8 +179,8 @@ function CauHoiReviewItem({
               />
             )}
           </Stack>
-          {cauHoi.noiDungCauHoi &&
-            cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi && (
+          {hasDistinctNoiDung && (
+            isNoiDungHtml ? (
               <Box
                 sx={{
                   fontSize: 13,
@@ -185,9 +200,21 @@ function CauHoiReviewItem({
                   "& b, & strong": { fontWeight: 700, color: INK },
                   "& a": { color: RED },
                 }}
-                dangerouslySetInnerHTML={{ __html: cauHoi.noiDungCauHoi }}
+                dangerouslySetInnerHTML={{ __html: cleanedNoiDung }}
               />
-            )}
+            ) : (
+              <Typography
+                sx={{
+                  fontSize: 13,
+                  color: "#3c3d40",
+                  mt: 0.4,
+                  lineHeight: 1.6,
+                }}
+              >
+                {cleanedNoiDung}
+              </Typography>
+            )
+          )}
         </Box>
       </Box>
 

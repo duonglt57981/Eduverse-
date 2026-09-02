@@ -43,6 +43,7 @@ import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 import { isNotificationForRole } from "@/src/libs/notificationRole";
+import { resolveNotificationUrl } from "@/src/utils/notificationUrlResolver";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
 import WishlistHoverPopover from "./header/WishlistHoverPopover";
@@ -215,11 +216,16 @@ export default function StudentHomeHeader() {
       }
     }
 
-    if (notification.link) {
-      router.push(notification.link);
-    } else {
-      setSelectedNoti(notification);
+    const target = resolveNotificationUrl(
+      notification,
+      pathname || "/student",
+      roles,
+    );
+    if (/^https?:\/\//i.test(target)) {
+      window.location.assign(target);
+      return;
     }
+    router.push(target);
   };
 
   const handleMarkAllAsRead = async () => {
