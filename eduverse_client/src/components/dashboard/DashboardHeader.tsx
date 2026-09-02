@@ -201,25 +201,25 @@ export default function DashboardHeader({
   const [activeRole, setActiveRole] = useState<string>("HocVien");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (typeof window !== "undefined") {
+      let nextRole = "HocVien";
       if (pathname.startsWith("/personnel")) {
         localStorage.setItem("current_role", "personnel");
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setActiveRole("personnel");
+        nextRole = "personnel";
       } else if (pathname.startsWith("/instructor")) {
         localStorage.setItem("current_role", "GiaoVien");
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setActiveRole("GiaoVien");
+        nextRole = "GiaoVien";
       } else if (pathname.startsWith("/admin")) {
         localStorage.setItem("current_role", "Admin");
-        setActiveRole("Admin");
+        nextRole = "Admin";
       } else if (pathname.startsWith("/student/dashboard")) {
         localStorage.setItem("current_role", "HocVien");
-        setActiveRole("HocVien");
+        nextRole = "HocVien";
       } else {
         const storedRole = localStorage.getItem("current_role");
         if (storedRole) {
-          setActiveRole(storedRole);
+          nextRole = storedRole;
         } else {
           if (
             roles.some(
@@ -228,16 +228,18 @@ export default function DashboardHeader({
                 r.toLowerCase() === "nhanvien",
             )
           ) {
-            setActiveRole("personnel");
+            nextRole = "personnel";
           } else if (roles.includes("GiaoVien")) {
-            setActiveRole("GiaoVien");
+            nextRole = "GiaoVien";
           } else if (roles.includes("Admin")) {
-            setActiveRole("Admin");
+            nextRole = "Admin";
           } else {
-            setActiveRole("HocVien");
+            nextRole = "HocVien";
           }
         }
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveRole(nextRole);
     }
   }, [pathname, roles]);
 
@@ -313,7 +315,7 @@ export default function DashboardHeader({
 
   // Search placeholder based on mode
   const getSearchPlaceholder = () => {
-    if (isAdminMode) return "Tìm kiếm báo cáo...";
+    if (isAdminMode) return "Tìm kiếm thông tin...";
     if (isInstructorMode) return "Tìm kiếm học viên, khóa học hoặc dữ liệu...";
     return "Tìm kiếm nội dung bất kỳ...";
   };

@@ -18,8 +18,10 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
@@ -688,10 +690,18 @@ function LoiMoiCard({
   dangXuLy: boolean;
   onOpenConfirm: (loiMoi: LoiMoiChoXacNhanDto, dongY: boolean) => void;
 }) {
+  const router = useRouter();
   const isPending = loiMoi.trangThai === "Pending";
   const quyenDuocCap = DANH_SACH_QUYEN_HIEN_THI.filter(
     (q) => (loiMoi as any)[q.key] === true,
   );
+
+  const handleOpenInstructorProfile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (loiMoi.idNguoiMoi) {
+      router.push(`/instructor/profile/${loiMoi.idNguoiMoi}`);
+    }
+  };
 
   return (
     <Paper
@@ -890,29 +900,60 @@ function LoiMoiCard({
             </Box>
 
             {/* Inviter Info */}
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 1.25,
-                p: "4px 12px 4px 4px",
-                borderRadius: "999px",
-                bgcolor: "#F8FAFC",
-                border: "1px solid #E2E8F0",
-              }}
+            <Tooltip
+              title={
+                loiMoi.idNguoiMoi
+                  ? "Bấm để xem trang cá nhân của giảng viên"
+                  : "Thông tin người mời"
+              }
+              arrow
             >
-              <EduAvatar
-                src={loiMoi.anhNguoiMoi}
-                name={loiMoi.tenNguoiMoi || "Giảng viên chính"}
-                size={30}
-              />
-              <Typography sx={{ fontSize: "0.84rem", color: "#64748B" }}>
-                Giảng viên mời:{" "}
-                <strong style={{ color: "#0F172A", fontWeight: 700 }}>
-                  {loiMoi.tenNguoiMoi || "Giảng viên chính"}
-                </strong>
-              </Typography>
-            </Box>
+              <Box
+                onClick={handleOpenInstructorProfile}
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 1.25,
+                  p: "4px 12px 4px 4px",
+                  borderRadius: "999px",
+                  bgcolor: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  cursor: loiMoi.idNguoiMoi ? "pointer" : "default",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  "&:hover": loiMoi.idNguoiMoi
+                    ? {
+                        bgcolor: "#FEF2F2",
+                        borderColor: "rgba(139, 19, 19, 0.3)",
+                        boxShadow: "0 2px 8px rgba(139, 19, 19, 0.08)",
+                        transform: "translateY(-1px)",
+                        "& .inviter-name": {
+                          color: BRAND.main,
+                          textDecoration: "underline",
+                        },
+                      }
+                    : {},
+                }}
+              >
+                <EduAvatar
+                  src={loiMoi.anhNguoiMoi}
+                  name={loiMoi.tenNguoiMoi || "Giảng viên chính"}
+                  size={30}
+                />
+                <Typography sx={{ fontSize: "0.84rem", color: "#64748B" }}>
+                  Giảng viên mời:{" "}
+                  <strong
+                    className="inviter-name"
+                    style={{
+                      color: "#0F172A",
+                      fontWeight: 700,
+                      transition: "color 0.15s ease",
+                    }}
+                  >
+                    {loiMoi.tenNguoiMoi || "Giảng viên chính"}
+                  </strong>
+                </Typography>
+              </Box>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -1261,6 +1302,7 @@ function ConfirmActionDialog({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const router = useRouter();
   if (!loiMoi) return null;
 
   return (
@@ -1353,15 +1395,38 @@ function ConfirmActionDialog({
           </Typography>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <Typography sx={{ fontSize: "0.85rem", color: "#64748B" }}>
                 Giảng viên chính:
               </Typography>
-              <Typography
-                sx={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B" }}
+              <Tooltip
+                title={
+                  loiMoi.idNguoiMoi
+                    ? "Bấm để xem trang cá nhân giảng viên"
+                    : ""
+                }
+                arrow
               >
-                {loiMoi.tenNguoiMoi || "Giảng viên"}
-              </Typography>
+                <Typography
+                  onClick={() => {
+                    if (loiMoi.idNguoiMoi) {
+                      router.push(`/instructor/profile/${loiMoi.idNguoiMoi}`);
+                    }
+                  }}
+                  sx={{
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    color: loiMoi.idNguoiMoi ? BRAND.main : "#1E293B",
+                    cursor: loiMoi.idNguoiMoi ? "pointer" : "default",
+                    transition: "all 0.15s ease",
+                    "&:hover": loiMoi.idNguoiMoi
+                      ? { textDecoration: "underline", color: BRAND.dark }
+                      : {},
+                  }}
+                >
+                  {loiMoi.tenNguoiMoi || "Giảng viên"}
+                </Typography>
+              </Tooltip>
             </Box>
 
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
@@ -1966,8 +2031,8 @@ export default function InvitesPage() {
         LoiMoiGiangVienService.GetLoiMoiCuaToi(),
         LoiMoiGiangVienService.GetLoiMoiKhuyenMaiCuaToi(),
       ]);
-      setDanhSach(invitesData || []);
-      setDsKhuyenMai(promosData || []);
+      setDanhSach((invitesData || []).filter((x) => Boolean(x?.tenKhoaHoc?.trim())));
+      setDsKhuyenMai((promosData || []).filter((x) => Boolean(x?.tenKhoaHoc?.trim())));
     } catch (err: any) {
       setToast({
         open: true,

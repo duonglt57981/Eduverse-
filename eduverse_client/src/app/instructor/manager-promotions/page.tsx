@@ -20,13 +20,17 @@ import {
   InputAdornment,
   Stack,
   Tooltip,
+  Checkbox,
 } from "@mui/material";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloseIcon from "@mui/icons-material/Close";
-import { useCallback, useEffect, useState } from "react";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import KhuyenMaiService, {
   KhuyenMaiDto,
 } from "@/src/services/KhuyenMaiService";
@@ -72,6 +76,17 @@ function QuanLyKhuyenMaiContent() {
 
   const [khoaHocDaDuyet, setKhoaHocDaDuyet] = useState<KhoaHocMiniDto[]>([]);
   const [dangTaiKhoaHoc, setDangTaiKhoaHoc] = useState(false);
+  const [searchKhoaHoc, setSearchKhoaHoc] = useState("");
+
+  const filteredKhoaHocList = useMemo(() => {
+    if (!searchKhoaHoc.trim()) return khoaHocDaDuyet;
+    const q = searchKhoaHoc.toLowerCase().trim();
+    return khoaHocDaDuyet.filter(
+      (c) =>
+        c.tieuDe?.toLowerCase().includes(q) ||
+        c.loaiKhoaHoc?.toLowerCase().includes(q),
+    );
+  }, [khoaHocDaDuyet, searchKhoaHoc]);
 
   const [xacNhanXoa, setXacNhanXoa] = useState<KhuyenMaiDto | null>(null);
   const [dangXoa, setDangXoa] = useState(false);
@@ -146,12 +161,14 @@ function QuanLyKhuyenMaiContent() {
   const moTaoMoi = () => {
     setDangSua(null);
     setForm(formRong);
+    setSearchKhoaHoc("");
     setMoForm(true);
     taiKhoaHocDaDuyet();
   };
 
   const moSua = (km: KhuyenMaiDto) => {
     setDangSua(km);
+    setSearchKhoaHoc("");
     setForm({
       maGiamGia: km.maGiamGia ?? "",
       phanTramGiam: String(km.phanTramGiam ?? ""),
@@ -172,6 +189,7 @@ function QuanLyKhuyenMaiContent() {
     if (dangLuu) return;
     setMoForm(false);
     setDangSua(null);
+    setSearchKhoaHoc("");
     setForm(formRong);
   };
 
@@ -693,55 +711,271 @@ function QuanLyKhuyenMaiContent() {
             </Box>
 
             <Box>
-              <Typography
+              <Box
                 sx={{
-                  fontSize: 13,
-                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   mb: 1,
-                  color: CSSVAR.textPrimary,
+                  flexWrap: "wrap",
+                  gap: 1,
                 }}
               >
-                Áp dụng cho khóa học đã duyệt *
-              </Typography>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: CSSVAR.textPrimary,
+                  }}
+                >
+                  Áp dụng cho khóa học đã duyệt *
+                </Typography>
+                {khoaHocDaDuyet.length > 0 && (
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                    <Chip
+                      size="small"
+                      label={`Đã chọn ${form.idsKhoaHoc.length}/${khoaHocDaDuyet.length}`}
+                      sx={{
+                        fontWeight: 700,
+                        fontSize: 11.5,
+                        bgcolor:
+                          form.idsKhoaHoc.length > 0
+                            ? MAU.chinhNhat
+                            : CSSVAR.paperAlt,
+                        color:
+                          form.idsKhoaHoc.length > 0
+                            ? MAU.chinh
+                            : CSSVAR.textSecondary,
+                      }}
+                    />
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        if (form.idsKhoaHoc.length === khoaHocDaDuyet.length) {
+                          setForm((p) => ({ ...p, idsKhoaHoc: [] }));
+                        } else {
+                          setForm((p) => ({
+                            ...p,
+                            idsKhoaHoc: khoaHocDaDuyet.map((c) => c.id),
+                          }));
+                        }
+                      }}
+                      sx={{
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        textTransform: "none",
+                        p: 0,
+                        minWidth: "auto",
+                        color: MAU.chinh,
+                        "&:hover": {
+                          bgcolor: "transparent",
+                          textDecoration: "underline",
+                        },
+                      }}
+                    >
+                      {form.idsKhoaHoc.length === khoaHocDaDuyet.length
+                        ? "Bỏ chọn tất cả"
+                        : "Chọn tất cả"}
+                    </Button>
+                  </Stack>
+                )}
+              </Box>
+
               {dangTaiKhoaHoc ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
-                  <CircularProgress size={20} sx={{ color: MAU.chinh }} />
+                <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                  <CircularProgress size={22} sx={{ color: MAU.chinh }} />
                 </Box>
               ) : khoaHocDaDuyet.length === 0 ? (
                 <Typography sx={{ fontSize: 12.5, color: MAU.chuXam }}>
                   Bạn chưa có khóa học nào được duyệt.
                 </Typography>
               ) : (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 1,
-                    maxHeight: 220,
-                    overflowY: "auto",
-                  }}
-                >
-                  {khoaHocDaDuyet.map((c) => {
-                    const active = form.idsKhoaHoc.includes(c.id);
-                    return (
-                      <Tooltip key={c.id} title={c.tieuDe} arrow>
-                        <Chip
-                          label={c.tieuDe}
-                          onClick={() => toggleKhoaHoc(c.id)}
-                          sx={{
-                            borderRadius: "999px",
-                            fontWeight: 600,
-                            maxWidth: 260,
-                            border: `1.5px solid ${active ? MAU.chinh : CSSVAR.divider}`,
-                            bgcolor: active ? MAU.chinhNhat : "transparent",
-                            color: active ? MAU.chinh : CSSVAR.textSecondary,
-                            "&:hover": { bgcolor: MAU.chinhNhat },
-                          }}
-                        />
-                      </Tooltip>
-                    );
-                  })}
-                </Box>
+                <Stack spacing={1.25}>
+                  {/* Search Bar */}
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Tìm kiếm khóa học theo tên..."
+                    value={searchKhoaHoc}
+                    onChange={(e) => setSearchKhoaHoc(e.target.value)}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon sx={{ fontSize: 18, color: MAU.chuXam }} />
+                          </InputAdornment>
+                        ),
+                        endAdornment: searchKhoaHoc ? (
+                          <InputAdornment position="end">
+                            <IconButton
+                              size="small"
+                              onClick={() => setSearchKhoaHoc("")}
+                            >
+                              <ClearIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </InputAdornment>
+                        ) : null,
+                      },
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "10px",
+                        bgcolor: CSSVAR.paper,
+                        fontSize: 13,
+                      },
+                    }}
+                  />
+
+                  {/* Selected Chips Preview (Collapsible / Removable) */}
+                  {form.idsKhoaHoc.length > 0 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 0.75,
+                        maxHeight: 80,
+                        overflowY: "auto",
+                        p: 1,
+                        bgcolor: MAU.chinhNhat,
+                        borderRadius: "10px",
+                        border: `1px solid rgba(139, 19, 19, 0.12)`,
+                      }}
+                    >
+                      {form.idsKhoaHoc.map((id) => {
+                        const c = khoaHocDaDuyet.find((k) => k.id === id);
+                        if (!c) return null;
+                        return (
+                          <Chip
+                            key={id}
+                            size="small"
+                            label={c.tieuDe}
+                            onDelete={() => toggleKhoaHoc(id)}
+                            sx={{
+                              fontSize: 11.5,
+                              fontWeight: 600,
+                              bgcolor: "#FFFFFF",
+                              color: MAU.chinh,
+                              border: `1px solid rgba(139, 19, 19, 0.25)`,
+                              maxWidth: 220,
+                              "& .MuiChip-deleteIcon": {
+                                color: MAU.chinh,
+                                fontSize: 14,
+                                "&:hover": { color: MAU.chinhDam },
+                              },
+                            }}
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+
+                  {/* Searchable Course List */}
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      maxHeight: 220,
+                      overflowY: "auto",
+                      border: `1px solid ${CSSVAR.divider}`,
+                      borderRadius: "12px",
+                      bgcolor: CSSVAR.paper,
+                      p: 0.5,
+                    }}
+                  >
+                    {filteredKhoaHocList.length === 0 ? (
+                      <Box sx={{ py: 3, textAlign: "center" }}>
+                        <Typography sx={{ fontSize: 12.5, color: MAU.chuXam }}>
+                          Không tìm thấy khóa học nào phù hợp với &quot;
+                          {searchKhoaHoc}&quot;
+                        </Typography>
+                      </Box>
+                    ) : (
+                      filteredKhoaHocList.map((c: KhoaHocMiniDto) => {
+                        const checked = form.idsKhoaHoc.includes(c.id);
+                        return (
+                          <Box
+                            key={c.id}
+                            onClick={() => toggleKhoaHoc(c.id)}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.25,
+                              p: "8px 10px",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              bgcolor: checked ? MAU.chinhNhat : "transparent",
+                              transition: "all 0.15s ease",
+                              "&:hover": {
+                                bgcolor: checked
+                                  ? MAU.chinhNhat
+                                  : CSSVAR.paperAlt,
+                              },
+                            }}
+                          >
+                            <Checkbox
+                              checked={checked}
+                              size="small"
+                              sx={{
+                                p: 0.5,
+                                color: CSSVAR.textSecondary,
+                                "&.Mui-checked": { color: MAU.chinh },
+                              }}
+                            />
+                            {c.hinhAnhKhoaHoc ? (
+                              <Box
+                                component="img"
+                                src={c.hinhAnhKhoaHoc}
+                                alt={c.tieuDe}
+                                sx={{
+                                  width: 36,
+                                  height: 24,
+                                  borderRadius: "4px",
+                                  objectFit: "cover",
+                                  flexShrink: 0,
+                                }}
+                              />
+                            ) : (
+                              <SchoolOutlinedIcon
+                                sx={{
+                                  fontSize: 20,
+                                  color: MAU.chuXam,
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: 13,
+                                  fontWeight: checked ? 700 : 500,
+                                  color: checked
+                                    ? MAU.chinh
+                                    : CSSVAR.textPrimary,
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {c.tieuDe}
+                              </Typography>
+                              {c.gia != null && (
+                                <Typography
+                                  sx={{
+                                    fontSize: 11,
+                                    color: CSSVAR.textSecondary,
+                                  }}
+                                >
+                                  {c.gia === 0
+                                    ? "Miễn phí"
+                                    : `${c.gia.toLocaleString("vi-VN")}đ`}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        );
+                      })
+                    )}
+                  </Paper>
+                </Stack>
               )}
             </Box>
           </Stack>

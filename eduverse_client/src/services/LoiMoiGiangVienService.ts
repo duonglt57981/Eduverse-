@@ -64,6 +64,7 @@ export interface LoiMoiGiangVienDto {
 export interface LoiMoiChoXacNhanDto {
   id: string;
   idKhoaHoc: string;
+  idNguoiMoi?: string;
   tenKhoaHoc?: string;
   hinhAnhKhoaHoc?: string;
   tenNguoiMoi?: string;

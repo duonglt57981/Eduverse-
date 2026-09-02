@@ -680,6 +680,7 @@ export default function PerformanceContent() {
                     <BarChart
                       data={chartDataDT}
                       margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                      style={{ outline: "none" }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
                       <XAxis
@@ -1133,6 +1134,7 @@ export default function PerformanceContent() {
                   <LineChart
                     data={chartDataHV}
                     margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    style={{ outline: "none" }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
                     <XAxis

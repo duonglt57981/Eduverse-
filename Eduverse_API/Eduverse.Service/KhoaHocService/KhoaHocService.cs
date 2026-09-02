@@ -3747,6 +3747,9 @@ namespace Eduverse.Service.KhoaHocService
                     : (!string.IsNullOrWhiteSpace(item.CreatedBy)
                         ? new List<string> { item.CreatedBy }
                         : new List<string>());
+                item.TenGiangVien = giangViens.FirstOrDefault()?.HoTen 
+                    ?? item.DanhSachGiangVienHienThi.FirstOrDefault() 
+                    ?? item.CreatedBy;
             }
         }
 

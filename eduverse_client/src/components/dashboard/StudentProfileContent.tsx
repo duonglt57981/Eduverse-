@@ -229,10 +229,15 @@ export default function StudentProfileContent({
         if (draft) {
           // eslint-disable-next-line react-hooks/set-state-in-effect
           if (draft.phoneNumber) setPhoneNumber(draft.phoneNumber);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           if (draft.specialty) setSpecialty(draft.specialty);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           if (draft.experience) setExperience(draft.experience);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           if (draft.bangCap) setBangCap(draft.bangCap);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           if (draft.motivation) setMotivation(draft.motivation);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           if (typeof draft.agreedToTerms === "boolean")
             setAgreedToTerms(draft.agreedToTerms);
         }
