@@ -1672,16 +1672,19 @@ export default function StudentHomeContent() {
         console.error("Failed to load latest courses:", err);
       }
 
-      const res = await apiService.get<DashboardData>(
-        "/dashboard?role=HocVien",
-      );
-      if (res.status && res.data) {
-        setData(res.data);
-      } else {
-        setError(res.message ?? "Không thể tải dữ liệu.");
+      try {
+        const res = await apiService.get<any>("/dashboard?role=HocVien");
+        const dashData = res?.data?.data || res?.data || (res as any);
+        if (dashData && (res?.status || dashData.trendingCourses || dashData.welcomeStats)) {
+          setData(dashData);
+          setError("");
+        } else {
+          setError(res?.message ?? "Không thể tải dữ liệu.");
+        }
+      } catch (e) {
+        console.error("Dashboard load error:", e);
+        setError(e instanceof Error ? e.message : "Đã xảy ra lỗi.");
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Đã xảy ra lỗi.");
     } finally {
       setLoading(false);
     }

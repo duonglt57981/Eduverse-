@@ -401,15 +401,18 @@ namespace Eduverse.Api.Controller
                     activeCategoryIds.Contains(link.IdDanhMuc))
                 .ToListAsync();
 
-            var categoryNameById = categories.ToDictionary(
-                cat => cat.Id,
-                cat => cat.TenDanhMuc ?? string.Empty);
+            var categoryNameById = categories
+                .GroupBy(cat => cat.Id)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().TenDanhMuc ?? string.Empty);
+
             var categoryNamesByCourseId = courseCategoryLinks
                 .GroupBy(link => link.IdKhoaHoc)
                 .ToDictionary(
                     group => group.Key,
                     group => group
-                        .Select(link => categoryNameById[link.IdDanhMuc])
+                        .Select(link => categoryNameById.TryGetValue(link.IdDanhMuc, out var cn) ? cn : string.Empty)
                         .Where(name => !string.IsNullOrWhiteSpace(name))
                         .Distinct()
                         .ToList());
@@ -420,7 +423,8 @@ namespace Eduverse.Api.Controller
                 id = c.Id.ToString(),
                 title = c.TieuDe,
                 hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                instructor = c.CreatedBy,
+                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
                 studentsCount = c.SoLuongHocVien ?? 0,
                 level = c.CapDo ?? "Trung cấp",
                 diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var r1) ? r1.DiemTrungBinh : (double?)null,
@@ -440,7 +444,7 @@ namespace Eduverse.Api.Controller
                 var nowVoucher = DateTime.Now;
 
                 var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
-                var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+                var adminIds = adminUsers.Select(u => u.Id).ToList();
 
                 var activeAdminVouchers = await _khuyenMaiService.GetQueryable()
                     .Where(km => km.CreatedId.HasValue
@@ -462,9 +466,12 @@ namespace Eduverse.Api.Controller
                     var voucherByCourseId = links
                         .Where(l => l.IdKhoaHoc.HasValue && l.IdKhuyenMai.HasValue)
                         .GroupBy(l => l.IdKhoaHoc!.Value)
-                        .ToDictionary(g => g.Key, g => activeAdminVouchers.First(v => v.Id == g.First().IdKhuyenMai!.Value));
+                        .ToDictionary(
+                            g => g.Key,
+                            g => activeAdminVouchers.FirstOrDefault(v => v.Id == g.First().IdKhuyenMai!.Value)
+                        );
 
-                    var promotedCourseIds = voucherByCourseId.Keys.ToList();
+                    var promotedCourseIds = voucherByCourseId.Where(kv => kv.Value != null).Select(kv => kv.Key).ToList();
 
                     var promotedCourseEntities = courses
                         .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id))
