@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DanhGiaRepository;
 using Eduverse.Repository.KhoaHocRepository;
@@ -114,7 +114,7 @@ namespace Eduverse.Service.DangKyKhoaHocService
                     TieuDe = "Khóa học có học viên mới",
                     NoiDung = $"{learnerName} vừa đăng ký khóa học '{khoaHoc.TieuDe}'.",
                     LoaiThongBao = "HocVienDangKyKhoaHoc",
-                    Link = "/instructor/students",
+                    Link = $"/instructor/manager-courses/{khoaHoc.Id}/manager/performance",
                     FromUser = idNguoiDangKi,
                     ItemId = khoaHoc.Id,
                     ItemName = khoaHoc.TieuDe

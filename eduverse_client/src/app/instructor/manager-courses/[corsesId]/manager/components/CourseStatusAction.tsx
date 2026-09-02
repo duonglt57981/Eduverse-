@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { CSSVAR, STATUS } from "@/src/theme/tokens";
@@ -18,6 +19,7 @@ import {
   Alert,
   CircularProgress,
   Tooltip,
+  Snackbar,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
@@ -58,6 +60,7 @@ export default function CourseStatusAction({
   const [danhSachThieu, setDanhSachThieu] = useState<MucThieu[]>([]);
   const [moDialogHuyDuyet, setMoDialogHuyDuyet] = useState(false);
   const [dangHuyDuyet, setDangHuyDuyet] = useState(false);
+  const [loiGuiDuyet, setLoiGuiDuyet] = useState<string | null>(null);
 
   const xuLyXacNhanHuyDuyet = async () => {
     if (!onHuyPheDuyet) return;
@@ -94,7 +97,14 @@ export default function CourseStatusAction({
     }
     try {
       setDangXuLy(true);
+      setLoiGuiDuyet(null);
       await onGuiPheDuyet();
+    } catch (err: any) {
+      setLoiGuiDuyet(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Gửi phê duyệt thất bại",
+      );
     } finally {
       setDangXuLy(false);
     }
@@ -238,9 +248,7 @@ export default function CourseStatusAction({
         {/* <Typography sx={{ fontSize: 13, color: "#ffb4b4", maxWidth: 360 }}>
           Bị từ chối{lyDoTuChoi ? `: ${lyDoTuChoi}` : "."}
         </Typography> */}
-        <Typography
-          sx={{ fontSize: 13, color: CSSVAR.textMuted }}
-        >
+        <Typography sx={{ fontSize: 13, color: CSSVAR.textMuted }}>
           Vui lòng chỉnh sửa và gửi lại
         </Typography>
       </Box>
@@ -443,6 +451,20 @@ export default function CourseStatusAction({
           )}
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={!!loiGuiDuyet}
+        autoHideDuration={6000}
+        onClose={() => setLoiGuiDuyet(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity="error"
+          onClose={() => setLoiGuiDuyet(null)}
+          sx={{ width: "100%" }}
+        >
+          {loiGuiDuyet}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

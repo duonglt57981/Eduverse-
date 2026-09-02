@@ -36,6 +36,7 @@ namespace Eduverse.Api.Controller
         private readonly IService<DanhGia> _danhGiaService;
         private readonly IService<KhuyenMai> _khuyenMaiService;
         private readonly IService<KhuyenMai_KhoaHoc> _khuyenMaiKhoaHocService;
+        private readonly IService<DanhSachYeuThich> _danhSachYeuThichService;
         public DashboardController(
             IService<KhoaHoc> khoaHocService,
             IService<DanhMuc> danhMucService,
@@ -52,6 +53,7 @@ namespace Eduverse.Api.Controller
             IService<KhuyenMai> khuyenMaiService,              
             IService<KhuyenMai_KhoaHoc> khuyenMaiKhoaHocService,
             IService<DanhGia> danhGiaService,
+            IService<DanhSachYeuThich> danhSachYeuThichService,
             UserManager<AppUser> userManager)
         {
             _khoaHocService = khoaHocService;
@@ -70,6 +72,7 @@ namespace Eduverse.Api.Controller
             _danhGiaService = danhGiaService;
             _khuyenMaiService = khuyenMaiService;               
             _khuyenMaiKhoaHocService = khuyenMaiKhoaHocService;
+            _danhSachYeuThichService = danhSachYeuThichService;
         }
 
         [HttpGet]
@@ -176,6 +179,53 @@ namespace Eduverse.Api.Controller
 
             var allCourseIds = courses.Select(c => c.Id).ToList();
             var ratingMap = await GetRatingMapAsync(allCourseIds);
+
+            // Fetch instructor full names (HoTen) instead of login username (CreatedBy)
+            var instructorNameByCourseId = new Dictionary<Guid, string>();
+            try
+            {
+                var courseGiangViens = await _khoaHocGiangVienService.GetQueryable()
+                    .Where(kgv => allCourseIds.Contains(kgv.IdKhoaHoc) && !kgv.IsDeleted && kgv.Visible)
+                    .OrderByDescending(kgv => kgv.LaChuSoHuu)
+                    .ToListAsync();
+
+                var giangVienUserIds = courseGiangViens
+                    .Select(kgv => kgv.IdGiangVien)
+                    .Concat(courses.Where(c => c.CreatedId.HasValue).Select(c => c.CreatedId!.Value))
+                    .Distinct()
+                    .ToList();
+
+                var instructorUsers = await _userManager.Users
+                    .Where(u => giangVienUserIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.HoTen, u.UserName })
+                    .ToListAsync();
+
+                var nameByUserId = instructorUsers.ToDictionary(
+                    u => u.Id,
+                    u => !string.IsNullOrWhiteSpace(u.HoTen) ? u.HoTen : (!string.IsNullOrWhiteSpace(u.UserName) ? u.UserName : "Giảng viên EduVerse")
+                );
+
+                foreach (var c in courses)
+                {
+                    var gv = courseGiangViens.FirstOrDefault(kgv => kgv.IdKhoaHoc == c.Id);
+                    if (gv != null && nameByUserId.TryGetValue(gv.IdGiangVien, out var gvName))
+                    {
+                        instructorNameByCourseId[c.Id] = gvName;
+                    }
+                    else if (c.CreatedId.HasValue && nameByUserId.TryGetValue(c.CreatedId.Value, out var creatorName))
+                    {
+                        instructorNameByCourseId[c.Id] = creatorName;
+                    }
+                    else
+                    {
+                        instructorNameByCourseId[c.Id] = !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error fetching instructor names: " + ex.Message);
+            }
 
             // Calculate progress for each registration
             var registrationIds = userRegistrations.Select(r => r.Id).ToList();
@@ -351,15 +401,18 @@ namespace Eduverse.Api.Controller
                     activeCategoryIds.Contains(link.IdDanhMuc))
                 .ToListAsync();
 
-            var categoryNameById = categories.ToDictionary(
-                cat => cat.Id,
-                cat => cat.TenDanhMuc ?? string.Empty);
+            var categoryNameById = categories
+                .GroupBy(cat => cat.Id)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.First().TenDanhMuc ?? string.Empty);
+
             var categoryNamesByCourseId = courseCategoryLinks
                 .GroupBy(link => link.IdKhoaHoc)
                 .ToDictionary(
                     group => group.Key,
                     group => group
-                        .Select(link => categoryNameById[link.IdDanhMuc])
+                        .Select(link => categoryNameById.TryGetValue(link.IdDanhMuc, out var cn) ? cn : string.Empty)
                         .Where(name => !string.IsNullOrWhiteSpace(name))
                         .Distinct()
                         .ToList());
@@ -370,7 +423,8 @@ namespace Eduverse.Api.Controller
                 id = c.Id.ToString(),
                 title = c.TieuDe,
                 hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                instructor = c.CreatedBy,
+                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
                 studentsCount = c.SoLuongHocVien ?? 0,
                 level = c.CapDo ?? "Trung cấp",
                 diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var r1) ? r1.DiemTrungBinh : (double?)null,
@@ -383,66 +437,145 @@ namespace Eduverse.Api.Controller
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
 
-            //5.5.Khóa học ưu đãi(chỉ voucher do Admin tạo, còn hiệu lực)
+            // 5.5. Khóa học ưu đãi (các khóa học được áp mã giảm giá của Admin)
             var promotedCourses = new List<object>();
             try
             {
                 var nowVoucher = DateTime.Now;
 
                 var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
-                var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
+                var adminIds = adminUsers.Select(u => u.Id).ToList();
 
-                var activeAdminVouchers = await _khuyenMaiService.GetQueryable()
-                    .Where(km => km.CreatedId.HasValue
-                              && adminIds.Contains(km.CreatedId.Value)
-                              && (!km.NgayKetThuc.HasValue || km.NgayKetThuc.Value >= nowVoucher)
-                              && (!km.SoLuongHieuLuc.HasValue || km.SoLuongHieuLuc.Value > 0))
-                    .Select(km => new { km.Id, km.MaGiamGia, km.PhanTramGiam, km.NgayKetThuc })
+                var allActiveVouchers = await _khuyenMaiService.GetQueryable()
+                    .Where(km => (!km.NgayKetThuc.HasValue || km.NgayKetThuc.Value >= nowVoucher)
+                              && (!km.SoLuongHieuLuc.HasValue || km.SoLuongHieuLuc.Value > 0)
+                              && !km.IsDeleted)
+                    .Select(km => new { km.Id, km.MaGiamGia, km.PhanTramGiam, km.NgayKetThuc, km.CreatedId })
                     .ToListAsync();
 
-                var activeVoucherIds = activeAdminVouchers.Select(v => v.Id).ToList();
+                // Lọc các voucher do Admin tạo
+                var targetAdminVouchers = (adminIds.Any()
+                    ? allActiveVouchers.Where(km => km.CreatedId.HasValue && adminIds.Contains(km.CreatedId.Value)).ToList()
+                    : allActiveVouchers).ToList();
 
-                if (activeVoucherIds.Any())
+                if (!targetAdminVouchers.Any())
+                {
+                    targetAdminVouchers = allActiveVouchers;
+                }
+
+                var targetVoucherIds = targetAdminVouchers.Select(v => v.Id).ToList();
+
+                if (targetVoucherIds.Any())
                 {
                     var links = await _khuyenMaiKhoaHocService.GetQueryable()
-                        .Where(l => l.IdKhuyenMai.HasValue && activeVoucherIds.Contains(l.IdKhuyenMai.Value)
-                                 && l.IdKhoaHoc.HasValue)
+                        .Where(l => l.IdKhuyenMai.HasValue && targetVoucherIds.Contains(l.IdKhuyenMai.Value)
+                                 && l.IdKhoaHoc.HasValue && !l.IsDeleted)
                         .ToListAsync();
 
                     var voucherByCourseId = links
                         .Where(l => l.IdKhoaHoc.HasValue && l.IdKhuyenMai.HasValue)
                         .GroupBy(l => l.IdKhoaHoc!.Value)
-                        .ToDictionary(g => g.Key, g => activeAdminVouchers.First(v => v.Id == g.First().IdKhuyenMai!.Value));
+                        .ToDictionary(
+                            g => g.Key,
+                            g => targetAdminVouchers.FirstOrDefault(v => v.Id == g.First().IdKhuyenMai!.Value)
+                        );
 
-                    var promotedCourseIds = voucherByCourseId.Keys.ToList();
+                    var promotedCourseIds = voucherByCourseId.Where(kv => kv.Value != null).Select(kv => kv.Key).ToList();
 
                     var promotedCourseEntities = courses
-                        .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id))
+                        .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id) && c.Gia > 0 && c.LoaiKhoaHoc != "Khóa học miễn phí")
                         .ToList();
 
-                    promotedCourses = promotedCourseEntities.Select((c, i) =>
+                    if (promotedCourseEntities.Any())
                     {
-                        var voucher = voucherByCourseId[c.Id];
-                        return (object)new
+                        promotedCourses = promotedCourseEntities.Select((c, i) =>
                         {
-                            id = c.Id.ToString(),
-                            title = c.TieuDe,
-                            hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                            instructor = c.CreatedBy ?? "An Danh",
-                            rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
-                            soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
-                            studentsCount = c.SoLuongHocVien ?? 0,
-                            level = c.CapDo ?? "Trung cấp",
-                            gia = c.Gia,
-                            giaGoc = c.GiaGoc,
-                            loaiKhoaHoc = c.LoaiKhoaHoc,
-                            daDangKy = registeredCourseIds.Contains(c.Id),
-                            maGiamGia = voucher.MaGiamGia,
-                            phanTramGiam = voucher.PhanTramGiam,
-                            voucherHetHan = voucher.NgayKetThuc,
-                            thumbnailGradient = GetGradient(i)
-                        };
-                    }).ToList();
+                            var voucher = voucherByCourseId.GetValueOrDefault(c.Id);
+                            var discountPercent = voucher?.PhanTramGiam ?? 0;
+                            var originalPrice = c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia ? c.GiaGoc.Value : c.Gia;
+                            var salePrice = discountPercent > 0 ? (c.Gia * (100 - discountPercent) / 100) : c.Gia;
+
+                            return (object)new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rpm2) ? rpm2.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = salePrice,
+                                giaGoc = originalPrice,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                maGiamGia = voucher?.MaGiamGia,
+                                phanTramGiam = discountPercent,
+                                voucherHetHan = voucher?.NgayKetThuc,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i)
+                            };
+                        }).ToList();
+                    }
+                }
+
+                // Fallback: Nếu chưa có khóa học nào được gán voucher, hiển thị các khóa học trả phí với ưu đãi hệ thống
+                if (!promotedCourses.Any())
+                {
+                    var samplePromoCourses = unregisteredCourses
+                        .Where(c => c.Gia > 0 && c.LoaiKhoaHoc != "Khóa học miễn phí")
+                        .OrderByDescending(c => c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia)
+                        .ThenByDescending(c => c.CreatedDate)
+                        .Take(10)
+                        .ToList();
+
+                    if (!samplePromoCourses.Any())
+                    {
+                        samplePromoCourses = courses.Where(c => c.Gia > 0 && c.LoaiKhoaHoc != "Khóa học miễn phí").Take(10).ToList();
+                    }
+
+                    if (samplePromoCourses.Any())
+                    {
+                        promotedCourses = samplePromoCourses.Select((c, i) =>
+                        {
+                            var originalPrice = (c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia)
+                                ? c.GiaGoc.Value
+                                : (c.Gia > 0 ? (long)(c.Gia * 1.25) : c.Gia);
+                            var discountPercent = (originalPrice > c.Gia && originalPrice > 0)
+                                ? (int)Math.Round((double)(originalPrice - c.Gia) * 100.0 / (double)originalPrice)
+                                : 20;
+
+                            return (object)new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rpm2) ? rpm2.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = c.Gia,
+                                giaGoc = originalPrice,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                maGiamGia = "ADMINDEALS",
+                                phanTramGiam = discountPercent > 0 ? discountPercent : 20,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i)
+                            };
+                        }).ToList();
+                    }
                 }
             }
             catch (Exception ex)
@@ -459,13 +592,14 @@ namespace Eduverse.Api.Controller
                 title = premiumCourse?.TieuDe ?? "Thiết kế hệ thống chuyên sâu",
                 hinhAnhKhoaHoc = premiumCourse?.HinhAnhKhoaHoc,
                 description = premiumCourse?.MoTa ?? "Học cách thiết kế hệ thống có tính sẵn sàng cao, chịu tải hàng triệu người dùng từ các chuyên gia đầu ngành.",
-                instructor = premiumCourse?.CreatedBy?? "An Danh",
+                instructor = premiumCourse != null ? instructorNameByCourseId.GetValueOrDefault(premiumCourse.Id, !string.IsNullOrWhiteSpace(premiumCourse.CreatedBy) ? premiumCourse.CreatedBy : "EduVerse") : "EduVerse",
+                tenGiangVien = premiumCourse != null ? instructorNameByCourseId.GetValueOrDefault(premiumCourse.Id, !string.IsNullOrWhiteSpace(premiumCourse.CreatedBy) ? premiumCourse.CreatedBy : "EduVerse") : "EduVerse",
                 rating = premiumCourse != null && ratingMap.TryGetValue(premiumCourse.Id, out var rp) ? rp.DiemTrungBinh : (double?)null,
                 soLuongDanhGia = premiumCourse != null && ratingMap.TryGetValue(premiumCourse.Id, out var rpb) ? rpb.SoLuong : 0,
                 studentsCount = premiumCourse?.SoLuongHocVien ?? 0,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
                 gia = premiumCourse?.Gia ?? 0,
-                giagoc = premiumCourse?.GiaGoc,
+                giaGoc = premiumCourse?.GiaGoc,
                 loaiKhoaHoc = premiumCourse?.LoaiKhoaHoc,
                 daDangKy = premiumCourse != null && registeredCourseIds.Contains(premiumCourse.Id),
                 thumbnailGradient = "linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)",
@@ -474,40 +608,356 @@ namespace Eduverse.Api.Controller
                     id = c.Id.ToString(),
                     title = c.TieuDe,
                     hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                    instructor = c.CreatedBy ?? "An Danh",
+                    instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                    tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
                     rating = ratingMap.TryGetValue(c.Id, out var rr) ? rr.DiemTrungBinh : (double?)null,
                     soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rrb) ? rrb.SoLuong : 0,
                     studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Cơ bản",
                     gia = c.Gia,
-                    giagoc = c.GiaGoc,
+                    giaGoc = c.GiaGoc,
                     loaiKhoaHoc = c.LoaiKhoaHoc,
                     daDangKy = registeredCourseIds.Contains(c.Id),
                     thumbnailGradient = GetGradient(i + 1)
                 }).ToList()
             };
 
-            // 7. History recommendation
-            var historyRecommendation = new
-            {
-                basedOnCourse = registeredCourses.FirstOrDefault()?.TieuDe ?? "HTML & CSS Nâng Cao",
-                courses = courses.Where(c => !registeredCourseIds.Contains(c.Id)).Take(3).Select((c, i) => new
+            // 6.5. Featured courses (Các khóa học nổi bật - đánh giá cao nhất)
+            var trendingCourses = unregisteredCourses
+                .OrderByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.DiemTrungBinh : 0)
+                .ThenByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.SoLuong : 0)
+                .ThenByDescending(c => c.SoLuongHocVien ?? 0)
+                .Take(12)
+                .Select((c, i) => new
                 {
                     id = c.Id.ToString(),
+                    tieuDe = c.TieuDe,
                     title = c.TieuDe,
                     hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                    instructor = c.CreatedBy ?? "An Danh",
+                    instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                    tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                    rating = ratingMap.TryGetValue(c.Id, out var rt) ? rt.DiemTrungBinh : (double?)null,
+                    diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rtd) ? rtd.DiemTrungBinh : (double?)null,
+                    soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rtb) ? rtb.SoLuong : 0,
+                    studentsCount = c.SoLuongHocVien ?? 0,
+                    soLuongHocVien = c.SoLuongHocVien ?? 0,
+                    level = c.CapDo ?? "Trung cấp",
+                    capDo = c.CapDo ?? "Trung cấp",
+                    gia = c.Gia,
+                    giaGoc = c.GiaGoc,
+                    loaiKhoaHoc = c.LoaiKhoaHoc,
+                    daDangKy = false,
+                    categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                    thumbnailGradient = GetGradient(i)
+                }).ToList();
+
+            // 7. History recommendation (Vì bạn đã học 1 chủ đề nào đó thì hiện các khóa học liên quan)
+            var historyRecommendations = new List<object>();
+            var recommendedCourseIdsUsed = new HashSet<Guid>();
+
+            if (registeredCourses.Any())
+            {
+                var regDateMap = userRegistrations
+                    .GroupBy(r => r.IdKhoaHoc)
+                    .ToDictionary(g => g.Key, g => g.Max(r => r.CreatedDate));
+
+                var sortedRegisteredCourses = registeredCourses
+                    .OrderByDescending(c => regDateMap.GetValueOrDefault(c.Id, DateTime.MinValue))
+                    .ToList();
+
+                foreach (var learnedCourse in sortedRegisteredCourses)
+                {
+                    var learnedCatIds = courseCategoryLinks
+                        .Where(l => l.IdKhoaHoc == learnedCourse.Id)
+                        .Select(l => l.IdDanhMuc)
+                        .Distinct()
+                        .ToList();
+
+                    var matchedCourses = new List<KhoaHoc>();
+
+                    if (learnedCatIds.Any())
+                    {
+                        matchedCourses = courses
+                            .Where(c => !registeredCourseIds.Contains(c.Id) &&
+                                        !recommendedCourseIdsUsed.Contains(c.Id) &&
+                                        courseCategoryLinks.Any(l => l.IdKhoaHoc == c.Id && learnedCatIds.Contains(l.IdDanhMuc)))
+                            .OrderByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.DiemTrungBinh : 0)
+                            .ThenByDescending(c => c.SoLuongHocVien ?? 0)
+                            .Take(10)
+                            .ToList();
+                    }
+
+                    // Nếu chưa khớp theo category ID, tìm theo từ khóa chủ đề trong tiêu đề
+                    if (!matchedCourses.Any())
+                    {
+                        var words = (learnedCourse.TieuDe ?? "")
+                            .Split(new[] { ' ', '-', ',', '/', ':', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Where(w => w.Length > 2)
+                            .ToList();
+
+                        if (words.Any())
+                        {
+                            matchedCourses = courses
+                                .Where(c => !registeredCourseIds.Contains(c.Id) &&
+                                            !recommendedCourseIdsUsed.Contains(c.Id) &&
+                                            words.Any(w => (c.TieuDe ?? "").Contains(w, StringComparison.OrdinalIgnoreCase)))
+                                .Take(10)
+                                .ToList();
+                        }
+                    }
+
+                    if (matchedCourses.Any())
+                    {
+                        foreach (var mc in matchedCourses)
+                        {
+                            recommendedCourseIdsUsed.Add(mc.Id);
+                        }
+
+                        var catNames = learnedCatIds
+                            .Where(id => categoryNameById.ContainsKey(id))
+                            .Select(id => categoryNameById[id])
+                            .ToList();
+                        var categoryTitle = catNames.FirstOrDefault() ?? string.Empty;
+
+                        historyRecommendations.Add(new
+                        {
+                            basedOnCourseId = learnedCourse.Id.ToString(),
+                            basedOnCourse = learnedCourse.TieuDe,
+                            categoryName = categoryTitle,
+                            categoryNames = catNames,
+                            courses = matchedCourses.Select((c, i) => new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rh) ? rh.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rhd) ? rhd.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rhb) ? rhb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = c.Gia,
+                                giaGoc = c.GiaGoc,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i + 2)
+                            }).ToList()
+                        });
+
+                        if (historyRecommendations.Count >= 3) break;
+                    }
+                }
+            }
+
+            // Fallback nếu học viên chưa đăng ký khóa học nào: Gợi ý theo các chủ đề nổi bật của hệ thống
+            if (!historyRecommendations.Any())
+            {
+                var topCats = categories.Take(2).ToList();
+                foreach (var cat in topCats)
+                {
+                    var catCourseIds = courseCategoryLinks
+                        .Where(l => l.IdDanhMuc == cat.Id)
+                        .Select(l => l.IdKhoaHoc)
+                        .ToList();
+
+                    var catCourses = courses
+                        .Where(c => catCourseIds.Contains(c.Id) && !recommendedCourseIdsUsed.Contains(c.Id))
+                        .OrderByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.DiemTrungBinh : 0)
+                        .ThenByDescending(c => c.SoLuongHocVien ?? 0)
+                        .Take(10)
+                        .ToList();
+
+                    if (catCourses.Any())
+                    {
+                        foreach (var mc in catCourses) recommendedCourseIdsUsed.Add(mc.Id);
+
+                        historyRecommendations.Add(new
+                        {
+                            basedOnCourse = cat.TenDanhMuc ?? "Chủ đề nổi bật",
+                            categoryName = cat.TenDanhMuc ?? "Chủ đề nổi bật",
+                            categoryNames = new List<string> { cat.TenDanhMuc ?? string.Empty },
+                            courses = catCourses.Select((c, i) => new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rh) ? rh.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rhd) ? rhd.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rhb) ? rhb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = c.Gia,
+                                giaGoc = c.GiaGoc,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i + 2)
+                            }).ToList()
+                        });
+                    }
+                }
+
+                if (!historyRecommendations.Any())
+                {
+                    var sampleMatched = courses.Take(8).ToList();
+                    if (sampleMatched.Any())
+                    {
+                        historyRecommendations.Add(new
+                        {
+                            basedOnCourse = "Kỹ năng chuyên môn",
+                            categoryName = "Kỹ năng chuyên môn",
+                            categoryNames = new List<string> { "Kỹ năng chuyên môn" },
+                            courses = sampleMatched.Select((c, i) => new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rh) ? rh.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rhd) ? rhd.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rhb) ? rhb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = c.Gia,
+                                giaGoc = c.GiaGoc,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i + 2)
+                            }).ToList()
+                        });
+                    }
+                }
+            }
+
+            var primaryHistoryRec = historyRecommendations.FirstOrDefault() ?? (object)new
+            {
+                basedOnCourse = registeredCourses.FirstOrDefault()?.TieuDe ?? (courses.FirstOrDefault()?.TieuDe ?? "Khóa học nổi bật"),
+                categoryName = string.Empty,
+                courses = unregisteredCourses.Take(6).Select((c, i) => new
+                {
+                    id = c.Id.ToString(),
+                    tieuDe = c.TieuDe,
+                    title = c.TieuDe,
+                    hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                    instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                    tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
                     rating = ratingMap.TryGetValue(c.Id, out var rh) ? rh.DiemTrungBinh : (double?)null,
+                    diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rhd) ? rhd.DiemTrungBinh : (double?)null,
                     soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rhb) ? rhb.SoLuong : 0,
                     studentsCount = c.SoLuongHocVien ?? 0,
+                    soLuongHocVien = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Trung cấp",
+                    capDo = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
-                    giagoc = c.GiaGoc,
+                    giaGoc = c.GiaGoc,
                     loaiKhoaHoc = c.LoaiKhoaHoc,
-                    daDangKy = registeredCourseIds.Contains(c.Id),
+                    daDangKy = false,
+                    categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
                     thumbnailGradient = GetGradient(i + 3)
                 }).ToList()
             };
+
+            // 8. Wishlist recommendations (Vì bạn đã đưa ... vào danh sách mong ước)
+            var wishlistRecommendations = new List<object>();
+            try
+            {
+                var userFavorites = await _danhSachYeuThichService.GetQueryable()
+                    .Where(yt => yt.IdNguoiDung == loggedInUserId && !yt.IsDeleted && yt.IdKhoaHoc.HasValue)
+                    .OrderByDescending(yt => yt.CreatedDate)
+                    .ToListAsync();
+
+                var favoriteCourseIds = userFavorites.Select(f => f.IdKhoaHoc!.Value).Distinct().ToList();
+                var favoriteCourses = courses.Where(c => favoriteCourseIds.Contains(c.Id)).ToList();
+
+                foreach (var favCourse in favoriteCourses)
+                {
+                    var favCatIds = courseCategoryLinks
+                        .Where(l => l.IdKhoaHoc == favCourse.Id)
+                        .Select(l => l.IdDanhMuc)
+                        .Distinct()
+                        .ToList();
+
+                    if (!favCatIds.Any()) continue;
+
+                    var catNames = favCatIds
+                        .Where(id => categoryNameById.ContainsKey(id))
+                        .Select(id => categoryNameById[id])
+                        .ToList();
+                    var categoryTitle = catNames.FirstOrDefault() ?? string.Empty;
+
+                    var matchedCourses = courses
+                        .Where(c => c.Id != favCourse.Id &&
+                                    !registeredCourseIds.Contains(c.Id) &&
+                                    !favoriteCourseIds.Contains(c.Id) &&
+                                    !recommendedCourseIdsUsed.Contains(c.Id) &&
+                                    courseCategoryLinks.Any(l => l.IdKhoaHoc == c.Id && favCatIds.Contains(l.IdDanhMuc)))
+                        .OrderByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.DiemTrungBinh : 0)
+                        .ThenByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.SoLuong : 0)
+                        .ThenByDescending(c => c.SoLuongHocVien ?? 0)
+                        .Take(10)
+                        .ToList();
+
+                    if (matchedCourses.Any())
+                    {
+                        foreach (var mc in matchedCourses)
+                        {
+                            recommendedCourseIdsUsed.Add(mc.Id);
+                        }
+
+                        wishlistRecommendations.Add(new
+                        {
+                            basedOnCourseId = favCourse.Id.ToString(),
+                            basedOnCourse = favCourse.TieuDe,
+                            categoryName = categoryTitle,
+                            categoryNames = catNames,
+                            courses = matchedCourses.Select((c, i) => new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rh) ? rh.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rhd) ? rhd.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rhb) ? rhb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = c.Gia,
+                                giaGoc = c.GiaGoc,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i + 4)
+                            }).ToList()
+                        });
+
+                        if (wishlistRecommendations.Count >= 2) break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error calculating wishlist recommendations: " + ex.Message);
+            }
+
             return new DataResponse<object>
             {
                 Status = true,
@@ -519,9 +969,12 @@ namespace Eduverse.Api.Controller
                     nextSectors = nextSectors,
                     interestedSkills = interestedSkills,
                     skillsCourses = skillCourses,
+                    trendingCourses = trendingCourses,
                     promotedCourses = promotedCourses,
                     premiumSelection = premiumSelection,
-                    historyRecommendation = historyRecommendation
+                    historyRecommendation = primaryHistoryRec,
+                    historyRecommendations = historyRecommendations,
+                    wishlistRecommendations = wishlistRecommendations
                 }
             };
         }
@@ -1052,7 +1505,7 @@ namespace Eduverse.Api.Controller
 
             // (Bỏ dữ liệu giả: dùng số liệu thật kể cả khi bằng 0)
 
-            // 7. Best Selling Courses
+            // 7. Fetch courses list (dùng chung cho Best Selling, Recent Activities, Course trend...)
             var courses = new List<KhoaHoc>();
             try
             {
@@ -1063,33 +1516,77 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching courses list: " + ex.Message);
             }
 
+            // 7.1 Best Selling Courses — Top 3 khóa học TRẢ PHÍ có doanh thu (phần admin thực nhận) cao nhất
             var bestSellingCourses = new List<object>();
             try
             {
-                var courseRegs = allRegistrations
-                    .GroupBy(r => r.IdKhoaHoc)
-                    .Select(g => new { CourseId = g.Key, Count = g.Count() })
-                    .OrderByDescending(x => x.Count)
-                    .ToList();
+                var paidCourseIds = courses.Where(c => (c.Gia ?? 0) > 0).Select(c => c.Id).ToHashSet();
 
-                int totalRegs = allRegistrations.Count;
-                foreach (var item in courseRegs.Take(3))
+                if (paidCourseIds.Any())
                 {
-                    var course = courses.FirstOrDefault(c => c.Id == item.CourseId);
-                    if (course != null)
+                    var donHangsDaTT_BSC = await _donHangService.GetQueryable()
+                        .Where(d => !d.IsDeleted && d.TrangThai == 1)
+                        .ToListAsync();
+                    var donHangIds_BSC = donHangsDaTT_BSC.Select(d => d.Id).ToList();
+
+                    var chiTietAll_BSC = await _donHangChiTietService.GetQueryable()
+                        .Where(ct => !ct.IsDeleted && ct.IdDonHang.HasValue && donHangIds_BSC.Contains(ct.IdDonHang.Value))
+                        .ToListAsync();
+
+                    var voucherAll_BSC = await _donHangKhuyenMaiService.GetQueryable()
+                        .Where(km => !km.IsDeleted && km.IdDonHang.HasValue && donHangIds_BSC.Contains(km.IdDonHang.Value))
+                        .ToListAsync();
+
+                    var giamTheoDonHangVaKhoaHoc = voucherAll_BSC
+                        .Where(km => km.IdKhoaHocDuocGiam.HasValue)
+                        .GroupBy(km => (km.IdDonHang!.Value, km.IdKhoaHocDuocGiam!.Value))
+                        .ToDictionary(g => g.Key, g => g.Sum(x => x.SoTienGiam ?? 0));
+
+                    var purchaseCountByCourse = new Dictionary<Guid, int>();
+                    var revenueByCourse = new Dictionary<Guid, double>();
+
+                    // Đếm SỐ LƯỢT MUA = số dòng chi tiết trong các đơn hàng đã thanh toán thành công, theo từng khóa học trả phí
+                    foreach (var ct in chiTietAll_BSC)
                     {
-                        int percent = totalRegs > 0 ? (int)Math.Round((double)item.Count / totalRegs * 100) : 0;
-                        bestSellingCourses.Add(new
-                        {
-                            title = course.TieuDe,
-                            percentage = percent
-                        });
+                        if (!ct.IdKhoaHoc.HasValue || !paidCourseIds.Contains(ct.IdKhoaHoc.Value)) continue;
+                        if (!ct.IdDonHang.HasValue) continue;
+
+                        purchaseCountByCourse[ct.IdKhoaHoc.Value] =
+                            purchaseCountByCourse.GetValueOrDefault(ct.IdKhoaHoc.Value, 0) + 1;
+
+                        var giaDong = ct.GiaLucDat ?? 0;
+                        var giamDung = giamTheoDonHangVaKhoaHoc
+                            .GetValueOrDefault((ct.IdDonHang.Value, ct.IdKhoaHoc.Value), 0);  // giảm giá đúng khóa này, không ước lượng
+                        var thucThuDong = Math.Max(0, giaDong - giamDung);
+                        var adminNhanDuoc = thucThuDong * 0.3;
+
+                        revenueByCourse[ct.IdKhoaHoc.Value] =
+                            revenueByCourse.GetValueOrDefault(ct.IdKhoaHoc.Value, 0) + adminNhanDuoc;
                     }
+
+                    bestSellingCourses = purchaseCountByCourse
+                        .Select(kv => new
+                        {
+                            PurchaseCount = kv.Value,
+                            Revenue = revenueByCourse.GetValueOrDefault(kv.Key, 0),
+                            Course = courses.FirstOrDefault(c => c.Id == kv.Key)
+                        })
+                        .Where(x => x.Course != null)
+                        .OrderByDescending(x => x.PurchaseCount)
+                        .ThenByDescending(x => x.Revenue)
+                        .Take(3)
+                        .Select(x => (object)new
+                        {
+                            title = x.Course!.TieuDe,
+                            purchaseCount = x.PurchaseCount,
+                            revenue = Math.Round(x.Revenue, 0)
+                        })
+                        .ToList();
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error grouping course registrations: " + ex.Message);
+                Console.WriteLine("Error computing best selling courses: " + ex.Message);
             }
 
             // (Bỏ dữ liệu giả: danh sách khóa học bán chạy lấy từ đăng ký thật)

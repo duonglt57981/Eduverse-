@@ -76,6 +76,7 @@ export const EduAvatar = React.forwardRef<HTMLDivElement, EduAvatarProps>(
 
     // Reset imgError khi URL src thay đổi
     useEffect(() => {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImgError(false);
     }, [src]);
 

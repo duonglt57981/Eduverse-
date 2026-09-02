@@ -242,13 +242,27 @@ export const QuizResult = ({
 
           <Divider sx={{ borderColor: alpha(scoreColor, 0.08) }} />
 
-          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns:
+                soLanLam != null
+                  ? { xs: "1fr", sm: "repeat(3, 1fr)" }
+                  : { xs: "1fr", sm: "1fr 1fr" },
+            }}
+          >
             <Box
               sx={{
-                px: 4,
+                px: { xs: 3, sm: 3.5, md: 4 },
                 py: 2.25,
-                borderRight: `1px solid ${alpha(scoreColor, 0.08)}`,
-                borderBottom: `1px solid ${alpha(scoreColor, 0.08)}`,
+                borderRight: {
+                  xs: "none",
+                  sm: `1px solid ${alpha(scoreColor, 0.08)}`,
+                },
+                borderBottom: {
+                  xs: `1px solid ${alpha(scoreColor, 0.08)}`,
+                  sm: "none",
+                },
               }}
             >
               <Stack
@@ -279,9 +293,22 @@ export const QuizResult = ({
 
             <Box
               sx={{
-                px: 4,
+                px: { xs: 3, sm: 3.5, md: 4 },
                 py: 2.25,
-                borderBottom: `1px solid ${alpha(scoreColor, 0.08)}`,
+                borderRight:
+                  soLanLam != null
+                    ? {
+                        xs: "none",
+                        sm: `1px solid ${alpha(scoreColor, 0.08)}`,
+                      }
+                    : "none",
+                borderBottom:
+                  soLanLam != null
+                    ? {
+                        xs: `1px solid ${alpha(scoreColor, 0.08)}`,
+                        sm: "none",
+                      }
+                    : "none",
               }}
             >
               <Stack
@@ -311,7 +338,7 @@ export const QuizResult = ({
             </Box>
 
             {soLanLam != null && (
-              <Box sx={{ px: 4, py: 2.25 }}>
+              <Box sx={{ px: { xs: 3, sm: 3.5, md: 4 }, py: 2.25 }}>
                 <Stack
                   direction="row"
                   spacing={1.5}

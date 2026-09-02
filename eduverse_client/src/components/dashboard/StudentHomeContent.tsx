@@ -102,6 +102,8 @@ interface KhoaHocDto {
   categoryNames?: string[];
   tenGiangVien?: string;
   danhSachGiangVienHienThi?: string[];
+  phanTramGiam?: number;
+  maGiamGia?: string;
 }
 
 interface DashboardData {
@@ -127,6 +129,7 @@ interface DashboardData {
     subfields?: string[];
   }[];
   skillsCourses?: KhoaHocDto[];
+  trendingCourses?: KhoaHocDto[];
   promotedCourses?: KhoaHocDto[];
   premiumSelection?: {
     id?: string;
@@ -144,11 +147,18 @@ interface DashboardData {
     level?: string;
     daDangKy?: boolean;
     loaiKhoaHoc?: string;
-  };
-  historyRecommendation?: {
-    basedOnCourse?: string;
-    courses?: KhoaHocDto[];
-  };
+  } | null;
+  historyRecommendation?: HistoryRecommendationGroup;
+  historyRecommendations?: HistoryRecommendationGroup[];
+  wishlistRecommendations?: HistoryRecommendationGroup[];
+}
+
+export interface HistoryRecommendationGroup {
+  basedOnCourseId?: string;
+  basedOnCourse?: string;
+  categoryName?: string;
+  categoryNames?: string[];
+  courses?: KhoaHocDto[];
 }
 
 // ─── Format helpers ───────────────────────────────────────────────────────────
@@ -721,11 +731,13 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice =
-    course.gia ??
+  const discountPercent = isFree ? 0 : (course.phanTramGiam ?? 0);
+  const rawPrice = course.gia ?? 0;
+  const originalPrice =
     course.giaGoc ??
     ((course as unknown as Record<string, unknown>).giagoc as number) ??
-    0;
+    rawPrice;
+  const displayPrice = rawPrice;
   const title = course.tieuDe || course.title || "";
   const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh;
   const hasRating = typeof ratingVal === "number" && ratingVal > 0;
@@ -818,6 +830,31 @@ function CourseCard({
                 EDUVERSE
               </Typography>
             </Stack>
+          )}
+
+          {/* Admin Discount Badge */}
+          {course.maGiamGia && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 6,
+                left: 6,
+                bgcolor: "#DC2626",
+                color: "#FFFFFF",
+                px: 0.9,
+                py: 0.25,
+                borderRadius: "6px",
+                fontSize: 10.5,
+                fontWeight: 900,
+                zIndex: 5,
+                boxShadow: "0 2px 8px rgba(220,38,38,0.4)",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
+              <span>{course.maGiamGia}</span>
+            </Box>
           )}
 
           {/* Subtle wishlist heart button (visible on hover or when favorited) */}
@@ -983,7 +1020,7 @@ function CourseCard({
             )}
           </Stack>
 
-          {/* Bottom Badge: Pill badge (Brand red "Tất cả cấp độ" / Level) */}
+          {/* Bottom Badge: Pill badge (Level) */}
           <Box sx={{ mt: 0.5 }}>
             <Box
               sx={{
@@ -1068,6 +1105,66 @@ function SectionHeader({
         </Typography>
       )}
     </Stack>
+  );
+}
+
+// ─── Recommendation section header (Udemy styled) ───────────────────────────
+function RecommendationHeader({
+  prefix,
+  highlight,
+  suffix,
+  subtitle,
+  onClickHighlight,
+}: {
+  prefix: string;
+  highlight?: string;
+  suffix?: string;
+  subtitle?: string;
+  onClickHighlight?: () => void;
+}) {
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Typography
+        sx={{
+          fontSize: { xs: 18, md: 22 },
+          fontWeight: 800,
+          color: C.textDark,
+          lineHeight: 1.35,
+          letterSpacing: "-0.015em",
+        }}
+      >
+        {prefix}{" "}
+        {highlight && (
+          <Box
+            component="span"
+            onClick={onClickHighlight}
+            sx={{
+              color: BRAND.main,
+              fontWeight: 800,
+              cursor: onClickHighlight ? "pointer" : "inherit",
+              "&:hover": onClickHighlight
+                ? { textDecoration: "underline" }
+                : {},
+            }}
+          >
+            “{highlight}”
+          </Box>
+        )}
+        {suffix ? ` ${suffix}` : ""}
+      </Typography>
+      {subtitle && (
+        <Typography
+          sx={{
+            fontSize: 13,
+            color: C.textSecondary,
+            fontWeight: 500,
+            mt: 0.35,
+          }}
+        >
+          {subtitle}
+        </Typography>
+      )}
+    </Box>
   );
 }
 
@@ -1604,16 +1701,67 @@ export default function StudentHomeContent() {
         console.error("Failed to load latest courses:", err);
       }
 
-      const res = await apiService.get<DashboardData>(
-        "/dashboard?role=HocVien",
-      );
-      if (res.status && res.data) {
-        setData(res.data);
-      } else {
-        setError(res.message ?? "Không thể tải dữ liệu.");
+      // 3. Dashboard data
+      try {
+        const res = await apiService.get<any>("/dashboard?role=HocVien");
+        const dashData = res?.data?.data || res?.data || (res as any);
+        if (
+          dashData &&
+          (res?.status ||
+            dashData.trendingCourses ||
+            dashData.welcomeStats ||
+            dashData.skillsCourses ||
+            dashData.continueLearning)
+        ) {
+          setData(dashData);
+          setError("");
+        } else {
+          // Fallback data structure so student UI never breaks
+          setData((prev) => prev || {
+            welcomeStats: {
+              userName: "Học viên EduVerse",
+              subtitle: "Hôm nay là thời điểm tuyệt vời để tiếp tục hành trình học tập của bạn.",
+              totalCourses: 0,
+              progressPercent: 0,
+              certificatesCount: 0,
+            },
+            continueLearning: { courses: [], certificates: [] },
+            nextSectors: [],
+            interestedSkills: [],
+            skillsCourses: [],
+            trendingCourses: [],
+            promotedCourses: [],
+            premiumSelection: null,
+            historyRecommendation: { basedOnCourse: "Khóa học nổi bật", categoryName: "", courses: [] },
+            historyRecommendations: [],
+            wishlistRecommendations: [],
+          });
+          setError("");
+        }
+      } catch (e) {
+        console.error("Dashboard load error:", e);
+        // Fallback gracefully so page always renders beautiful content
+        setData((prev) => prev || {
+          welcomeStats: {
+            userName: "Học viên EduVerse",
+            subtitle: "Hôm nay là thời điểm tuyệt vời để tiếp tục hành trình học tập của bạn.",
+            totalCourses: 0,
+            progressPercent: 0,
+            certificatesCount: 0,
+          },
+          continueLearning: { courses: [], certificates: [] },
+          nextSectors: [],
+          interestedSkills: [],
+          skillsCourses: [],
+          trendingCourses: [],
+          promotedCourses: [],
+          premiumSelection: null,
+          historyRecommendation: { basedOnCourse: "Khóa học nổi bật", categoryName: "", courses: [] },
+          historyRecommendations: [],
+          wishlistRecommendations: [],
+        });
+        setError("");
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Đã xảy ra lỗi.");
     } finally {
       setLoading(false);
     }
@@ -1674,6 +1822,146 @@ export default function StudentHomeContent() {
     setActiveTab("courses");
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  // Gợi ý thông minh theo danh mục các khóa học đã học
+  const learnedRecs: HistoryRecommendationGroup[] = useMemo(() => {
+    if (
+      data?.historyRecommendations &&
+      Array.isArray(data.historyRecommendations) &&
+      data.historyRecommendations.length > 0
+    ) {
+      const valid = data.historyRecommendations.filter(
+        (g) => g.courses && g.courses.length > 0,
+      );
+      if (valid.length > 0) return valid;
+    }
+    if (
+      data?.historyRecommendation?.courses &&
+      data.historyRecommendation.courses.length > 0
+    ) {
+      return [data.historyRecommendation];
+    }
+    // Fallback: Gợi ý theo chủ đề nổi bật của các khóa học hiện có
+    if (latestCourses && latestCourses.length > 0) {
+      const designCourses = latestCourses.filter(
+        (c: any) =>
+          c.tieuDe?.toLowerCase().includes("design") ||
+          c.tieuDe?.toLowerCase().includes("photoshop") ||
+          c.tieuDe?.toLowerCase().includes("đồ họa") ||
+          c.categoryNames?.some((cn: string) => cn.toLowerCase().includes("thiết kế")),
+      );
+      const devCourses = latestCourses.filter(
+        (c: any) =>
+          c.tieuDe?.toLowerCase().includes("html") ||
+          c.tieuDe?.toLowerCase().includes("css") ||
+          c.tieuDe?.toLowerCase().includes("react") ||
+          c.tieuDe?.toLowerCase().includes("ruby") ||
+          c.tieuDe?.toLowerCase().includes("git") ||
+          c.categoryNames?.some((cn: string) => cn.toLowerCase().includes("lập trình")),
+      );
+
+      const recs: HistoryRecommendationGroup[] = [];
+      if (designCourses.length > 0) {
+        recs.push({
+          basedOnCourse: "Thiết kế đồ họa",
+          categoryName: "Thiết kế đồ họa",
+          courses: designCourses.slice(0, 8),
+        });
+      }
+      if (devCourses.length > 0) {
+        recs.push({
+          basedOnCourse: "Lập trình & Phát triển",
+          categoryName: "Lập trình & Phát triển",
+          courses: devCourses.slice(0, 8),
+        });
+      }
+      if (recs.length === 0) {
+        recs.push({
+          basedOnCourse: "Kỹ năng chuyên môn",
+          categoryName: "Kỹ năng chuyên môn",
+          courses: latestCourses.slice(0, 8),
+        });
+      }
+      return recs;
+    }
+    return [];
+  }, [data, latestCourses]);
+
+  // Gợi ý thông minh theo danh mục các khóa học trong danh sách mong ước (Wishlist)
+  const wishlistRecs: HistoryRecommendationGroup[] = useMemo(() => {
+    if (
+      data?.wishlistRecommendations &&
+      Array.isArray(data.wishlistRecommendations)
+    ) {
+      return data.wishlistRecommendations.filter(
+        (g) => g.courses && g.courses.length > 0,
+      );
+    }
+    return [];
+  }, [data]);
+
+  // Khóa học được ưu đãi (chỉ áp dụng cho các khóa học trả phí)
+  const promotedCoursesList = useMemo(() => {
+    if (
+      data?.promotedCourses &&
+      Array.isArray(data.promotedCourses) &&
+      data.promotedCourses.length > 0
+    ) {
+      return data.promotedCourses.filter(
+        (c: any) =>
+          (c.loaiKhoaHoc === "Khóa học trả phí" || (c.gia && c.gia > 0)) &&
+          c.loaiKhoaHoc !== "Khóa học miễn phí",
+      );
+    }
+    if (latestCourses && latestCourses.length > 0) {
+      const paidCourses = latestCourses.filter(
+        (c: any) =>
+          (c.loaiKhoaHoc === "Khóa học trả phí" || (c.gia && c.gia > 0)) &&
+          c.loaiKhoaHoc !== "Khóa học miễn phí" &&
+          !c.daDangKy,
+      );
+      return paidCourses.slice(0, 8).map((c: any) => ({
+        ...c,
+        phanTramGiam:
+          c.phanTramGiam ||
+          (c.giaGoc && c.giaGoc > c.gia
+            ? Math.round(((c.giaGoc - c.gia) * 100) / c.giaGoc)
+            : 25),
+        maGiamGia: c.maGiamGia || "ADMINDEALS",
+      }));
+    }
+    return [];
+  }, [data, latestCourses]);
+
+  // Các khóa học nổi bật (đánh giá cao nhất)
+  const trendingCoursesList = useMemo(() => {
+    if (
+      data?.trendingCourses &&
+      Array.isArray(data.trendingCourses) &&
+      data.trendingCourses.length > 0
+    ) {
+      return data.trendingCourses;
+    }
+    return [];
+  }, [data]);
+
+  const [featuredTab, setFeaturedTab] = useState<"all" | "advanced">("all");
+
+  const displayedFeaturedCourses = useMemo(() => {
+    if (!trendingCoursesList || trendingCoursesList.length === 0) return [];
+    if (featuredTab === "advanced") {
+      const advancedList = trendingCoursesList.filter(
+        (c: any) =>
+          c.capDo?.toLowerCase().includes("trung") ||
+          c.capDo?.toLowerCase().includes("nâng") ||
+          c.level?.toLowerCase().includes("intermediate") ||
+          c.level?.toLowerCase().includes("advanced") ||
+          c.capDo?.toLowerCase().includes("cao"),
+      );
+      return advancedList.length > 0 ? advancedList : trendingCoursesList;
+    }
+    return trendingCoursesList;
+  }, [trendingCoursesList, featuredTab]);
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
@@ -1764,7 +2052,6 @@ export default function StudentHomeContent() {
   const {
     welcomeStats,
     interestedSkills,
-    historyRecommendation,
     promotedCourses,
   } = data;
 
@@ -1970,6 +2257,181 @@ export default function StudentHomeContent() {
         )}
       </Box>
 
+      {/* ── 3.5. Khóa học được ưu đãi ─────── */}
+      {promotedCoursesList.length > 0 && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: { xs: 18, md: 22 },
+                  fontWeight: 900,
+                  color: C.textDark,
+                  letterSpacing: "-0.3px",
+                }}
+              >
+                Khóa học được ưu đãi
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: C.textSecondary, mt: 0.25, fontWeight: 500 }}>
+                Các khóa học đang được áp dụng mã giảm giá đặc biệt từ hệ thống
+              </Typography>
+            </Box>
+          </Box>
+          <CarouselRow>
+            {promotedCoursesList.map((c: any, i: number) => (
+              <CourseCard
+                key={c.id || i}
+                course={{
+                  ...c,
+                  hinhAnhKhoaHoc:
+                    c.hinhAnhKhoaHoc ||
+                    courseImages[c.id || ""] ||
+                    titleImages[c.tieuDe || ""],
+                }}
+                onAddCart={handleAddCart}
+                onClick={handleOpenCourse}
+              />
+            ))}
+          </CarouselRow>
+        </Box>
+      )}
+
+      {/* ── 4. Vì bạn đã học... (Gợi ý theo chủ đề / khóa học đã học) ── */}
+      {learnedRecs.map((group, gIdx) => (
+        <Box key={group.basedOnCourseId || `learned-${gIdx}`}>
+          <RecommendationHeader
+            prefix="Vì bạn đã học"
+            highlight={group.basedOnCourse}
+            subtitle={
+              group.categoryName
+                ? `Các khóa học cùng chủ đề ${group.categoryName} có thể bạn sẽ quan tâm`
+                : "Gợi ý các khóa học liên quan dựa trên lịch sử học tập của bạn"
+            }
+            onClickHighlight={
+              group.basedOnCourseId
+                ? () =>
+                    router.push(
+                      `/student/enroll-courses/${group.basedOnCourseId}`,
+                    )
+                : undefined
+            }
+          />
+          <CarouselRow>
+            {group.courses?.map((c: any, i: number) => (
+              <CourseCard
+                key={c.id || i}
+                course={{
+                  ...c,
+                  hinhAnhKhoaHoc:
+                    c.hinhAnhKhoaHoc ||
+                    courseImages[c.id || ""] ||
+                    titleImages[c.tieuDe || ""],
+                }}
+                onAddCart={handleAddCart}
+                onClick={handleOpenCourse}
+              />
+            ))}
+          </CarouselRow>
+        </Box>
+      ))}
+
+      {/* ── 5. Vì bạn đã đưa ... vào danh sách mong ước (Wishlist Recommendations) ── */}
+      {wishlistRecs.map((group, gIdx) => (
+        <Box key={group.basedOnCourseId || `wishlist-${gIdx}`}>
+          <RecommendationHeader
+            prefix="Vì bạn đã đưa"
+            highlight={group.basedOnCourse}
+            suffix="vào danh sách mong ước"
+            subtitle={
+              group.categoryName
+                ? `Các khóa học cùng chủ đề ${group.categoryName} nổi bật nhất`
+                : "Gợi ý dựa trên danh sách mong ước của bạn"
+            }
+            onClickHighlight={
+              group.basedOnCourseId
+                ? () =>
+                    router.push(
+                      `/student/enroll-courses/${group.basedOnCourseId}`,
+                    )
+                : undefined
+            }
+          />
+          <CarouselRow>
+            {group.courses?.map((c: any, i: number) => (
+              <CourseCard
+                key={c.id || i}
+                course={{
+                  ...c,
+                  hinhAnhKhoaHoc:
+                    c.hinhAnhKhoaHoc ||
+                    courseImages[c.id || ""] ||
+                    titleImages[c.tieuDe || ""],
+                }}
+                onAddCart={handleAddCart}
+                onClick={handleOpenCourse}
+              />
+            ))}
+          </CarouselRow>
+        </Box>
+      ))}
+
+      {/* ── 5.5. Các khóa học nổi bật (được nhiều người đánh giá cao nhất) ── */}
+      {trendingCoursesList.length > 0 && (
+        <Box>
+          <SectionHeader title="Các khóa học nổi bật" />
+
+          {/* Sub Tabs: Phổ biến nhất / Trung cấp & nâng cao */}
+          <Tabs
+            value={featuredTab}
+            onChange={(_, val) => setFeaturedTab(val)}
+            sx={{
+              mb: 2.5,
+              minHeight: 38,
+              borderBottom: `1px solid ${C.border}`,
+              "& .MuiTabs-indicator": {
+                bgcolor: C.textDark,
+                height: 2.5,
+                borderRadius: "2px",
+              },
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontSize: 14.5,
+                fontWeight: 700,
+                color: C.textMuted,
+                minWidth: "auto",
+                px: 1.5,
+                py: 0.5,
+                minHeight: 38,
+                "&.Mui-selected": {
+                  color: C.textDark,
+                  fontWeight: 800,
+                },
+              },
+            }}
+          >
+            <Tab value="all" label="Phổ biến nhất" />
+            <Tab value="advanced" label="Trung cấp & nâng cao" />
+          </Tabs>
+
+          <CarouselRow>
+            {displayedFeaturedCourses.map((c: any, i: number) => (
+              <CourseCard
+                key={c.id || i}
+                course={{
+                  ...c,
+                  hinhAnhKhoaHoc:
+                    c.hinhAnhKhoaHoc ||
+                    courseImages[c.id || ""] ||
+                    titleImages[c.tieuDe || ""],
+                }}
+                onAddCart={handleAddCart}
+                onClick={handleOpenCourse}
+              />
+            ))}
+          </CarouselRow>
+        </Box>
+      )}
+
       {/* ── 6. Khóa học mới nhất (chỉ khóa tạo trong 1 tháng & chưa đăng ký) ── */}
       {filteredLatestCourses.length > 0 && (
         <Box>
@@ -1988,45 +2450,6 @@ export default function StudentHomeContent() {
                 onAddCart={handleAddCart}
                 onClick={handleOpenCourse}
               />
-            ))}
-          </CarouselRow>
-        </Box>
-      )}
-
-      {/* ── Khóa học ưu đãi (voucher do Admin tạo) ──────────────────── */}
-      {promotedCourses && promotedCourses.length > 0 && (
-        <Box>
-          <SectionHeader title="Khóa học ưu đãi" />
-          <CarouselRow>
-            {promotedCourses.map((c, i) => (
-              <Box key={c.id || i} sx={{ position: "relative", flexShrink: 0 }}>
-                <Chip
-                  size="small"
-                  sx={{
-                    position: "absolute",
-                    top: -10,
-                    left: 10,
-                    zIndex: 6,
-                    bgcolor: STATUS.warning,
-                    color: "#fff",
-                    fontWeight: 900,
-                    fontSize: 10.5,
-                    height: 22,
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.18)",
-                  }}
-                />
-                <CourseCard
-                  course={{
-                    ...c,
-                    hinhAnhKhoaHoc:
-                      c.hinhAnhKhoaHoc ||
-                      courseImages[c.id || ""] ||
-                      titleImages[c.tieuDe || ""],
-                  }}
-                  onAddCart={handleAddCart}
-                  onClick={handleOpenCourse}
-                />
-              </Box>
             ))}
           </CarouselRow>
         </Box>

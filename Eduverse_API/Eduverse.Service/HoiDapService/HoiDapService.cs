@@ -940,9 +940,9 @@ namespace Eduverse.Service.HoiDapService
                     TieuDe = "Câu hỏi mới từ học viên",
                     NoiDung = $"{nguoiHoi ?? "Học viên"} vừa đặt câu hỏi mới trong khóa học của bạn.",
                     LoaiThongBao = "CauHoiMoi",
-                    Link = $"/instructor/courses/{cauHoi.IdKhoaHoc}/qna?idCauHoi={cauHoi.Id}",   // ← cần bạn xác nhận route thật
+                    Link = $"/instructor/manager-courses/{cauHoi.IdKhoaHoc}/manager/qna?idCauHoi={cauHoi.Id}",
                     FromUser = nguoiHoiId,
-                    ItemId = cauHoi.Id,
+                    ItemId = cauHoi.IdKhoaHoc,
                     ItemName = cauHoi.NoiDung
                 });
             }

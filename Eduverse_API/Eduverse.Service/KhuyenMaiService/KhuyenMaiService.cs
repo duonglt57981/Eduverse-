@@ -94,10 +94,10 @@ namespace Eduverse.Service.KhuyenMaiService
                 var adminIds = adminUsers.Select(u => u.Id).ToHashSet();
 
                 khuyenMais = await GetQueryable()
-                    .Where(x => (x.CreatedId == userId || khuyenMaiIdsLienQuan.Contains(x.Id))
-                             && !(x.CreatedId.HasValue && adminIds.Contains(x.CreatedId.Value)))
-                    .OrderByDescending(x => x.CreatedDate)
-                    .ToListAsync();
+                 .Where(x => khuyenMaiIdsLienQuan.Contains(x.Id)
+                          && !(x.CreatedId.HasValue && adminIds.Contains(x.CreatedId.Value)))
+                 .OrderByDescending(x => x.CreatedDate)
+                 .ToListAsync();
             }
 
             if (!khuyenMais.Any())
@@ -115,17 +115,19 @@ namespace Eduverse.Service.KhuyenMaiService
                 .Distinct()
                 .ToList();
 
-            var khoaHocs = await _khoaHocRepository.GetQueryable()
+            var khoaHocsRaw = await _khoaHocRepository.GetQueryable()
                 .Where(x => khoaHocIds.Contains(x.Id) && x.TrangThai == "HoatDong")
-                .Select(x => new KhoaHocMiniDto
-                {
-                    Id = x.Id,
-                    TieuDe = x.TieuDe,
-                    HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
-                })
                 .ToListAsync();
 
-            var khoaHocDict = khoaHocs.ToDictionary(x => x.Id);
+            // ★ MỚI: dọn link/lời mời của khóa học đã miễn phí trước khi hiển thị
+            (var khoaHocHopLe, links) = await DonDepVaLocKhoaHocKhongHopLe(khoaHocsRaw, links);
+
+            var khoaHocDict = khoaHocHopLe.ToDictionary(x => x.Id, x => new KhoaHocMiniDto
+            {
+                Id = x.Id,
+                TieuDe = x.TieuDe,
+                HinhAnhKhoaHoc = x.HinhAnhKhoaHoc
+            });
 
             // ★ MỚI: lấy trạng thái các lời mời đang chờ/bị từ chối cho từng mã KM
             //         (chỉ Admin cần thấy phần này để biết còn ai chưa duyệt)
@@ -539,7 +541,6 @@ namespace Eduverse.Service.KhuyenMaiService
             var khuyenMai = await GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhuyenMai);
             if (khuyenMai == null) return false;
 
-            if (khuyenMai.CreatedId == userId) return true;
 
             var khoaHocIds = await _khuyenMai_KhoaHocRepository.GetQueryable()
                 .Where(x => x.IdKhuyenMai == idKhuyenMai && x.IdKhoaHoc.HasValue)
@@ -566,9 +567,12 @@ namespace Eduverse.Service.KhuyenMaiService
                 .Where(x => x.IdKhoaHoc.HasValue)
                 .Select(x => x.IdKhoaHoc!.Value)
                 .ToList();
-            var khoaHocLinkSauCung = await _khoaHocRepository.GetQueryable()
+            var khoaHocLinkSauCungRaw = await _khoaHocRepository.GetQueryable()
                 .Where(x => idsLinkSauCung.Contains(x.Id))
                 .ToListAsync();
+
+
+            (var khoaHocLinkSauCung, lienKetSauCung) = await DonDepVaLocKhoaHocKhongHopLe(khoaHocLinkSauCungRaw, lienKetSauCung);
 
             var loiMoiSauCung = await _loiMoiGiangVienService.GetLoiMoiApDungTheoKhuyenMai(idKhuyenMai);
             // ★ FIX: lọc đúng "Pending" (khớp với GetListAll đang dùng), không phải
@@ -592,6 +596,65 @@ namespace Eduverse.Service.KhuyenMaiService
                 }).ToList(),
                 DanhSachDangCho = dangChoSauCung,
             };
+        }
+
+        private static bool LaKhoaHocMienPhi(KhoaHoc kh) =>
+        (kh.Gia ?? 0) <= 0
+        || kh.LoaiKhoaHoc == "Khóa học miễn phí"
+        || kh.LoaiKhoaHoc == "MienPhi";
+
+        private static bool LaKhoaHocKhongHopLeChoKhuyenMai(KhoaHoc kh) =>
+        kh.IsDeleted
+        || kh.TrangThaiPheDuyet != "DaDuyet"
+        || LaKhoaHocMienPhi(kh);
+
+        private async Task<(List<KhoaHoc> KhoaHocHopLe, List<KhuyenMai_KhoaHoc> LinksHopLe)>
+    DonDepVaLocKhoaHocKhongHopLe(List<KhoaHoc> khoaHocs, List<KhuyenMai_KhoaHoc> links)
+        {
+            var idsTrongLink = links
+                .Where(l => l.IdKhoaHoc.HasValue)
+                .Select(l => l.IdKhoaHoc!.Value)
+                .Distinct()
+                .ToHashSet();
+
+            var idsTonTai = khoaHocs.Select(x => x.Id).ToHashSet();
+            var idsMatHan = idsTrongLink.Except(idsTonTai).ToHashSet(); // xoá cứng khỏi DB
+
+            var idsKhongHopLe = khoaHocs
+                .Where(LaKhoaHocKhongHopLeChoKhuyenMai)
+                .Select(x => x.Id)
+                .ToHashSet();
+            idsKhongHopLe.UnionWith(idsMatHan);
+
+            if (!idsKhongHopLe.Any())
+                return (khoaHocs, links);
+
+            var linkCanXoa = links
+                .Where(l => l.IdKhoaHoc.HasValue && idsKhongHopLe.Contains(l.IdKhoaHoc.Value))
+                .ToList();
+
+            if (linkCanXoa.Any())
+            {
+                _khuyenMai_KhoaHocRepository.Delete(linkCanXoa);
+                await _khuyenMai_KhoaHocRepository.SaveAsync();
+            }
+
+            var kmBiAnhHuong = linkCanXoa
+                .Where(l => l.IdKhuyenMai.HasValue)
+                .Select(l => l.IdKhuyenMai!.Value)
+                .Distinct();
+
+            foreach (var kmId in kmBiAnhHuong)
+            {
+                var idsKhCuaKmNay = linkCanXoa
+                    .Where(l => l.IdKhuyenMai == kmId && l.IdKhoaHoc.HasValue)
+                    .Select(l => l.IdKhoaHoc!.Value)
+                    .ToList();
+                if (idsKhCuaKmNay.Any())
+                    await _loiMoiGiangVienService.HuyLoiMoiApDungKhuyenMaiTheoKhoaHoc(kmId, idsKhCuaKmNay);
+            }
+
+            return (khoaHocs.Where(x => !idsKhongHopLe.Contains(x.Id)).ToList(), links.Except(linkCanXoa).ToList());
         }
     }
 }

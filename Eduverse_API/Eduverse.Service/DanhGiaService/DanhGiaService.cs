@@ -1,4 +1,4 @@
-﻿using Eduverse.Model.Entities;
+using Eduverse.Model.Entities;
 using Eduverse.Repository.DangKyKhoaHocRepository;
 using Eduverse.Repository.DanhGiaRepository;
 using Eduverse.Repository.KhoaHoc_GiangVienRepository;
@@ -220,7 +220,7 @@ namespace Eduverse.Service.DanhGiaService
                         TieuDe = "Giảng viên đã phản hồi đánh giá của bạn",
                         NoiDung = $"{giangVien?.HoTen ?? "Giảng viên"} đã phản hồi đánh giá của bạn về khóa học \"{khoaHocTen}\".",
                         LoaiThongBao = "PhanHoiDanhGia",
-                        Link = $"/khoa-hoc/{danhGia.IdKhoaHoc}",
+                        Link = $"/student/enroll-courses/{danhGia.IdKhoaHoc}",
                         FromUser = userId,
                         ItemId = danhGia.IdKhoaHoc,
                         ItemName = khoaHocTen,
