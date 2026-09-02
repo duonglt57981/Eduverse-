@@ -102,6 +102,8 @@ interface KhoaHocDto {
   categoryNames?: string[];
   tenGiangVien?: string;
   danhSachGiangVienHienThi?: string[];
+  phanTramGiam?: number;
+  maGiamGia?: string;
 }
 
 interface DashboardData {
@@ -729,11 +731,13 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const displayPrice =
-    course.gia ??
+  const discountPercent = course.phanTramGiam ?? 0;
+  const rawPrice = course.gia ?? 0;
+  const originalPrice =
     course.giaGoc ??
     ((course as unknown as Record<string, unknown>).giagoc as number) ??
-    0;
+    rawPrice;
+  const displayPrice = rawPrice;
   const title = course.tieuDe || course.title || "";
   const ratingVal = course.rating ?? course.diemDanhGiaTrungBinh;
   const hasRating = typeof ratingVal === "number" && ratingVal > 0;
@@ -826,6 +830,34 @@ function CourseCard({
                 EDUVERSE
               </Typography>
             </Stack>
+          )}
+
+          {/* Admin Discount Badge */}
+          {discountPercent > 0 && (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 6,
+                left: 6,
+                bgcolor: "#DC2626",
+                color: "#FFFFFF",
+                px: 0.9,
+                py: 0.25,
+                borderRadius: "6px",
+                fontSize: 10.5,
+                fontWeight: 900,
+                zIndex: 5,
+                boxShadow: "0 2px 8px rgba(220,38,38,0.4)",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
+              <span>-{discountPercent}%</span>
+              {course.maGiamGia && (
+                <span style={{ opacity: 0.9, fontSize: 9.5 }}>• {course.maGiamGia}</span>
+              )}
+            </Box>
           )}
 
           {/* Subtle wishlist heart button (visible on hover or when favorited) */}
@@ -971,7 +1003,7 @@ function CourseCard({
               sx={{
                 fontSize: 15,
                 fontWeight: 800,
-                color: C.textDark,
+                color: discountPercent > 0 ? "#DC2626" : C.textDark,
                 lineHeight: 1.2,
               }}
             >
@@ -1827,6 +1859,18 @@ export default function StudentHomeContent() {
     return [];
   }, [data]);
 
+  // Khóa học được ưu đãi (áp dụng mã giảm giá của Admin)
+  const promotedCoursesList = useMemo(() => {
+    if (
+      data?.promotedCourses &&
+      Array.isArray(data.promotedCourses) &&
+      data.promotedCourses.length > 0
+    ) {
+      return data.promotedCourses;
+    }
+    return [];
+  }, [data]);
+
   // Các khóa học nổi bật (đánh giá cao nhất)
   const trendingCoursesList = useMemo(() => {
     if (
@@ -2151,7 +2195,60 @@ export default function StudentHomeContent() {
         )}
       </Box>
 
-      {/* ── 4. Vì bạn đã học... (Gợi ý theo danh mục khóa học đã học) ── */}
+      {/* ── 3.5. Khóa học được ưu đãi (Áp dụng mã giảm giá của Admin) ─────── */}
+      {promotedCoursesList.length > 0 && (
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Box>
+              <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: 18, md: 22 },
+                    fontWeight: 900,
+                    color: C.textDark,
+                    letterSpacing: "-0.3px",
+                  }}
+                >
+                  Khóa học được ưu đãi
+                </Typography>
+                <Chip
+                  label="Ưu đãi từ Admin"
+                  size="small"
+                  sx={{
+                    bgcolor: "rgba(220, 38, 38, 0.1)",
+                    color: "#DC2626",
+                    fontWeight: 800,
+                    fontSize: 11,
+                    height: 22,
+                    border: "1px solid rgba(220, 38, 38, 0.2)",
+                  }}
+                />
+              </Stack>
+              <Typography sx={{ fontSize: 13, color: C.textSecondary, mt: 0.25, fontWeight: 500 }}>
+                Các khóa học đang được áp dụng mã giảm giá đặc biệt từ hệ thống
+              </Typography>
+            </Box>
+          </Box>
+          <CarouselRow>
+            {promotedCoursesList.map((c: any, i: number) => (
+              <CourseCard
+                key={c.id || i}
+                course={{
+                  ...c,
+                  hinhAnhKhoaHoc:
+                    c.hinhAnhKhoaHoc ||
+                    courseImages[c.id || ""] ||
+                    titleImages[c.tieuDe || ""],
+                }}
+                onAddCart={handleAddCart}
+                onClick={handleOpenCourse}
+              />
+            ))}
+          </CarouselRow>
+        </Box>
+      )}
+
+      {/* ── 4. Vì bạn đã học... (Gợi ý theo chủ đề / khóa học đã học) ── */}
       {learnedRecs.map((group, gIdx) => (
         <Box key={group.basedOnCourseId || `learned-${gIdx}`}>
           <RecommendationHeader
@@ -2159,8 +2256,8 @@ export default function StudentHomeContent() {
             highlight={group.basedOnCourse}
             subtitle={
               group.categoryName
-                ? `Các khóa học cùng danh mục ${group.categoryName} có thể bạn sẽ quan tâm`
-                : "Gợi ý dựa trên lịch sử học tập của bạn"
+                ? `Các khóa học cùng chủ đề ${group.categoryName} có thể bạn sẽ quan tâm`
+                : "Gợi ý các khóa học liên quan dựa trên lịch sử học tập của bạn"
             }
             onClickHighlight={
               group.basedOnCourseId
@@ -2305,45 +2402,6 @@ export default function StudentHomeContent() {
                 onAddCart={handleAddCart}
                 onClick={handleOpenCourse}
               />
-            ))}
-          </CarouselRow>
-        </Box>
-      )}
-
-      {/* ── Khóa học ưu đãi (voucher do Admin tạo) ──────────────────── */}
-      {promotedCourses && promotedCourses.length > 0 && (
-        <Box>
-          <SectionHeader title="Khóa học ưu đãi" />
-          <CarouselRow>
-            {promotedCourses.map((c, i) => (
-              <Box key={c.id || i} sx={{ position: "relative", flexShrink: 0 }}>
-                <Chip
-                  size="small"
-                  sx={{
-                    position: "absolute",
-                    top: -10,
-                    left: 10,
-                    zIndex: 6,
-                    bgcolor: STATUS.warning,
-                    color: "#fff",
-                    fontWeight: 900,
-                    fontSize: 10.5,
-                    height: 22,
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.18)",
-                  }}
-                />
-                <CourseCard
-                  course={{
-                    ...c,
-                    hinhAnhKhoaHoc:
-                      c.hinhAnhKhoaHoc ||
-                      courseImages[c.id || ""] ||
-                      titleImages[c.tieuDe || ""],
-                  }}
-                  onAddCart={handleAddCart}
-                  onClick={handleOpenCourse}
-                />
-              </Box>
             ))}
           </CarouselRow>
         </Box>

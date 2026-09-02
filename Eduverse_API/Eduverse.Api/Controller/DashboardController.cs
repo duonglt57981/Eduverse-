@@ -437,7 +437,7 @@ namespace Eduverse.Api.Controller
                 thumbnailGradient = GetGradient(i + 2)
             }).ToList();
 
-            //5.5.Khóa học ưu đãi(chỉ voucher do Admin tạo, còn hiệu lực)
+            // 5.5. Khóa học ưu đãi (các khóa học được áp mã giảm giá của Admin)
             var promotedCourses = new List<object>();
             try
             {
@@ -446,21 +446,30 @@ namespace Eduverse.Api.Controller
                 var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
                 var adminIds = adminUsers.Select(u => u.Id).ToList();
 
-                var activeAdminVouchers = await _khuyenMaiService.GetQueryable()
-                    .Where(km => km.CreatedId.HasValue
-                              && adminIds.Contains(km.CreatedId.Value)
-                              && (!km.NgayKetThuc.HasValue || km.NgayKetThuc.Value >= nowVoucher)
-                              && (!km.SoLuongHieuLuc.HasValue || km.SoLuongHieuLuc.Value > 0))
-                    .Select(km => new { km.Id, km.MaGiamGia, km.PhanTramGiam, km.NgayKetThuc })
+                var allActiveVouchers = await _khuyenMaiService.GetQueryable()
+                    .Where(km => (!km.NgayKetThuc.HasValue || km.NgayKetThuc.Value >= nowVoucher)
+                              && (!km.SoLuongHieuLuc.HasValue || km.SoLuongHieuLuc.Value > 0)
+                              && !km.IsDeleted)
+                    .Select(km => new { km.Id, km.MaGiamGia, km.PhanTramGiam, km.NgayKetThuc, km.CreatedId })
                     .ToListAsync();
 
-                var activeVoucherIds = activeAdminVouchers.Select(v => v.Id).ToList();
+                // Lọc các voucher do Admin tạo
+                var targetAdminVouchers = (adminIds.Any()
+                    ? allActiveVouchers.Where(km => km.CreatedId.HasValue && adminIds.Contains(km.CreatedId.Value)).ToList()
+                    : allActiveVouchers).ToList();
 
-                if (activeVoucherIds.Any())
+                if (!targetAdminVouchers.Any())
+                {
+                    targetAdminVouchers = allActiveVouchers;
+                }
+
+                var targetVoucherIds = targetAdminVouchers.Select(v => v.Id).ToList();
+
+                if (targetVoucherIds.Any())
                 {
                     var links = await _khuyenMaiKhoaHocService.GetQueryable()
-                        .Where(l => l.IdKhuyenMai.HasValue && activeVoucherIds.Contains(l.IdKhuyenMai.Value)
-                                 && l.IdKhoaHoc.HasValue)
+                        .Where(l => l.IdKhuyenMai.HasValue && targetVoucherIds.Contains(l.IdKhuyenMai.Value)
+                                 && l.IdKhoaHoc.HasValue && !l.IsDeleted)
                         .ToListAsync();
 
                     var voucherByCourseId = links
@@ -468,7 +477,7 @@ namespace Eduverse.Api.Controller
                         .GroupBy(l => l.IdKhoaHoc!.Value)
                         .ToDictionary(
                             g => g.Key,
-                            g => activeAdminVouchers.FirstOrDefault(v => v.Id == g.First().IdKhuyenMai!.Value)
+                            g => targetAdminVouchers.FirstOrDefault(v => v.Id == g.First().IdKhuyenMai!.Value)
                         );
 
                     var promotedCourseIds = voucherByCourseId.Where(kv => kv.Value != null).Select(kv => kv.Key).ToList();
@@ -477,30 +486,87 @@ namespace Eduverse.Api.Controller
                         .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id))
                         .ToList();
 
-                    promotedCourses = promotedCourseEntities.Select((c, i) =>
+                    if (promotedCourseEntities.Any())
                     {
-                        var voucher = voucherByCourseId[c.Id];
-                        return (object)new
+                        promotedCourses = promotedCourseEntities.Select((c, i) =>
                         {
-                            id = c.Id.ToString(),
-                            title = c.TieuDe,
-                            hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
-                            instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
-                            tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
-                            rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
-                            soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
-                            studentsCount = c.SoLuongHocVien ?? 0,
-                            level = c.CapDo ?? "Trung cấp",
-                            gia = c.Gia,
-                            giaGoc = c.GiaGoc,
-                            loaiKhoaHoc = c.LoaiKhoaHoc,
-                            daDangKy = registeredCourseIds.Contains(c.Id),
-                            maGiamGia = voucher.MaGiamGia,
-                            phanTramGiam = voucher.PhanTramGiam,
-                            voucherHetHan = voucher.NgayKetThuc,
-                            thumbnailGradient = GetGradient(i)
-                        };
-                    }).ToList();
+                            var voucher = voucherByCourseId.GetValueOrDefault(c.Id);
+                            var discountPercent = voucher?.PhanTramGiam ?? 0;
+                            var originalPrice = c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia ? c.GiaGoc.Value : c.Gia;
+                            var salePrice = discountPercent > 0 ? (c.Gia * (100 - discountPercent) / 100) : c.Gia;
+
+                            return (object)new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rpm2) ? rpm2.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = salePrice,
+                                giaGoc = originalPrice,
+                                giagoc = originalPrice,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                maGiamGia = voucher?.MaGiamGia,
+                                phanTramGiam = discountPercent,
+                                voucherHetHan = voucher?.NgayKetThuc,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i)
+                            };
+                        }).ToList();
+                    }
+                }
+
+                // Fallback: Nếu chưa có khóa học nào được gán voucher, hiển thị các khóa học có giá ưu đãi
+                if (!promotedCourses.Any())
+                {
+                    var discountedCourses = unregisteredCourses
+                        .Where(c => c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia)
+                        .OrderByDescending(c => (c.GiaGoc.Value - c.Gia) / (double)c.GiaGoc.Value)
+                        .Take(10)
+                        .ToList();
+
+                    if (discountedCourses.Any())
+                    {
+                        promotedCourses = discountedCourses.Select((c, i) =>
+                        {
+                            var originalPrice = c.GiaGoc!.Value;
+                            var discountPercent = (int)Math.Round((originalPrice - c.Gia) * 100.0 / originalPrice);
+                            return (object)new
+                            {
+                                id = c.Id.ToString(),
+                                tieuDe = c.TieuDe,
+                                title = c.TieuDe,
+                                hinhAnhKhoaHoc = c.HinhAnhKhoaHoc,
+                                instructor = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                tenGiangVien = instructorNameByCourseId.GetValueOrDefault(c.Id, !string.IsNullOrWhiteSpace(c.CreatedBy) ? c.CreatedBy : "EduVerse"),
+                                rating = ratingMap.TryGetValue(c.Id, out var rpm) ? rpm.DiemTrungBinh : (double?)null,
+                                diemDanhGiaTrungBinh = ratingMap.TryGetValue(c.Id, out var rpm2) ? rpm2.DiemTrungBinh : (double?)null,
+                                soLuongDanhGia = ratingMap.TryGetValue(c.Id, out var rpb) ? rpb.SoLuong : 0,
+                                studentsCount = c.SoLuongHocVien ?? 0,
+                                soLuongHocVien = c.SoLuongHocVien ?? 0,
+                                level = c.CapDo ?? "Trung cấp",
+                                capDo = c.CapDo ?? "Trung cấp",
+                                gia = c.Gia,
+                                giaGoc = originalPrice,
+                                giagoc = originalPrice,
+                                loaiKhoaHoc = c.LoaiKhoaHoc,
+                                daDangKy = false,
+                                maGiamGia = "ADMINDEALS",
+                                phanTramGiam = discountPercent,
+                                categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
+                                thumbnailGradient = GetGradient(i)
+                            };
+                        }).ToList();
+                    }
                 }
             }
             catch (Exception ex)
@@ -577,7 +643,7 @@ namespace Eduverse.Api.Controller
                     thumbnailGradient = GetGradient(i)
                 }).ToList();
 
-            // 7. History recommendation (Vì bạn đã học...)
+            // 7. History recommendation (Vì bạn đã học 1 chủ đề nào đó thì hiện các khóa học liên quan)
             var historyRecommendations = new List<object>();
             var recommendedCourseIdsUsed = new HashSet<Guid>();
 
@@ -599,20 +665,38 @@ namespace Eduverse.Api.Controller
                         .Distinct()
                         .ToList();
 
-                    if (!learnedCatIds.Any()) continue;
+                    var matchedCourses = new List<KhoaHoc>();
 
-                    var catNames = learnedCatIds
-                        .Where(id => categoryNameById.ContainsKey(id))
-                        .Select(id => categoryNameById[id])
-                        .ToList();
-                    var categoryTitle = catNames.FirstOrDefault() ?? string.Empty;
+                    if (learnedCatIds.Any())
+                    {
+                        matchedCourses = courses
+                            .Where(c => !registeredCourseIds.Contains(c.Id) &&
+                                        !recommendedCourseIdsUsed.Contains(c.Id) &&
+                                        courseCategoryLinks.Any(l => l.IdKhoaHoc == c.Id && learnedCatIds.Contains(l.IdDanhMuc)))
+                            .OrderByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.DiemTrungBinh : 0)
+                            .ThenByDescending(c => c.SoLuongHocVien ?? 0)
+                            .Take(10)
+                            .ToList();
+                    }
 
-                    var matchedCourses = courses
-                        .Where(c => !registeredCourseIds.Contains(c.Id) &&
-                                    !recommendedCourseIdsUsed.Contains(c.Id) &&
-                                    courseCategoryLinks.Any(l => l.IdKhoaHoc == c.Id && learnedCatIds.Contains(l.IdDanhMuc)))
-                        .Take(10)
-                        .ToList();
+                    // Nếu chưa khớp theo category ID, tìm theo từ khóa chủ đề trong tiêu đề
+                    if (!matchedCourses.Any())
+                    {
+                        var words = (learnedCourse.TieuDe ?? "")
+                            .Split(new[] { ' ', '-', ',', '/', ':', '|' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Where(w => w.Length > 2)
+                            .ToList();
+
+                        if (words.Any())
+                        {
+                            matchedCourses = courses
+                                .Where(c => !registeredCourseIds.Contains(c.Id) &&
+                                            !recommendedCourseIdsUsed.Contains(c.Id) &&
+                                            words.Any(w => (c.TieuDe ?? "").Contains(w, StringComparison.OrdinalIgnoreCase)))
+                                .Take(10)
+                                .ToList();
+                        }
+                    }
 
                     if (matchedCourses.Any())
                     {
@@ -620,6 +704,12 @@ namespace Eduverse.Api.Controller
                         {
                             recommendedCourseIdsUsed.Add(mc.Id);
                         }
+
+                        var catNames = learnedCatIds
+                            .Where(id => categoryNameById.ContainsKey(id))
+                            .Select(id => categoryNameById[id])
+                            .ToList();
+                        var categoryTitle = catNames.FirstOrDefault() ?? string.Empty;
 
                         historyRecommendations.Add(new
                         {
@@ -652,7 +742,7 @@ namespace Eduverse.Api.Controller
                             }).ToList()
                         });
 
-                        if (historyRecommendations.Count >= 2) break;
+                        if (historyRecommendations.Count >= 3) break;
                     }
                 }
             }
