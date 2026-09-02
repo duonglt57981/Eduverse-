@@ -506,7 +506,7 @@ function MyCoursesContent() {
       });
       const rawItems = extractCourseItems(response);
       const allItems = rawItems.filter((c: KhoaHocType) => {
-        const itemAny = c as Record<string, unknown>;
+        const itemAny = c as unknown as Record<string, unknown>;
         if (userId) {
           const isMyCourse =
             itemAny.createdId === userId ||
@@ -574,7 +574,7 @@ function MyCoursesContent() {
       const response = await khoaHocService.GetListDangKi(search);
       const rawItems = extractCourseItems(response);
       const items = rawItems.filter((c: KhoaHocType) => {
-        const itemAny = c as Record<string, unknown>;
+        const itemAny = c as unknown as Record<string, unknown>;
         if (userId) {
           const isMyCourse =
             itemAny.createdId === userId ||
