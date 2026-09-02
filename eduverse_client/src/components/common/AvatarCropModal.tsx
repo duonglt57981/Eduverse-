@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -92,7 +93,10 @@ export function AvatarCropModal({
       const effImgH = isRotated90 ? img.width : img.height;
 
       const cropDiameter = CROP_RADIUS * 2;
-      const baseScale = Math.max(cropDiameter / effImgW, cropDiameter / effImgH);
+      const baseScale = Math.max(
+        cropDiameter / effImgW,
+        cropDiameter / effImgH,
+      );
       const totalScale = baseScale * currentZoom;
 
       const effDrawnW = effImgW * totalScale;
@@ -117,7 +121,8 @@ export function AvatarCropModal({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+    const dpr =
+      typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
     const w = VIEWPORT_SIZE;
     const h = VIEWPORT_SIZE;
     const cx = w / 2;
@@ -213,7 +218,10 @@ export function AvatarCropModal({
         const pDrawnW = drawnW * pRatio;
         const pDrawnH = drawnH * pRatio;
 
-        pCtx.translate(pSize / 2 + clampedPan.x * pRatio, pSize / 2 + clampedPan.y * pRatio);
+        pCtx.translate(
+          pSize / 2 + clampedPan.x * pRatio,
+          pSize / 2 + clampedPan.y * pRatio,
+        );
         pCtx.rotate((rotation * Math.PI) / 180);
         pCtx.drawImage(image, -pDrawnW / 2, -pDrawnH / 2, pDrawnW, pDrawnH);
         pCtx.restore();
@@ -260,7 +268,10 @@ export function AvatarCropModal({
   };
 
   const adjustZoom = (delta: number) => {
-    const nextZoom = Math.min(Math.max(Number((zoom + delta).toFixed(2)), 1), 3);
+    const nextZoom = Math.min(
+      Math.max(Number((zoom + delta).toFixed(2)), 1),
+      3,
+    );
     setZoom(nextZoom);
     if (image) {
       setPan((prev) => getClampedPan(prev, nextZoom, rotation, image));

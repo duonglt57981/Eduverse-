@@ -1740,7 +1740,7 @@ namespace Eduverse.Service.KhoaHocService
 
                 // Bài giảng đang DangSua
                 var baiGiangs = await _baiGiangRepository.GetQueryable()
-                    .Where(b => phanHocIds.Contains(b.IdPhan) && !b.IsDeleted && b.TrangThaiPheDuyet == "DangSua")
+                    .Where(b => phanHocIds.Contains(b.IdPhan) && !b.IsDeleted && b.TrangThaiPheDuyet == "ChoDuyet")
                     .ToListAsync();
 
                 foreach (var bg in baiGiangs)

@@ -1,8 +1,16 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Avatar, Box, IconButton, SxProps, Theme, Tooltip } from "@mui/material";
+import {
+  Avatar,
+  Box,
+  IconButton,
+  SxProps,
+  Theme,
+  Tooltip,
+} from "@mui/material";
 import CameraAltRoundedIcon from "@mui/icons-material/CameraAltRounded";
 import { BRAND } from "@/src/theme/tokens";
 import { getAvatarInitials } from "@/src/utils/avatarUtils";
@@ -18,7 +26,10 @@ export type EduAvatarSize =
   | "profileLarge" // 160px, font 58px
   | number;
 
-const SIZE_MAP: Record<string, { size: number; fontSize: number; border: number }> = {
+const SIZE_MAP: Record<
+  string,
+  { size: number; fontSize: number; border: number }
+> = {
   xs: { size: 24, fontSize: 10.5, border: 1.5 },
   sm: { size: 32, fontSize: 13, border: 2 },
   md: { size: 40, fontSize: 15, border: 2 },

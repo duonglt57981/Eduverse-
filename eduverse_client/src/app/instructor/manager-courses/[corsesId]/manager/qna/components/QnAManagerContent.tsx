@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -178,11 +179,7 @@ function TraLoiCard({
           sx={{
             p: 2,
             borderRadius: "16px",
-            bgcolor: isTopAnswer
-              ? "#FFFDF5"
-              : isGV
-                ? "#FAF7F6"
-                : "#F8FAFC",
+            bgcolor: isTopAnswer ? "#FFFDF5" : isGV ? "#FAF7F6" : "#F8FAFC",
             border: `1px solid ${
               isTopAnswer
                 ? "#FDE68A"
@@ -197,7 +194,11 @@ function TraLoiCard({
             transition: "all 0.2s ease",
             "&:hover": {
               boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
-              borderColor: isTopAnswer ? "#F59E0B" : isGV ? BRAND.main : "#CBD5E1",
+              borderColor: isTopAnswer
+                ? "#F59E0B"
+                : isGV
+                  ? BRAND.main
+                  : "#CBD5E1",
             },
           }}
         >
@@ -225,7 +226,10 @@ function TraLoiCard({
               <Chip
                 icon={
                   <SchoolOutlinedIcon
-                    sx={{ fontSize: "13px !important", color: "#FFFFFF !important" }}
+                    sx={{
+                      fontSize: "13px !important",
+                      color: "#FFFFFF !important",
+                    }}
                   />
                 }
                 label="Giảng viên"
@@ -246,7 +250,10 @@ function TraLoiCard({
               <Chip
                 icon={
                   <StarIcon
-                    sx={{ fontSize: "13px !important", color: "#92400E !important" }}
+                    sx={{
+                      fontSize: "13px !important",
+                      color: "#92400E !important",
+                    }}
                   />
                 }
                 label="Top Answer"
@@ -351,7 +358,10 @@ function TraLoiCard({
                   color: "#475569",
                   p: "2px 8px",
                   borderRadius: "8px",
-                  "&:hover": { color: BRAND.main, bgcolor: "rgba(139, 19, 19, 0.08)" },
+                  "&:hover": {
+                    color: BRAND.main,
+                    bgcolor: "rgba(139, 19, 19, 0.08)",
+                  },
                 }}
               >
                 Phản hồi
@@ -360,7 +370,11 @@ function TraLoiCard({
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               <Tooltip
-                title={isTopAnswer ? "Bỏ đánh dấu Top Answer" : "Đánh dấu là Top Answer"}
+                title={
+                  isTopAnswer
+                    ? "Bỏ đánh dấu Top Answer"
+                    : "Đánh dấu là Top Answer"
+                }
               >
                 <IconButton
                   size="small"
@@ -554,9 +568,7 @@ export default function QnAManagerContent() {
   const [filterLoai, setFilterLoai] = useState<
     "TatCa" | "ChuaTraLoi" | "ChuaDoc" | "NhieuLike"
   >("TatCa");
-  const [sapXep] = useState<"MoiNhat" | "NhieuTraLoi" | "DaGhim">(
-    "MoiNhat",
-  );
+  const [sapXep] = useState<"MoiNhat" | "NhieuTraLoi" | "DaGhim">("MoiNhat");
 
   // ── Data state ────────────────────────────────────────────────────
   const [cauHois, setCauHois] = useState<HoiDapDto[]>([]);
@@ -698,7 +710,9 @@ export default function QnAManagerContent() {
         );
         setCauHois((prev) =>
           prev.map((c) =>
-            c.id === cauHoiMo.id ? { ...c, soTraLoi: (c.soTraLoi || 0) + 1 } : c,
+            c.id === cauHoiMo.id
+              ? { ...c, soTraLoi: (c.soTraLoi || 0) + 1 }
+              : c,
           ),
         );
         setNoiDungTraLoi("");
@@ -872,12 +886,22 @@ export default function QnAManagerContent() {
           my: 4,
         }}
       >
-        <HelpOutlineOutlinedIcon sx={{ fontSize: 48, color: "#94A3B8", mb: 1.5 }} />
-        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#334155", mb: 0.5 }}>
+        <HelpOutlineOutlinedIcon
+          sx={{ fontSize: 48, color: "#94A3B8", mb: 1.5 }}
+        />
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            color: "#334155",
+            mb: 0.5,
+          }}
+        >
           Hỏi đáp chưa khả dụng
         </Typography>
         <Typography sx={{ fontSize: "0.88rem", color: "#64748B" }}>
-          Chức năng hỏi đáp & thảo luận chỉ khả dụng sau khi khóa học được phê duyệt chính thức.
+          Chức năng hỏi đáp & thảo luận chỉ khả dụng sau khi khóa học được phê
+          duyệt chính thức.
         </Typography>
       </Paper>
     );
@@ -897,7 +921,14 @@ export default function QnAManagerContent() {
         }}
       >
         <LockOutlinedIcon sx={{ fontSize: 48, color: "#94A3B8", mb: 1.5 }} />
-        <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#334155", mb: 0.5 }}>
+        <Typography
+          sx={{
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            color: "#334155",
+            mb: 0.5,
+          }}
+        >
           Không có quyền truy cập
         </Typography>
         <Typography sx={{ fontSize: "0.88rem", color: "#64748B" }}>
@@ -992,7 +1023,11 @@ export default function QnAManagerContent() {
                     Hỏi đáp & Thảo luận
                   </Typography>
                   <Typography
-                    sx={{ fontSize: "0.78rem", color: "#64748B", fontWeight: 500 }}
+                    sx={{
+                      fontSize: "0.78rem",
+                      color: "#64748B",
+                      fontWeight: 500,
+                    }}
                   >
                     Quản lý và giải đáp câu hỏi của học viên
                   </Typography>
@@ -1123,7 +1158,13 @@ export default function QnAManagerContent() {
                 }}
               >
                 <CircularProgress size={32} sx={{ color: BRAND.main }} />
-                <Typography sx={{ fontSize: "0.84rem", color: "#64748B", fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: "0.84rem",
+                    color: "#64748B",
+                    fontWeight: 600,
+                  }}
+                >
                   Đang tải câu hỏi...
                 </Typography>
               </Box>
@@ -1133,7 +1174,12 @@ export default function QnAManagerContent() {
                   sx={{ fontSize: 44, color: "#CBD5E1", mb: 1.5 }}
                 />
                 <Typography
-                  sx={{ fontWeight: 800, fontSize: "0.95rem", color: "#475569", mb: 0.5 }}
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: "0.95rem",
+                    color: "#475569",
+                    mb: 0.5,
+                  }}
                 >
                   Không có câu hỏi nào
                 </Typography>
@@ -1205,7 +1251,9 @@ export default function QnAManagerContent() {
                           gap: 1,
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
                           <UserAvatar
                             anh={cauHoi.nguoiHoiAnh}
                             ten={cauHoi.nguoiHoiTen}
@@ -1227,7 +1275,11 @@ export default function QnAManagerContent() {
                         </Box>
 
                         <Typography
-                          sx={{ fontSize: "0.72rem", color: "#94A3B8", flexShrink: 0 }}
+                          sx={{
+                            fontSize: "0.72rem",
+                            color: "#94A3B8",
+                            flexShrink: 0,
+                          }}
                         >
                           {thoiGianTuatoi(cauHoi.ngayTao)}
                         </Typography>
@@ -1268,7 +1320,11 @@ export default function QnAManagerContent() {
                           }}
                         >
                           <PlayCircleFilledWhiteOutlinedIcon
-                            sx={{ fontSize: 13, color: "#64748B", flexShrink: 0 }}
+                            sx={{
+                              fontSize: 13,
+                              color: "#64748B",
+                              flexShrink: 0,
+                            }}
                           />
                           <Typography
                             sx={{
@@ -1294,7 +1350,13 @@ export default function QnAManagerContent() {
                           mt: 0.5,
                         }}
                       >
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
+                        >
                           <Box
                             sx={{
                               display: "flex",
@@ -1313,7 +1375,9 @@ export default function QnAManagerContent() {
                               display: "flex",
                               alignItems: "center",
                               gap: 0.4,
-                              color: isUnanswered ? STATUS.warningDark : "#64748B",
+                              color: isUnanswered
+                                ? STATUS.warningDark
+                                : "#64748B",
                               fontSize: "0.76rem",
                               fontWeight: 700,
                             }}
@@ -1323,7 +1387,13 @@ export default function QnAManagerContent() {
                           </Box>
                         </Box>
 
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.75,
+                          }}
+                        >
                           {cauHoi.daGhim && (
                             <Chip
                               label="📌 Ghim"
@@ -1426,7 +1496,13 @@ export default function QnAManagerContent() {
                 }}
               >
                 <CircularProgress size={38} sx={{ color: BRAND.main }} />
-                <Typography sx={{ fontSize: "0.88rem", color: "#64748B", fontWeight: 600 }}>
+                <Typography
+                  sx={{
+                    fontSize: "0.88rem",
+                    color: "#64748B",
+                    fontWeight: 600,
+                  }}
+                >
                   Đang tải nội dung câu hỏi...
                 </Typography>
               </Box>
@@ -1550,7 +1626,9 @@ export default function QnAManagerContent() {
                         >
                           {cauHoiMo.nguoiHoiTen || "Học viên"}
                         </Typography>
-                        <Typography sx={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+                        <Typography
+                          sx={{ fontSize: "0.78rem", color: "#94A3B8" }}
+                        >
                           Đã hỏi {thoiGianTuatoi(cauHoiMo.ngayTao)}
                         </Typography>
                       </Box>
@@ -1583,7 +1661,9 @@ export default function QnAManagerContent() {
                           }
                           sx={{
                             color: cauHoiMo.daGhim ? "#D97706" : "#64748B",
-                            bgcolor: cauHoiMo.daGhim ? "#FEF3C7" : "transparent",
+                            bgcolor: cauHoiMo.daGhim
+                              ? "#FEF3C7"
+                              : "transparent",
                             "&:hover": { bgcolor: "#FEF3C7", color: "#D97706" },
                           }}
                         >
@@ -1609,8 +1689,13 @@ export default function QnAManagerContent() {
                           }
                           sx={{
                             color: cauHoiMo.daDong ? STATUS.error : "#64748B",
-                            bgcolor: cauHoiMo.daDong ? "#FEE2E2" : "transparent",
-                            "&:hover": { bgcolor: "#FEE2E2", color: STATUS.error },
+                            bgcolor: cauHoiMo.daDong
+                              ? "#FEE2E2"
+                              : "transparent",
+                            "&:hover": {
+                              bgcolor: "#FEE2E2",
+                              color: STATUS.error,
+                            },
                           }}
                         >
                           {cauHoiMo.daDong ? (
@@ -1627,17 +1712,27 @@ export default function QnAManagerContent() {
                           onClick={() => xoaCauHoi(cauHoiMo.id)}
                           sx={{
                             color: "#64748B",
-                            "&:hover": { color: STATUS.error, bgcolor: "#FEE2E2" },
+                            "&:hover": {
+                              color: STATUS.error,
+                              bgcolor: "#FEE2E2",
+                            },
                           }}
                         >
                           <DeleteOutlineIcon sx={{ fontSize: 18 }} />
                         </IconButton>
                       </Tooltip>
 
-                      <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+                      <Divider
+                        orientation="vertical"
+                        flexItem
+                        sx={{ mx: 0.5 }}
+                      />
 
                       <Tooltip title="Đóng cửa sổ chi tiết">
-                        <IconButton size="small" onClick={() => setCauHoiMo(null)}>
+                        <IconButton
+                          size="small"
+                          onClick={() => setCauHoiMo(null)}
+                        >
                           <CloseIcon sx={{ fontSize: 18, color: "#64748B" }} />
                         </IconButton>
                       </Tooltip>
@@ -1655,7 +1750,9 @@ export default function QnAManagerContent() {
                       mb: 2.5,
                     }}
                   >
-                    <ForumOutlinedIcon sx={{ fontSize: 18, color: BRAND.main }} />
+                    <ForumOutlinedIcon
+                      sx={{ fontSize: 18, color: BRAND.main }}
+                    />
                     <Typography
                       sx={{
                         fontSize: "0.85rem",
@@ -1693,7 +1790,9 @@ export default function QnAManagerContent() {
                       >
                         Chưa có câu trả lời nào
                       </Typography>
-                      <Typography sx={{ fontSize: "0.84rem", color: "#64748B" }}>
+                      <Typography
+                        sx={{ fontSize: "0.84rem", color: "#64748B" }}
+                      >
                         Hãy là người đầu tiên giải đáp thắc mắc này cho học viên
                         để tăng trải nghiệm học tập.
                       </Typography>
@@ -1862,7 +1961,10 @@ export default function QnAManagerContent() {
                           }}
                         >
                           {dangReply ? (
-                            <CircularProgress size={14} sx={{ color: "#fff" }} />
+                            <CircularProgress
+                              size={14}
+                              sx={{ color: "#fff" }}
+                            />
                           ) : (
                             "Gửi phản hồi"
                           )}
@@ -1967,7 +2069,9 @@ export default function QnAManagerContent() {
                           },
                         }}
                       >
-                        {dangGoiY ? "Đang tạo gợi ý..." : "✨ AI gợi ý câu trả lời"}
+                        {dangGoiY
+                          ? "Đang tạo gợi ý..."
+                          : "✨ AI gợi ý câu trả lời"}
                       </Button>
 
                       <Button
@@ -2023,7 +2127,8 @@ export default function QnAManagerContent() {
                         fontWeight: 700,
                       }}
                     >
-                      🔒 Câu hỏi này đã bị đóng. Học viên và giảng viên không thể gửi thêm phản hồi.
+                      🔒 Câu hỏi này đã bị đóng. Học viên và giảng viên không
+                      thể gửi thêm phản hồi.
                     </Typography>
                   </Box>
                 )}
@@ -2211,9 +2316,15 @@ export default function QnAManagerContent() {
                 textAlign: "left",
               }}
             >
-              <TipsAndUpdatesOutlinedIcon sx={{ color: BRAND.main, fontSize: 22 }} />
-              <Typography sx={{ fontSize: "0.82rem", color: "#475569", lineHeight: 1.5 }}>
-                <strong>Mẹo giảng viên:</strong> Sử dụng nút <strong>✨ AI gợi ý</strong> khi xem chi tiết câu hỏi để tạo câu trả lời mẫu nhanh chóng dựa trên tài liệu bài giảng!
+              <TipsAndUpdatesOutlinedIcon
+                sx={{ color: BRAND.main, fontSize: 22 }}
+              />
+              <Typography
+                sx={{ fontSize: "0.82rem", color: "#475569", lineHeight: 1.5 }}
+              >
+                <strong>Mẹo giảng viên:</strong> Sử dụng nút{" "}
+                <strong>✨ AI gợi ý</strong> khi xem chi tiết câu hỏi để tạo câu
+                trả lời mẫu nhanh chóng dựa trên tài liệu bài giảng!
               </Typography>
             </Box>
           </Box>
