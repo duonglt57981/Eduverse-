@@ -1052,7 +1052,7 @@ namespace Eduverse.Api.Controller
 
             // (Bỏ dữ liệu giả: dùng số liệu thật kể cả khi bằng 0)
 
-            // 7. Best Selling Courses
+            // 7. Fetch courses list (dùng chung cho Best Selling, Recent Activities, Course trend...)
             var courses = new List<KhoaHoc>();
             try
             {
@@ -1063,33 +1063,77 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching courses list: " + ex.Message);
             }
 
+            // 7.1 Best Selling Courses — Top 3 khóa học TRẢ PHÍ có doanh thu (phần admin thực nhận) cao nhất
             var bestSellingCourses = new List<object>();
             try
             {
-                var courseRegs = allRegistrations
-                    .GroupBy(r => r.IdKhoaHoc)
-                    .Select(g => new { CourseId = g.Key, Count = g.Count() })
-                    .OrderByDescending(x => x.Count)
-                    .ToList();
+                var paidCourseIds = courses.Where(c => (c.Gia ?? 0) > 0).Select(c => c.Id).ToHashSet();
 
-                int totalRegs = allRegistrations.Count;
-                foreach (var item in courseRegs.Take(3))
+                if (paidCourseIds.Any())
                 {
-                    var course = courses.FirstOrDefault(c => c.Id == item.CourseId);
-                    if (course != null)
+                    var donHangsDaTT_BSC = await _donHangService.GetQueryable()
+                        .Where(d => !d.IsDeleted && d.TrangThai == 1)
+                        .ToListAsync();
+                    var donHangIds_BSC = donHangsDaTT_BSC.Select(d => d.Id).ToList();
+
+                    var chiTietAll_BSC = await _donHangChiTietService.GetQueryable()
+                        .Where(ct => !ct.IsDeleted && ct.IdDonHang.HasValue && donHangIds_BSC.Contains(ct.IdDonHang.Value))
+                        .ToListAsync();
+
+                    var voucherAll_BSC = await _donHangKhuyenMaiService.GetQueryable()
+                        .Where(km => !km.IsDeleted && km.IdDonHang.HasValue && donHangIds_BSC.Contains(km.IdDonHang.Value))
+                        .ToListAsync();
+
+                    var giamTheoDonHangVaKhoaHoc = voucherAll_BSC
+                        .Where(km => km.IdKhoaHocDuocGiam.HasValue)
+                        .GroupBy(km => (km.IdDonHang!.Value, km.IdKhoaHocDuocGiam!.Value))
+                        .ToDictionary(g => g.Key, g => g.Sum(x => x.SoTienGiam ?? 0));
+
+                    var purchaseCountByCourse = new Dictionary<Guid, int>();
+                    var revenueByCourse = new Dictionary<Guid, double>();
+
+                    // Đếm SỐ LƯỢT MUA = số dòng chi tiết trong các đơn hàng đã thanh toán thành công, theo từng khóa học trả phí
+                    foreach (var ct in chiTietAll_BSC)
                     {
-                        int percent = totalRegs > 0 ? (int)Math.Round((double)item.Count / totalRegs * 100) : 0;
-                        bestSellingCourses.Add(new
-                        {
-                            title = course.TieuDe,
-                            percentage = percent
-                        });
+                        if (!ct.IdKhoaHoc.HasValue || !paidCourseIds.Contains(ct.IdKhoaHoc.Value)) continue;
+                        if (!ct.IdDonHang.HasValue) continue;
+
+                        purchaseCountByCourse[ct.IdKhoaHoc.Value] =
+                            purchaseCountByCourse.GetValueOrDefault(ct.IdKhoaHoc.Value, 0) + 1;
+
+                        var giaDong = ct.GiaLucDat ?? 0;
+                        var giamDung = giamTheoDonHangVaKhoaHoc
+                            .GetValueOrDefault((ct.IdDonHang.Value, ct.IdKhoaHoc.Value), 0);  // giảm giá đúng khóa này, không ước lượng
+                        var thucThuDong = Math.Max(0, giaDong - giamDung);
+                        var adminNhanDuoc = thucThuDong * 0.3;
+
+                        revenueByCourse[ct.IdKhoaHoc.Value] =
+                            revenueByCourse.GetValueOrDefault(ct.IdKhoaHoc.Value, 0) + adminNhanDuoc;
                     }
+
+                    bestSellingCourses = purchaseCountByCourse
+                        .Select(kv => new
+                        {
+                            PurchaseCount = kv.Value,
+                            Revenue = revenueByCourse.GetValueOrDefault(kv.Key, 0),
+                            Course = courses.FirstOrDefault(c => c.Id == kv.Key)
+                        })
+                        .Where(x => x.Course != null)
+                        .OrderByDescending(x => x.PurchaseCount)
+                        .ThenByDescending(x => x.Revenue)
+                        .Take(3)
+                        .Select(x => (object)new
+                        {
+                            title = x.Course!.TieuDe,
+                            purchaseCount = x.PurchaseCount,
+                            revenue = Math.Round(x.Revenue, 0)
+                        })
+                        .ToList();
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error grouping course registrations: " + ex.Message);
+                Console.WriteLine("Error computing best selling courses: " + ex.Message);
             }
 
             // (Bỏ dữ liệu giả: danh sách khóa học bán chạy lấy từ đăng ký thật)

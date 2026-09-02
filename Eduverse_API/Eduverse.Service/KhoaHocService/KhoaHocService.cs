@@ -1489,6 +1489,15 @@ namespace Eduverse.Service.KhoaHocService
             if (!coQuyenGuiDuyet)
                 throw new Exception($"Bạn không có quyền hạn để sửa khóa học: {khoaHoc.Id}");
 
+            var tongTyLeDoanhThu = await _khoaHoc_GiangVienRepository.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .SumAsync(x => x.TyLeChiaDoanhThu);
+
+            if (tongTyLeDoanhThu != 100)
+                throw new Exception(
+                    $"Tổng tỷ lệ chia doanh thu giảng viên phải đủ 100% mới được gửi duyệt " +
+                    $"(hiện tại: {tongTyLeDoanhThu}%). Vui lòng vào mục Quản lý giảng viên để điều chỉnh.");
+
             var khoaHocNhap = await GetQueryable()
                 .Where(kh => kh.IdBanGhiTruoc == khoaHoc.Id && !kh.IsDeleted)
                 .FirstOrDefaultAsync();

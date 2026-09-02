@@ -130,6 +130,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var tongPending = await _loiMoiRepo.GetQueryable()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc
                          && x.TrangThai == "Pending"
+                         && !x.IdKhuyenMai.HasValue         
+                         && x.IdNguoiMoi != x.IdNguoiDuocMoi
                          && !x.IsDeleted
                          && (ngoaiTruLoiMoiId == null || x.Id != ngoaiTruLoiMoiId))
                 .SumAsync(x => x.TyLeChiaDoanhThu);
@@ -223,6 +225,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var khoaHoc = await _khoaHocRepo.GetQueryable()
                 .FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
 
+            var tyLeHoanLai = congTacVien.TyLeChiaDoanhThu;
+
             _khoaHocGVRepo.Delete(congTacVien);
 
             var loiMoi = await _loiMoiRepo.GetQueryable()
@@ -230,6 +234,21 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                                        && x.IdNguoiDuocMoi == idGiangVien
                                        && !x.IsDeleted);
             if (loiMoi != null) _loiMoiRepo.Delete(loiMoi);
+
+            // ── Hoàn lại % cho chủ sở hữu ─────────────────────────
+            if (tyLeHoanLai > 0)
+            {
+                var chuSoHuu = await _khoaHocGVRepo.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
+                                           && x.IdGiangVien == userId
+                                           && x.LaChuSoHuu
+                                           && !x.IsDeleted);
+                if (chuSoHuu != null)
+                {
+                    chuSoHuu.TyLeChiaDoanhThu += tyLeHoanLai;
+                    _khoaHocGVRepo.Update(chuSoHuu);
+                }
+            }
 
             await _khoaHocGVRepo.SaveAsync();
 
@@ -257,25 +276,21 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (khoaHoc.TrangThaiPheDuyet == "DaDuyet")
                 throw new Exception("Khóa học đã được duyệt, không thể mời thêm giảng viên mới. Bạn vẫn có thể chỉnh sửa quyền của giảng viên hiện có.");
 
-            // Chỉ chủ sở hữu mới được mời
             var laChu = await _khoaHocGVRepo.GetQueryable()
-            .AnyAsync(x => x.IdKhoaHoc == request.IdKhoaHoc
-                        && x.IdGiangVien == userId
-                        && x.LaChuSoHuu
-                        && !x.IsDeleted);
+                .AnyAsync(x => x.IdKhoaHoc == request.IdKhoaHoc
+                            && x.IdGiangVien == userId
+                            && x.LaChuSoHuu
+                            && !x.IsDeleted);
             if (!laChu)
                 throw new Exception("Chỉ chủ sở hữu mới được mời giảng viên");
 
-            // Tìm tài khoản theo email
             var nguoiDuocMoi = await _appUserService.GetQueryable()
                 .FirstOrDefaultAsync(x => x.Email.ToLower() == emailChuan && !x.IsDeleted)
                 ?? throw new Exception("Email này chưa có tài khoản giảng viên trên hệ thống");
 
-            // Không mời chính mình
             if (nguoiDuocMoi.Id == userId)
                 throw new Exception("Bạn không thể mời chính mình");
 
-            // Không mời người đã có trong khóa học
             var daTonTai = await _khoaHocGVRepo.GetQueryable()
                 .AnyAsync(x => x.IdKhoaHoc == request.IdKhoaHoc
                             && x.IdGiangVien == nguoiDuocMoi.Id
@@ -283,7 +298,6 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (daTonTai)
                 throw new Exception("Giảng viên này đã tham gia khóa học");
 
-            // Không mời người đang có lời mời Pending
             var loiMoiCu = await _loiMoiRepo.GetQueryable()
                 .FirstOrDefaultAsync(x => x.IdKhoaHoc == request.IdKhoaHoc
                                        && x.IdNguoiDuocMoi == nguoiDuocMoi.Id
@@ -292,11 +306,34 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (loiMoiCu != null)
                 throw new Exception("Đã có lời mời đang chờ xác nhận với giảng viên này");
 
-            // Kiểm tra tổng % không vượt 100
+            // Chỉ cần validate % hợp lệ (0-100) — KHÔNG dùng KiemTraTongTyLe ở đây,
+            // vì % mời mới là "chuyển nhượng" từ chủ sở hữu, không phải "cộng thêm"
+            // vào tổng. Việc trừ % chủ sở hữu bên dưới đã tự đảm bảo tổng ≤ 100%.
             KiemTraTyLeHopLe(request.TyLeChiaDoanhThu);
-            await KiemTraTongTyLe(
-                    request.IdKhoaHoc,
-                    request.TyLeChiaDoanhThu);
+
+            // ── Tự động trừ % vừa mời từ chủ sở hữu ─────────────────────────
+            var chuSoHuu = await _khoaHocGVRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.IdKhoaHoc == request.IdKhoaHoc
+                                       && x.IdGiangVien == userId
+                                       && x.LaChuSoHuu
+                                       && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy thông tin chủ sở hữu khóa học");
+
+            bool daTruChuSoHuu = false;
+
+            if (request.TyLeChiaDoanhThu > 0)
+            {
+                if (chuSoHuu.TyLeChiaDoanhThu <= 0)
+                    throw new Exception("Chủ sở hữu đã chia hết 100% doanh thu (đang ở 0%). Vui lòng điều chỉnh lại tỷ lệ chia doanh thu của các giảng viên hiện có trước khi mời thêm.");
+
+                if (chuSoHuu.TyLeChiaDoanhThu < request.TyLeChiaDoanhThu)
+                    throw new Exception($"Chủ sở hữu chỉ còn {chuSoHuu.TyLeChiaDoanhThu}% khả dụng, không đủ để chia {request.TyLeChiaDoanhThu}% cho giảng viên mới.");
+
+                chuSoHuu.TyLeChiaDoanhThu -= request.TyLeChiaDoanhThu;
+                _khoaHocGVRepo.Update(chuSoHuu);
+                await _khoaHocGVRepo.SaveAsync();
+                daTruChuSoHuu = true;
+            }
 
             var loiMoi = new LoiMoiGiangVien
             {
@@ -316,10 +353,22 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 Promotions = request.Promotions,
             };
 
-            _loiMoiRepo.Add(loiMoi);
-            await _loiMoiRepo.SaveAsync();
+            try
+            {
+                _loiMoiRepo.Add(loiMoi);
+                await _loiMoiRepo.SaveAsync();
+            }
+            catch
+            {
+                if (daTruChuSoHuu)
+                {
+                    chuSoHuu.TyLeChiaDoanhThu += request.TyLeChiaDoanhThu;
+                    _khoaHocGVRepo.Update(chuSoHuu);
+                    await _khoaHocGVRepo.SaveAsync();
+                }
+                throw;
+            }
 
-            // Gửi thông báo
             await _notificationPublisher.NotifyUserAsync(nguoiDuocMoi.Id, new NotificationPayload
             {
                 TieuDe = "Lời mời đồng giảng dạy",
@@ -331,7 +380,24 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 ItemName = khoaHoc.TieuDe
             });
 
-            return new LoiMoiGiangVienDto { /* map */ };
+            return new LoiMoiGiangVienDto
+            {
+                Id = loiMoi.Id,
+                IdKhoaHoc = loiMoi.IdKhoaHoc,
+                EmailDuocMoi = loiMoi.EmailDuocMoi,
+                TrangThai = loiMoi.TrangThai,
+                Visible = loiMoi.Visible,
+                TyLeChiaDoanhThu = loiMoi.TyLeChiaDoanhThu,
+                Manage = loiMoi.Manage,
+                Performance = loiMoi.Performance,
+                QnA = loiMoi.QnA,
+                Reviews = loiMoi.Reviews,
+                Assignments = loiMoi.Assignments,
+                Materials = loiMoi.Materials,
+                Promotions = loiMoi.Promotions,
+                NgayMoi = loiMoi.CreatedDate,
+                NgayPhanHoi = loiMoi.NgayPhanHoi,
+            };
         }
 
         public async Task PhanHoi(Guid idLoiMoi, bool dongY)
@@ -379,6 +445,23 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     Promotions = loiMoi.Promotions,
                 };
                 _khoaHocGVRepo.Add(congTacVien);
+            }
+            else
+            {
+                // ── Từ chối → hoàn lại % đã bị trừ từ chủ sở hữu lúc gửi lời mời ──
+                if (loiMoi.TyLeChiaDoanhThu > 0)
+                {
+                    var chuSoHuu = await _khoaHocGVRepo.GetQueryable()
+                        .FirstOrDefaultAsync(x => x.IdKhoaHoc == loiMoi.IdKhoaHoc
+                                               && x.IdGiangVien == loiMoi.IdNguoiMoi
+                                               && x.LaChuSoHuu
+                                               && !x.IsDeleted);
+                    if (chuSoHuu != null)
+                    {
+                        chuSoHuu.TyLeChiaDoanhThu += loiMoi.TyLeChiaDoanhThu;
+                        _khoaHocGVRepo.Update(chuSoHuu);
+                    }
+                }
             }
 
             await _khoaHocGVRepo.SaveAsync();
@@ -616,9 +699,9 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             // Soft-delete lời mời
             _loiMoiRepo.Delete(loiMoi);
 
-            // Nếu đã Accepted → soft-delete luôn cộng tác viên
             if (loiMoi.TrangThai == "Accepted")
             {
+                // Nếu đã Accepted → soft-delete luôn cộng tác viên
                 var congTacVien = await _khoaHocGVRepo.GetQueryable()
                     .FirstOrDefaultAsync(x => x.IdKhoaHoc == loiMoi.IdKhoaHoc
                                            && x.IdGiangVien == loiMoi.IdNguoiDuocMoi
@@ -627,7 +710,39 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     _khoaHocGVRepo.Delete(congTacVien);
             }
 
+            // ── Hoàn lại % vừa bị trừ cho chủ sở hữu ─────────────────────────
+            // CHỈ hoàn khi lời mời đang Pending hoặc Accepted — % của những
+            // trạng thái đó vẫn còn "kẹt" ở lời mời. Nếu đã Rejected, PhanHoi
+            // đã hoàn % rồi — hoàn lại lần nữa ở đây sẽ bị double-refund.
+            bool canHoanTyLe = loiMoi.TrangThai == "Pending" || loiMoi.TrangThai == "Accepted";
+
+            if (canHoanTyLe
+                && loiMoi.TyLeChiaDoanhThu > 0
+                && !loiMoi.IdKhuyenMai.HasValue
+                && loiMoi.IdNguoiMoi != loiMoi.IdNguoiDuocMoi)
+            {
+                var chuSoHuu = await _khoaHocGVRepo.GetQueryable()
+                    .FirstOrDefaultAsync(x => x.IdKhoaHoc == loiMoi.IdKhoaHoc
+                                           && x.IdGiangVien == loiMoi.IdNguoiMoi
+                                           && x.LaChuSoHuu
+                                           && !x.IsDeleted);
+                if (chuSoHuu != null)
+                {
+                    chuSoHuu.TyLeChiaDoanhThu += loiMoi.TyLeChiaDoanhThu;
+                    _khoaHocGVRepo.Update(chuSoHuu);
+                }
+            }
+
             await _khoaHocGVRepo.SaveAsync();
+
+            await _notificationPublisher.NotifyUserAsync(loiMoi.IdNguoiDuocMoi, new NotificationPayload
+            {
+                TieuDe = "Lời mời đã bị hủy",
+                NoiDung = "Lời mời đồng giảng dạy của bạn đã bị chủ sở hữu khóa học hủy.",
+                LoaiThongBao = "HuyLoiMoi",
+                FromUser = userId,
+                ItemId = loiMoi.IdKhoaHoc,
+            });
         }
 
         public async Task<DanhSachGiangVienDto> GetDanhSachGiangVien(Guid idKhoaHoc)
