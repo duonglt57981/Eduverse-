@@ -977,7 +977,9 @@ export default function AdminDashboardContent() {
       trend: fmtTrend(welcomeStats.completionTrendPct),
       isUp: trendUp(welcomeStats.completionTrendPct),
       icon: (
-        <AssignmentTurnedInRounded sx={{ color: STATUS.success, fontSize: 22 }} />
+        <AssignmentTurnedInRounded
+          sx={{ color: STATUS.success, fontSize: 22 }}
+        />
       ),
       iconBg: "rgba(16,185,129,0.05)",
     },
@@ -1142,74 +1144,113 @@ export default function AdminDashboardContent() {
                   Khóa học bán chạy nhất
                 </Typography>
 
-                <Stack spacing={3}>
-                  {bestSellingCourses.map((course: any, idx: number) => {
-                    const colors = [COLORS.primary, COLORS.purpleAI, "#0EA5E9"];
-                    return (
-                      <Stack key={idx} spacing={1}>
-                        <Stack
-                          direction="row"
-                          sx={{
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
+                <Stack spacing={2}>
+                  {!bestSellingCourses || bestSellingCourses.length === 0 ? (
+                    <Typography
+                      sx={{
+                        color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
+                        fontSize: 13.5,
+                        textAlign: "center",
+                        py: 3,
+                      }}
+                    >
+                      Chưa có dữ liệu để thống kê.
+                    </Typography>
+                  ) : (
+                    (() => {
+                      const colors = [
+                        COLORS.primary,
+                        COLORS.purpleAI,
+                        "#0EA5E9",
+                      ];
+                      const badgeBg = [
+                        "rgba(141,19,19,0.08)",
+                        "rgba(124,58,237,0.08)",
+                        "rgba(14,165,233,0.08)",
+                      ];
+                      return bestSellingCourses.map(
+                        (course: any, idx: number) => (
                           <Stack
+                            key={idx}
                             direction="row"
-                            spacing={1.5}
-                            sx={{ alignItems: "center" }}
+                            spacing={2}
+                            sx={{
+                              alignItems: "center",
+                              p: 1.5,
+                              borderRadius: "14px",
+                              bgcolor:
+                                idx === 0
+                                  ? "rgba(141,19,19,0.03)"
+                                  : "transparent",
+                              border:
+                                idx === 0
+                                  ? "1px solid rgba(141,19,19,0.08)"
+                                  : "1px solid transparent",
+                            }}
                           >
                             <Box
                               sx={{
-                                width: 32,
-                                height: 32,
-                                borderRadius: "8px",
-                                bgcolor: "rgba(0,0,0,0.04)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                width: 38,
+                                height: 38,
+                                borderRadius: "10px",
+                                bgcolor: badgeBg[idx % badgeBg.length],
+                                display: "grid",
+                                placeItems: "center",
+                                fontSize: 15,
+                                fontWeight: 900,
+                                color: colors[idx % colors.length],
+                                flexShrink: 0,
                               }}
                             >
-                              <StarRounded
-                                sx={{ color: STATUS.warning, fontSize: 16 }}
-                              />
+                              #{idx + 1}
                             </Box>
+
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: 14,
+                                  fontWeight: 800,
+                                  color: COLORS.textDark,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                                title={course.title}
+                              >
+                                {course.title}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: 12,
+                                  color:
+                                    "var(--ev-text-muted, rgba(31,41,55,0.5))",
+                                  fontWeight: 600,
+                                  mt: 0.3,
+                                }}
+                              >
+                                {(course.purchaseCount ?? 0).toLocaleString(
+                                  "vi-VN",
+                                )}{" "}
+                                lượt mua
+                              </Typography>
+                            </Box>
+
                             <Typography
                               sx={{
-                                fontSize: 14,
-                                fontWeight: 700,
-                                color: COLORS.textDark,
+                                fontSize: 13.5,
+                                fontWeight: 800,
+                                color: colors[idx % colors.length],
+                                flexShrink: 0,
+                                textAlign: "right",
                               }}
                             >
-                              {course.title}
+                              {(course.revenue || 0).toLocaleString("vi-VN")}đ
                             </Typography>
                           </Stack>
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: 800,
-                              color: COLORS.textDark,
-                            }}
-                          >
-                            {course.percentage}%
-                          </Typography>
-                        </Stack>
-                        <LinearProgress
-                          variant="determinate"
-                          value={course.percentage}
-                          sx={{
-                            height: 6,
-                            borderRadius: "3px",
-                            bgcolor: "rgba(0,0,0,0.04)",
-                            "& .MuiLinearProgress-bar": {
-                              borderRadius: "3px",
-                              bgcolor: colors[idx % colors.length],
-                            },
-                          }}
-                        />
-                      </Stack>
-                    );
-                  })}
+                        ),
+                      );
+                    })()
+                  )}
                 </Stack>
               </Paper>
             </Grid>
