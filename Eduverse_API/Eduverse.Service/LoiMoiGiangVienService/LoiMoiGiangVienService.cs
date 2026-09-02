@@ -1235,6 +1235,11 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             });
         }
 
+        private static bool LaKhoaHocKhongHopLeChoKhuyenMai(KhoaHoc kh) =>
+            kh.IsDeleted
+            || kh.TrangThaiPheDuyet != "DaDuyet"
+            || LaKhoaHocMienPhi(kh);
+
         public async Task<List<LoiMoiApDungKhuyenMaiDto>> GetLoiMoiApDungTheoKhuyenMai(Guid idKhuyenMai)
         {
             var loiMois = await _loiMoiRepo.GetQueryable()
@@ -1247,10 +1252,39 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var khoaHocIds = loiMois.Select(x => x.IdKhoaHoc).Distinct().ToList();
             var giangVienIds = loiMois.Select(x => x.IdNguoiDuocMoi).Distinct().ToList();
 
-            var khoaHocs = await _khoaHocRepo.GetQueryable()
-                .Where(x => khoaHocIds.Contains(x.Id))
+            var khoaHocsRaw = await _khoaHocRepo.GetQueryable()
+        .Where(x => khoaHocIds.Contains(x.Id))
+        .ToListAsync();
+
+            // ★ MỚI: tự huỷ lời mời Pending trỏ tới khóa học không còn hợp lệ (đã
+            // xoá / mất duyệt / chuyển miễn phí / xoá cứng khỏi DB) — chỉ cần khóa
+            // học không đủ điều kiện là tự rớt khỏi danh sách chờ duyệt của Admin,
+            // không cần ai vào xử lý tay.
+            var idsTonTai = khoaHocsRaw.Select(x => x.Id).ToHashSet();
+            var idsMatHan = khoaHocIds.Except(idsTonTai).ToHashSet(); // xoá cứng, không còn row
+            var idsKhongHopLe = khoaHocsRaw
+                .Where(LaKhoaHocKhongHopLeChoKhuyenMai)
+                .Select(x => x.Id)
+                .ToHashSet();
+            idsKhongHopLe.UnionWith(idsMatHan);
+
+            if (idsKhongHopLe.Any())
+            {
+                var loiMoiCanHuy = loiMois
+                    .Where(x => x.TrangThai == "Pending" && idsKhongHopLe.Contains(x.IdKhoaHoc))
+                    .ToList();
+                if (loiMoiCanHuy.Any())
+                {
+                    _loiMoiRepo.Delete(loiMoiCanHuy);
+                    await _loiMoiRepo.SaveAsync();
+                    loiMois = loiMois.Except(loiMoiCanHuy).ToList();
+                }
+            }
+
+            // học sau đó có mất hợp lệ — chỉ Pending mới bị huỷ ở trên.
+            var khoaHocs = khoaHocsRaw
                 .Select(x => new { x.Id, x.TieuDe, x.HinhAnhKhoaHoc })
-                .ToListAsync();
+                .ToList();
 
             var giangViens = await _appUserService.GetQueryable()
                 .Where(x => giangVienIds.Contains(x.Id))
@@ -1298,10 +1332,13 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             if (khoaHoc == null) return false;
             if (khoaHoc.CreatedId == userId) return true;
 
-            var daDongY = await _khoaHocGVRepo.GetQueryable()
-            .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc && x.IdGiangVien == userId && !x.IsDeleted);
+            var laChuSoHuu = await _khoaHocGVRepo.GetQueryable()
+            .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                    && x.IdGiangVien == userId
+                    && x.LaChuSoHuu
+                    && !x.IsDeleted);
 
-            return daDongY;
+            return laChuSoHuu;
         }
 
         private async Task<bool> DaThamGiaEduverseDeals(Guid idKhoaHoc)
@@ -1322,11 +1359,23 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             return await DaThamGiaEduverseDeals(idKhoaHoc);
         }
 
+        private static bool LaKhoaHocMienPhi(KhoaHoc kh) =>
+            (kh.Gia ?? 0) <= 0
+            || kh.LoaiKhoaHoc == "Khóa học miễn phí"
+            || kh.LoaiKhoaHoc == "MienPhi";
+
         public async Task ThamGiaEduverseDeals(Guid idKhoaHoc)
         {
             var userId = LayUserId();
             if (!await CoQuyenEduverseDeals(idKhoaHoc, userId))
                 throw new Exception("Bạn không có quyền tham gia Eduverse Deals cho khóa học này");
+
+            var khoaHoc = await _khoaHocRepo.GetQueryable()
+                .FirstOrDefaultAsync(x => x.Id == idKhoaHoc && !x.IsDeleted)
+                ?? throw new Exception("Không tìm thấy khóa học");
+
+            if (LaKhoaHocMienPhi(khoaHoc))
+                throw new Exception("Chỉ áp dụng Eduverse Deals cho khóa học có phí");
 
             _ = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc && !x.IsDeleted)
                 ?? throw new Exception("Không tìm thấy khóa học");
@@ -1410,6 +1459,63 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             };
             _loiMoiRepo.Add(moi);
             await _loiMoiRepo.SaveAsync();
+
+            // ★ MỚI: bật Eduverse Deals lần đầu (dù bật trực tiếp qua ThamGiaEduverseDeals
+            // hay gián tiếp qua việc đồng ý 1 lời mời khuyến mãi cụ thể trong PhanHoiKhuyenMai)
+            // coi như giảng viên đã đồng ý áp TẤT CẢ khuyến mãi Admin gửi cho khóa học này —
+            // không bắt phải vào từng lời mời cũ bấm "Đồng ý" riêng nữa.
+            await TuDongDuyetLoiMoiKhuyenMaiDangCho(idKhoaHoc, userId);
+        }
+
+        // ── Tự động duyệt các lời mời áp dụng khuyến mãi đang Pending sẵn có của
+        // khóa học khi Eduverse Deals vừa được bật lần đầu ──────────────────────
+        private async Task TuDongDuyetLoiMoiKhuyenMaiDangCho(Guid idKhoaHoc, Guid userId)
+        {
+            var loiMoiDangCho = await _loiMoiRepo.GetQueryable()
+                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                         && x.IdKhuyenMai.HasValue
+                         && x.TrangThai == "Pending"
+                         && !x.IsDeleted)
+                .ToListAsync();
+
+            if (!loiMoiDangCho.Any()) return;
+
+            var khoaHoc = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(x => x.Id == idKhoaHoc);
+            // Khóa học không còn ở trạng thái đã duyệt thì không tự động áp — giữ
+            // nguyên Pending, để logic dọn dẹp ở GetLoiMoiApDungTheoKhuyenMai xử lý sau.
+            if (khoaHoc == null || khoaHoc.TrangThaiPheDuyet != "DaDuyet")
+                return;
+
+            foreach (var lm in loiMoiDangCho)
+            {
+                lm.TrangThai = "Accepted";
+                lm.NgayPhanHoi = DateTime.UtcNow;
+                _loiMoiRepo.Update(lm);
+
+                var daCoLink = await _kmKhoaHocRepo.GetQueryable()
+                    .AnyAsync(x => x.IdKhuyenMai == lm.IdKhuyenMai && x.IdKhoaHoc == idKhoaHoc);
+                if (!daCoLink)
+                {
+                    _kmKhoaHocRepo.Add(new KhuyenMai_KhoaHoc
+                    {
+                        IdKhuyenMai = lm.IdKhuyenMai,
+                        IdKhoaHoc = idKhoaHoc,
+                    });
+                }
+
+                await _notificationPublisher.NotifyUserAsync(lm.IdNguoiMoi, new NotificationPayload
+                {
+                    TieuDe = "Khuyến mãi đã được áp dụng tự động",
+                    NoiDung = $"Khóa học \"{khoaHoc.TieuDe}\" vừa bật Eduverse Deals nên khuyến mãi đang chờ trước đó được áp dụng tự động, không cần xác nhận riêng.",
+                    LoaiThongBao = "PhanHoiApDungKhuyenMai",
+                    FromUser = userId,
+                    ItemId = lm.IdKhuyenMai,
+                    ItemName = khoaHoc.TieuDe,
+                });
+            }
+
+            await _loiMoiRepo.SaveAsync();
+            await _kmKhoaHocRepo.SaveAsync();
         }
 
         // ── Gỡ khóa học khỏi các mã khuyến mãi đến từ lời mời Admin khi
@@ -1463,12 +1569,15 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .Where(x => x.TrangThaiPheDuyet == "DaDuyet"
                          && x.IsBanHienTai == true
                          && !x.IsDeleted
-                         && x.TrangThai == "HoatDong");
+                         && x.TrangThai == "HoatDong"
+                         && (x.Gia ?? 0) > 0 
+                         && x.LoaiKhoaHoc != "Khóa học miễn phí"      
+                         && x.LoaiKhoaHoc != "MienPhi"); 
 
             if (!isAdmin)
             {
                 var idsCoQuyen = await _khoaHocGVRepo.GetQueryable()
-                    .Where(x => x.IdGiangVien == userId && !x.IsDeleted)
+                    .Where(x => x.IdGiangVien == userId && x.LaChuSoHuu && !x.IsDeleted)
                     .Select(x => x.IdKhoaHoc)
                     .Distinct()
                     .ToListAsync();
