@@ -731,7 +731,7 @@ function CourseCard({
   const isFree =
     course.loaiKhoaHoc !== "Khóa học trả phí" &&
     (!course.gia || course.gia <= 0);
-  const discountPercent = course.phanTramGiam ?? 0;
+  const discountPercent = isFree ? 0 : (course.phanTramGiam ?? 0);
   const rawPrice = course.gia ?? 0;
   const originalPrice =
     course.giaGoc ??
@@ -833,7 +833,7 @@ function CourseCard({
           )}
 
           {/* Admin Discount Badge */}
-          {discountPercent > 0 && (
+          {course.maGiamGia && (
             <Box
               sx={{
                 position: "absolute",
@@ -853,10 +853,7 @@ function CourseCard({
                 gap: 0.5,
               }}
             >
-              <span>-{discountPercent}%</span>
-              {course.maGiamGia && (
-                <span style={{ opacity: 0.9, fontSize: 9.5 }}>• {course.maGiamGia}</span>
-              )}
+              <span>{course.maGiamGia}</span>
             </Box>
           )}
 
@@ -1003,7 +1000,7 @@ function CourseCard({
               sx={{
                 fontSize: 15,
                 fontWeight: 800,
-                color: discountPercent > 0 ? "#DC2626" : C.textDark,
+                color: C.textDark,
                 lineHeight: 1.2,
               }}
             >
@@ -1827,7 +1824,6 @@ export default function StudentHomeContent() {
   }, []);
 
   // Gợi ý thông minh theo danh mục các khóa học đã học
-  // Gợi ý thông minh theo danh mục các khóa học đã học
   const learnedRecs: HistoryRecommendationGroup[] = useMemo(() => {
     if (
       data?.historyRecommendations &&
@@ -1904,19 +1900,33 @@ export default function StudentHomeContent() {
     return [];
   }, [data]);
 
-  // Khóa học được ưu đãi (áp dụng mã giảm giá của Admin)
+  // Khóa học được ưu đãi (chỉ áp dụng cho các khóa học trả phí)
   const promotedCoursesList = useMemo(() => {
     if (
       data?.promotedCourses &&
       Array.isArray(data.promotedCourses) &&
       data.promotedCourses.length > 0
     ) {
-      return data.promotedCourses;
+      return data.promotedCourses.filter(
+        (c: any) =>
+          (c.loaiKhoaHoc === "Khóa học trả phí" || (c.gia && c.gia > 0)) &&
+          c.loaiKhoaHoc !== "Khóa học miễn phí",
+      );
     }
     if (latestCourses && latestCourses.length > 0) {
-      return latestCourses.slice(0, 8).map((c: any) => ({
+      const paidCourses = latestCourses.filter(
+        (c: any) =>
+          (c.loaiKhoaHoc === "Khóa học trả phí" || (c.gia && c.gia > 0)) &&
+          c.loaiKhoaHoc !== "Khóa học miễn phí" &&
+          !c.daDangKy,
+      );
+      return paidCourses.slice(0, 8).map((c: any) => ({
         ...c,
-        phanTramGiam: c.phanTramGiam || (c.giaGoc && c.giaGoc > c.gia ? Math.round((c.giaGoc - c.gia) * 100 / c.giaGoc) : 25),
+        phanTramGiam:
+          c.phanTramGiam ||
+          (c.giaGoc && c.giaGoc > c.gia
+            ? Math.round(((c.giaGoc - c.gia) * 100) / c.giaGoc)
+            : 25),
         maGiamGia: c.maGiamGia || "ADMINDEALS",
       }));
     }
@@ -2247,35 +2257,21 @@ export default function StudentHomeContent() {
         )}
       </Box>
 
-      {/* ── 3.5. Khóa học được ưu đãi (Áp dụng mã giảm giá của Admin) ─────── */}
+      {/* ── 3.5. Khóa học được ưu đãi ─────── */}
       {promotedCoursesList.length > 0 && (
         <Box>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
             <Box>
-              <Stack direction="row" spacing={1.2} sx={{ alignItems: "center" }}>
-                <Typography
-                  sx={{
-                    fontSize: { xs: 18, md: 22 },
-                    fontWeight: 900,
-                    color: C.textDark,
-                    letterSpacing: "-0.3px",
-                  }}
-                >
-                  Khóa học được ưu đãi
-                </Typography>
-                <Chip
-                  label="Ưu đãi từ Admin"
-                  size="small"
-                  sx={{
-                    bgcolor: "rgba(220, 38, 38, 0.1)",
-                    color: "#DC2626",
-                    fontWeight: 800,
-                    fontSize: 11,
-                    height: 22,
-                    border: "1px solid rgba(220, 38, 38, 0.2)",
-                  }}
-                />
-              </Stack>
+              <Typography
+                sx={{
+                  fontSize: { xs: 18, md: 22 },
+                  fontWeight: 900,
+                  color: C.textDark,
+                  letterSpacing: "-0.3px",
+                }}
+              >
+                Khóa học được ưu đãi
+              </Typography>
               <Typography sx={{ fontSize: 13, color: C.textSecondary, mt: 0.25, fontWeight: 500 }}>
                 Các khóa học đang được áp dụng mã giảm giá đặc biệt từ hệ thống
               </Typography>

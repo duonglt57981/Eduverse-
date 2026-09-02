@@ -483,7 +483,7 @@ namespace Eduverse.Api.Controller
                     var promotedCourseIds = voucherByCourseId.Where(kv => kv.Value != null).Select(kv => kv.Key).ToList();
 
                     var promotedCourseEntities = courses
-                        .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id))
+                        .Where(c => promotedCourseIds.Contains(c.Id) && !registeredCourseIds.Contains(c.Id) && c.Gia > 0 && c.LoaiKhoaHoc != "Khóa học miễn phí")
                         .ToList();
 
                     if (promotedCourseEntities.Any())
@@ -512,7 +512,6 @@ namespace Eduverse.Api.Controller
                                 capDo = c.CapDo ?? "Trung cấp",
                                 gia = salePrice,
                                 giaGoc = originalPrice,
-                                giagoc = originalPrice,
                                 loaiKhoaHoc = c.LoaiKhoaHoc,
                                 daDangKy = false,
                                 maGiamGia = voucher?.MaGiamGia,
@@ -525,10 +524,11 @@ namespace Eduverse.Api.Controller
                     }
                 }
 
-                // Fallback: Nếu chưa có khóa học nào được gán voucher, hiển thị các khóa học với ưu đãi hệ thống
+                // Fallback: Nếu chưa có khóa học nào được gán voucher, hiển thị các khóa học trả phí với ưu đãi hệ thống
                 if (!promotedCourses.Any())
                 {
                     var samplePromoCourses = unregisteredCourses
+                        .Where(c => c.Gia > 0 && c.LoaiKhoaHoc != "Khóa học miễn phí")
                         .OrderByDescending(c => c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia)
                         .ThenByDescending(c => c.CreatedDate)
                         .Take(10)
@@ -536,7 +536,7 @@ namespace Eduverse.Api.Controller
 
                     if (!samplePromoCourses.Any())
                     {
-                        samplePromoCourses = courses.Take(10).ToList();
+                        samplePromoCourses = courses.Where(c => c.Gia > 0 && c.LoaiKhoaHoc != "Khóa học miễn phí").Take(10).ToList();
                     }
 
                     if (samplePromoCourses.Any())
@@ -545,9 +545,9 @@ namespace Eduverse.Api.Controller
                         {
                             var originalPrice = (c.GiaGoc.HasValue && c.GiaGoc.Value > c.Gia)
                                 ? c.GiaGoc.Value
-                                : (c.Gia > 0 ? (long)(c.Gia * 1.25) : 100000);
+                                : (c.Gia > 0 ? (long)(c.Gia * 1.25) : c.Gia);
                             var discountPercent = (originalPrice > c.Gia && originalPrice > 0)
-                                ? (int)Math.Round((originalPrice - c.Gia) * 100.0 / originalPrice)
+                                ? (int)Math.Round((double)(originalPrice - c.Gia) * 100.0 / (double)originalPrice)
                                 : 20;
 
                             return (object)new
@@ -567,7 +567,6 @@ namespace Eduverse.Api.Controller
                                 capDo = c.CapDo ?? "Trung cấp",
                                 gia = c.Gia,
                                 giaGoc = originalPrice,
-                                giagoc = originalPrice,
                                 loaiKhoaHoc = c.LoaiKhoaHoc,
                                 daDangKy = false,
                                 maGiamGia = "ADMINDEALS",
@@ -600,7 +599,7 @@ namespace Eduverse.Api.Controller
                 studentsCount = premiumCourse?.SoLuongHocVien ?? 0,
                 level = premiumCourse?.CapDo ?? "Nâng cao",
                 gia = premiumCourse?.Gia ?? 0,
-                giagoc = premiumCourse?.GiaGoc,
+                giaGoc = premiumCourse?.GiaGoc,
                 loaiKhoaHoc = premiumCourse?.LoaiKhoaHoc,
                 daDangKy = premiumCourse != null && registeredCourseIds.Contains(premiumCourse.Id),
                 thumbnailGradient = "linear-gradient(135deg, #8B1E3F 0%, #7C3AED 100%)",
@@ -616,7 +615,7 @@ namespace Eduverse.Api.Controller
                     studentsCount = c.SoLuongHocVien ?? 0,
                     level = c.CapDo ?? "Cơ bản",
                     gia = c.Gia,
-                    giagoc = c.GiaGoc,
+                    giaGoc = c.GiaGoc,
                     loaiKhoaHoc = c.LoaiKhoaHoc,
                     daDangKy = registeredCourseIds.Contains(c.Id),
                     thumbnailGradient = GetGradient(i + 1)
@@ -646,7 +645,6 @@ namespace Eduverse.Api.Controller
                     capDo = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
                     giaGoc = c.GiaGoc,
-                    giagoc = c.GiaGoc,
                     loaiKhoaHoc = c.LoaiKhoaHoc,
                     daDangKy = false,
                     categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
@@ -744,7 +742,6 @@ namespace Eduverse.Api.Controller
                                 capDo = c.CapDo ?? "Trung cấp",
                                 gia = c.Gia,
                                 giaGoc = c.GiaGoc,
-                                giagoc = c.GiaGoc,
                                 loaiKhoaHoc = c.LoaiKhoaHoc,
                                 daDangKy = false,
                                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
@@ -801,7 +798,6 @@ namespace Eduverse.Api.Controller
                                 capDo = c.CapDo ?? "Trung cấp",
                                 gia = c.Gia,
                                 giaGoc = c.GiaGoc,
-                                giagoc = c.GiaGoc,
                                 loaiKhoaHoc = c.LoaiKhoaHoc,
                                 daDangKy = false,
                                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
@@ -838,7 +834,6 @@ namespace Eduverse.Api.Controller
                                 capDo = c.CapDo ?? "Trung cấp",
                                 gia = c.Gia,
                                 giaGoc = c.GiaGoc,
-                                giagoc = c.GiaGoc,
                                 loaiKhoaHoc = c.LoaiKhoaHoc,
                                 daDangKy = false,
                                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
@@ -870,7 +865,6 @@ namespace Eduverse.Api.Controller
                     capDo = c.CapDo ?? "Trung cấp",
                     gia = c.Gia,
                     giaGoc = c.GiaGoc,
-                    giagoc = c.GiaGoc,
                     loaiKhoaHoc = c.LoaiKhoaHoc,
                     daDangKy = false,
                     categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),
@@ -948,7 +942,6 @@ namespace Eduverse.Api.Controller
                                 capDo = c.CapDo ?? "Trung cấp",
                                 gia = c.Gia,
                                 giaGoc = c.GiaGoc,
-                                giagoc = c.GiaGoc,
                                 loaiKhoaHoc = c.LoaiKhoaHoc,
                                 daDangKy = false,
                                 categoryNames = categoryNamesByCourseId.GetValueOrDefault(c.Id, new List<string>()),

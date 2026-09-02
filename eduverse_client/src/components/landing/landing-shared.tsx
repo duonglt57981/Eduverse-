@@ -1,11 +1,9 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import {
   Chip,
-  CssBaseline,
   Divider,
   Paper,
   Stack,
@@ -47,13 +45,21 @@ export function LandingThemeProvider({
 import { isTokenExpired } from "@/src/utils/jwt";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
 
+const emptySubscribe = () => () => {};
+
 export function LandingNavbar({ activePath = "/" }: { activePath?: string }) {
+  const user = useSelector((s) => s.auth.user);
+  const isClient = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
   if (activePath.startsWith("/personnel")) {
     return null;
   }
 
-  const user = useSelector((s) => s.auth.user);
-  const hasUser = !!(
+  const hasUser = isClient && !!(
     user &&
     user.accessToken &&
     !isTokenExpired(user.accessToken)
