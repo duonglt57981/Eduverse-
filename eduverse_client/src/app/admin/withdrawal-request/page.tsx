@@ -28,6 +28,7 @@ import {
   Stack,
   Checkbox,
   Tooltip,
+  Pagination,
 } from "@mui/material";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
@@ -84,6 +85,25 @@ function RutTienContent() {
 
   const choDuyet = tatCaYeuCau.filter((y) => y.trangThai === "ChoDuyet");
   const daXuLy = tatCaYeuCau.filter((y) => y.trangThai !== "ChoDuyet");
+
+  // ── Phân trang lịch sử đã xử lý (10 mục/trang) ──
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PAGE_SIZE = 10;
+
+  const sortedDaXuLy = useMemo(() => {
+    return [...daXuLy].sort((a, b) => {
+      const timeA = a.ngayXuLy ? new Date(a.ngayXuLy).getTime() : 0;
+      const timeB = b.ngayXuLy ? new Date(b.ngayXuLy).getTime() : 0;
+      return timeB - timeA;
+    });
+  }, [daXuLy]);
+
+  const totalHistoryPages = Math.ceil(sortedDaXuLy.length / HISTORY_PAGE_SIZE) || 1;
+
+  const paginatedDaXuLy = useMemo(() => {
+    const startIndex = (historyPage - 1) * HISTORY_PAGE_SIZE;
+    return sortedDaXuLy.slice(startIndex, startIndex + HISTORY_PAGE_SIZE);
+  }, [sortedDaXuLy, historyPage]);
 
   const formatTien = (n?: number) =>
     n ? `${n.toLocaleString("vi-VN")}đ` : "0đ";
@@ -787,7 +807,7 @@ function RutTienContent() {
       </Card>
 
       {/* Lịch sử đã xử lý */}
-      {daXuLy.length > 0 && (
+      {sortedDaXuLy.length > 0 && (
         <Card
           sx={{
             borderRadius: "16px",
@@ -797,11 +817,38 @@ function RutTienContent() {
             overflow: "hidden",
           }}
         >
-          <Box sx={{ p: 2.5 }}>
-            <Typography
-              sx={{ fontWeight: 850, fontSize: 17, color: CSSVAR.textPrimary }}
-            >
-              Lịch sử đã xử lý
+          <Box
+            sx={{
+              p: 2.5,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: 1.5,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+              <Typography
+                sx={{ fontWeight: 850, fontSize: 17, color: CSSVAR.textPrimary }}
+              >
+                Lịch sử đã xử lý
+              </Typography>
+              <Chip
+                label={`${sortedDaXuLy.length} yêu cầu`}
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: 12,
+                  bgcolor: "rgba(17,24,39,0.04)",
+                  color: CSSVAR.textSecondary,
+                  borderRadius: "8px",
+                }}
+              />
+            </Box>
+            <Typography sx={{ fontSize: 13, color: CSSVAR.textSecondary, fontWeight: 500 }}>
+              Hiển thị {(historyPage - 1) * HISTORY_PAGE_SIZE + 1} -{" "}
+              {Math.min(historyPage * HISTORY_PAGE_SIZE, sortedDaXuLy.length)} trong tổng số{" "}
+              {sortedDaXuLy.length}
             </Typography>
           </Box>
           <Divider sx={{ borderColor: CSSVAR.divider }} />
@@ -822,7 +869,7 @@ function RutTienContent() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {daXuLy.map((y) => (
+                {paginatedDaXuLy.map((y) => (
                   <TableRow
                     key={y.id}
                     sx={{ "&:hover": { bgcolor: "rgba(0,0,0,0.01)" } }}
@@ -869,6 +916,45 @@ function RutTienContent() {
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Phân trang */}
+          {totalHistoryPages > 1 && (
+            <>
+              <Divider sx={{ borderColor: CSSVAR.divider }} />
+              <Box
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
+                <Typography sx={{ fontSize: 13, color: CSSVAR.textSecondary, fontWeight: 500 }}>
+                  Trang {historyPage} / {totalHistoryPages}
+                </Typography>
+                <Pagination
+                  count={totalHistoryPages}
+                  page={historyPage}
+                  onChange={(_, p) => setHistoryPage(p)}
+                  color="primary"
+                  shape="rounded"
+                  size="medium"
+                  sx={{
+                    "& .MuiPaginationItem-root": {
+                      fontWeight: 700,
+                      borderRadius: "8px",
+                    },
+                    "& .Mui-selected": {
+                      bgcolor: `${PRIMARY} !important`,
+                      color: "#FFFFFF",
+                    },
+                  }}
+                />
+              </Box>
+            </>
+          )}
         </Card>
       )}
 

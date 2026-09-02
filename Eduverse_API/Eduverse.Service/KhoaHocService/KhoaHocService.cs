@@ -422,6 +422,22 @@ namespace Eduverse.Service.KhoaHocService
             });
 
             var paged = await PagedList<KhoaHocDto>.CreateAsync(itemsQuery, search);
+            if (currentUserId != Guid.Empty)
+            {
+                var myInstructorIds = await _khoaHoc_GiangVienRepository.GetQueryable()
+                    .Where(gv => gv.IdGiangVien == currentUserId && !gv.IsDeleted)
+                    .Select(gv => gv.IdKhoaHoc)
+                    .Distinct()
+                    .ToListAsync();
+                foreach (var item in paged.Items)
+                {
+                    if (item.CreatedId == currentUserId || myInstructorIds.Contains(item.Id))
+                    {
+                        item.DaDangKy = false;
+                        item.idDangKiKhoaHoc = Guid.Empty;
+                    }
+                }
+            }
             await GanDanhSachGiangVienHienThi(paged.Items);
             await GanDanhGiaAsync(paged.Items);
             await GanPhanTramHoanThanhAsync(paged.Items);
@@ -680,11 +696,26 @@ namespace Eduverse.Service.KhoaHocService
 
             search ??= new KhoaHocDangKiSearch();
 
+            // Loại bỏ các khóa học mà người dùng này là giảng viên (chủ sở hữu hoặc giảng viên cộng tác)
+            var myInstructorCourseIds = await _khoaHoc_GiangVienRepository.GetQueryable()
+                .Where(gv => gv.IdGiangVien == userId && !gv.IsDeleted)
+                .Select(gv => gv.IdKhoaHoc)
+                .Distinct()
+                .ToListAsync();
+
+            var myCreatedCourseIds = await GetAll()
+                .Where(kh => kh.CreatedId == userId)
+                .Select(kh => kh.Id)
+                .Distinct()
+                .ToListAsync();
+
+            var excludeCourseIds = myInstructorCourseIds.Union(myCreatedCourseIds).ToList();
+
             var query =
                 from dk in _dangKyKhoaHocRepository.GetQueryable().AsNoTracking()
                 join kh in GetAll()
                    on dk.IdKhoaHoc equals kh.Id
-                where dk.IdNguoiDangKi == userId 
+                where dk.IdNguoiDangKi == userId && !excludeCourseIds.Contains(kh.Id)
                 select new
                 {
                     DangKyId = dk.Id,
@@ -1485,9 +1516,17 @@ namespace Eduverse.Service.KhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học nào");
 
-            var coQuyenGuiDuyet = await CoQuyenTrenKhoaHoc(khoaHoc.Id, userId, gv => gv.Manage);
-            if (!coQuyenGuiDuyet)
-                throw new Exception($"Bạn không có quyền hạn để sửa khóa học: {khoaHoc.Id}");
+            var laAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") == true;
+            var idKHTraCuu = khoaHoc.IdBanGhiTruoc ?? idKhoaHoc;
+            var laChuSoHuu = khoaHoc.CreatedId == userId
+                || await _khoaHoc_GiangVienRepository.GetQueryable()
+                    .AnyAsync(x => (x.IdKhoaHoc == idKhoaHoc || x.IdKhoaHoc == idKHTraCuu)
+                                && x.IdGiangVien == userId
+                                && x.LaChuSoHuu
+                                && !x.IsDeleted);
+
+            if (!laAdmin && !laChuSoHuu)
+                throw new Exception("Chỉ có giảng viên chủ sở hữu mới có quyền gửi phê duyệt khóa học.");
 
             var tongTyLeDoanhThu = await _khoaHoc_GiangVienRepository.GetQueryable()
                 .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
@@ -1700,9 +1739,17 @@ namespace Eduverse.Service.KhoaHocService
             if (khoaHoc == null)
                 throw new Exception("Không tìm thấy khóa học nào");
 
-            var coQuyenGuiDuyet = await CoQuyenTrenKhoaHoc(khoaHoc.Id, userId, gv => gv.Manage);
-            if (!coQuyenGuiDuyet)
-                throw new Exception($"Bạn không có quyền hạn để sửa khóa học: {khoaHoc.Id}");
+            var laAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") == true;
+            var idKHTraCuu = khoaHoc.IdBanGhiTruoc ?? idKhoaHoc;
+            var laChuSoHuu = khoaHoc.CreatedId == userId
+                || await _khoaHoc_GiangVienRepository.GetQueryable()
+                    .AnyAsync(x => (x.IdKhoaHoc == idKhoaHoc || x.IdKhoaHoc == idKHTraCuu)
+                                && x.IdGiangVien == userId
+                                && x.LaChuSoHuu
+                                && !x.IsDeleted);
+
+            if (!laAdmin && !laChuSoHuu)
+                throw new Exception("Chỉ có giảng viên chủ sở hữu mới có quyền hủy phê duyệt khóa học.");
 
             var khoaHocNhap = await GetQueryable()
                 .Where(kh => kh.IdBanGhiTruoc == khoaHoc.Id && !kh.IsDeleted)

@@ -38,6 +38,7 @@ import ForumRoundedIcon from "@mui/icons-material/ForumRounded";
 import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
 import { EduAvatar } from "@/src/components/common/EduAvatar";
+import { useSelector } from "@/src/store/hook";
 import FolderRoundedIcon from "@mui/icons-material/FolderRounded";
 import LocalOfferRoundedIcon from "@mui/icons-material/LocalOfferRounded";
 import PercentRoundedIcon from "@mui/icons-material/PercentRounded";
@@ -148,6 +149,8 @@ export default function InstructorsContent() {
   const coTheThemGV = TRANG_THAI_CHO_THEM_GV.includes(trangThai);
   const { quyen: quyenCuaToi, loading: loadingQuyen } =
     useQuyenCuaToi(idKhoaHoc);
+  const isOwner = quyenCuaToi?.laChuSoHuu ?? false;
+  const user = useSelector((state: any) => state.auth.user);
 
   const [rows, setRows] = useState<RowState[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,18 +186,93 @@ export default function InstructorsContent() {
     setLoading(true);
     try {
       const data = await LoiMoiGiangVienService.GetDanhSachGiangVien(idKhoaHoc);
-      setRows(data.danhSachCongTac.map((gv) => ({ ...gv, _dirty: false })));
-      setPendingRows(data.danhSachDangMoi);
-    } catch (err: any) {
-      setToast({
-        open: true,
-        message: err.message || "Lỗi tải dữ liệu",
-        severity: "error",
-      });
+      if (data && Array.isArray(data.danhSachCongTac) && data.danhSachCongTac.length > 0) {
+        setRows(data.danhSachCongTac.map((gv) => ({ ...gv, _dirty: false })));
+      } else if (quyenCuaToi) {
+        setRows([
+          {
+            idGiangVien: quyenCuaToi.idGiangVien || user?.id || "my-id",
+            hoTen: quyenCuaToi.hoTen || user?.hoTen || "Giảng viên cộng tác",
+            email: quyenCuaToi.email || user?.email || "",
+            anhDaiDien: quyenCuaToi.anhDaiDien || user?.anhDaiDien || "",
+            laChuSoHuu: quyenCuaToi.laChuSoHuu,
+            visible: quyenCuaToi.visible,
+            tyLeChiaDoanhThu: quyenCuaToi.tyLeChiaDoanhThu ?? 0,
+            manage: quyenCuaToi.manage,
+            performance: quyenCuaToi.performance,
+            qnA: quyenCuaToi.qnA,
+            reviews: quyenCuaToi.reviews,
+            assignments: quyenCuaToi.assignments,
+            materials: quyenCuaToi.materials,
+            promotions: quyenCuaToi.promotions,
+            _dirty: false,
+          },
+        ]);
+      }
+      if (data && Array.isArray(data.danhSachDangMoi)) {
+        setPendingRows(data.danhSachDangMoi);
+      }
+    } catch {
+      if (quyenCuaToi) {
+        setRows([
+          {
+            idGiangVien: quyenCuaToi.idGiangVien || user?.id || "my-id",
+            hoTen: quyenCuaToi.hoTen || user?.hoTen || "Giảng viên cộng tác",
+            email: quyenCuaToi.email || user?.email || "",
+            anhDaiDien: quyenCuaToi.anhDaiDien || user?.anhDaiDien || "",
+            laChuSoHuu: quyenCuaToi.laChuSoHuu,
+            visible: quyenCuaToi.visible,
+            tyLeChiaDoanhThu: quyenCuaToi.tyLeChiaDoanhThu ?? 0,
+            manage: quyenCuaToi.manage,
+            performance: quyenCuaToi.performance,
+            qnA: quyenCuaToi.qnA,
+            reviews: quyenCuaToi.reviews,
+            assignments: quyenCuaToi.assignments,
+            materials: quyenCuaToi.materials,
+            promotions: quyenCuaToi.promotions,
+            _dirty: false,
+          },
+        ]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [idKhoaHoc]);
+  }, [idKhoaHoc, quyenCuaToi, user]);
+
+  useEffect(() => {
+    if (quyenCuaToi && !isOwner) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRows((prev) => {
+        if (
+          prev.length === 0 ||
+          (prev.length === 1 &&
+            prev[0].tyLeChiaDoanhThu === 0 &&
+            (quyenCuaToi.tyLeChiaDoanhThu ?? 0) > 0)
+        ) {
+          return [
+            {
+              idGiangVien: quyenCuaToi.idGiangVien || user?.id || "my-id",
+              hoTen: quyenCuaToi.hoTen || user?.hoTen || "Giảng viên cộng tác",
+              email: quyenCuaToi.email || user?.email || "",
+              anhDaiDien: quyenCuaToi.anhDaiDien || user?.anhDaiDien || "",
+              laChuSoHuu: quyenCuaToi.laChuSoHuu,
+              visible: quyenCuaToi.visible,
+              tyLeChiaDoanhThu: quyenCuaToi.tyLeChiaDoanhThu ?? 0,
+              manage: quyenCuaToi.manage,
+              performance: quyenCuaToi.performance,
+              qnA: quyenCuaToi.qnA,
+              reviews: quyenCuaToi.reviews,
+              assignments: quyenCuaToi.assignments,
+              materials: quyenCuaToi.materials,
+              promotions: quyenCuaToi.promotions,
+              _dirty: false,
+            },
+          ];
+        }
+        return prev;
+      });
+    }
+  }, [quyenCuaToi, isOwner, user]);
 
   const normalizeEmail = (e: string) => e.trim().toLowerCase();
 
@@ -273,13 +351,32 @@ export default function InstructorsContent() {
     ) {
       return;
     }
-    setRows((prev) =>
-      prev.map((r) =>
+    setRows((prev) => {
+      const updated = prev.map((r) =>
         r.idGiangVien === idGiangVien
           ? { ...r, [field]: value, _dirty: true }
           : r,
-      ),
-    );
+      );
+
+      // Nếu sửa % của giảng viên cộng tác -> tự động cân đối lại % của chủ sở hữu để tổng đạt 100%
+      if (field === "tyLeChiaDoanhThu") {
+        const chuSoHuuIndex = updated.findIndex((r) => r.laChuSoHuu);
+        if (chuSoHuuIndex !== -1 && updated[chuSoHuuIndex].idGiangVien !== idGiangVien) {
+          const tongPending = pendingRows.reduce((s, lm) => s + (lm.tyLeChiaDoanhThu || 0), 0);
+          const tongCongTac = updated
+            .filter((r) => !r.laChuSoHuu)
+            .reduce((s, r) => s + (r.tyLeChiaDoanhThu || 0), 0);
+          const tyLeChuSoHuuMoi = Math.max(0, 100 - tongCongTac - tongPending);
+          updated[chuSoHuuIndex] = {
+            ...updated[chuSoHuuIndex],
+            tyLeChiaDoanhThu: tyLeChuSoHuuMoi,
+            _dirty: true,
+          };
+        }
+      }
+
+      return updated;
+    });
   };
 
   // ── Save tất cả row đã dirty ──────────────────────────────────────────────
@@ -425,11 +522,11 @@ export default function InstructorsContent() {
     );
   }
 
-  if (!quyenCuaToi?.laChuSoHuu) {
+  if (!quyenCuaToi) {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
         <Typography sx={{ fontWeight: 700, color: "#9CA3AF" }}>
-          Chỉ chủ sở hữu khóa học mới được quản lý giảng viên.
+          Bạn không có quyền truy cập vào thông tin giảng viên của khóa học này.
         </Typography>
       </Box>
     );
@@ -477,90 +574,94 @@ export default function InstructorsContent() {
             <Typography
               sx={{ fontSize: 13, color: "#64748B", mt: 0.5, fontWeight: 500 }}
             >
-              Phân quyền chi tiết & tỷ lệ chia sẻ doanh thu cho đội ngũ giảng
-              viên cộng tác
+              {isOwner
+                ? "Phân quyền chi tiết & tỷ lệ chia sẻ doanh thu cho đội ngũ giảng viên cộng tác"
+                : "Xem thông tin tỷ lệ chia sẻ doanh thu và các quyền hạn bạn được phân bổ trong khóa học"}
             </Typography>
           </Box>
 
-          {coTheThemGV ? (
-            chuSoHuuTyLeKhaDung > 0 ? (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon sx={{ fontSize: 20 }} />}
-                onClick={() => {
-                  setShowMoiDialog(true);
-                  setLoiMoiDialog(null);
-                  setEmailWarning(null);
-                  setFormMoi({ ...DEFAULT_QUYEN, tyLeChiaDoanhThu: 0 });
-                }}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 700,
-                  fontSize: 14,
-                  bgcolor: MAU.chinh,
-                  color: "#FFFFFF",
-                  borderRadius: "12px",
-                  px: 2.75,
-                  py: 1.1,
-                  boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    bgcolor: MAU.chinhDam || "#6b0f0f",
-                    boxShadow: "0 6px 20px rgba(139,19,19,0.35)",
-                    transform: "translateY(-1px)",
-                  },
-                }}
-              >
-                Thêm giảng viên
-              </Button>
+          {isOwner && (
+            coTheThemGV ? (
+              chuSoHuuTyLeKhaDung > 0 ? (
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon sx={{ fontSize: 20 }} />}
+                  onClick={() => {
+                    setShowMoiDialog(true);
+                    setLoiMoiDialog(null);
+                    setEmailWarning(null);
+                    setFormMoi({ ...DEFAULT_QUYEN, tyLeChiaDoanhThu: 0 });
+                  }}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    bgcolor: MAU.chinh,
+                    color: "#FFFFFF",
+                    borderRadius: "12px",
+                    px: 2.75,
+                    py: 1.1,
+                    boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      bgcolor: MAU.chinhDam || "#6b0f0f",
+                      boxShadow: "0 6px 20px rgba(139,19,19,0.35)",
+                      transform: "translateY(-1px)",
+                    },
+                  }}
+                >
+                  Thêm giảng viên
+                </Button>
+              ) : (
+                <Tooltip title="Chủ sở hữu đã chia hết 100% doanh thu. Vui lòng điều chỉnh tỷ lệ hiện có trước khi mời thêm.">
+                  <span>
+                    <Button
+                      variant="contained"
+                      disabled
+                      startIcon={<AddIcon sx={{ fontSize: 20 }} />}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        borderRadius: "12px",
+                        px: 2.75,
+                        py: 1.1,
+                      }}
+                    >
+                      Thêm giảng viên
+                    </Button>
+                  </span>
+                </Tooltip>
+              )
             ) : (
-              <Tooltip title="Chủ sở hữu đã chia hết 100% doanh thu. Vui lòng điều chỉnh tỷ lệ hiện có trước khi mời thêm.">
-                <span>
-                  <Button
-                    variant="contained"
-                    disabled
-                    startIcon={<AddIcon sx={{ fontSize: 20 }} />}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 700,
-                      fontSize: 14,
-                      borderRadius: "12px",
-                      px: 2.75,
-                      py: 1.1,
-                    }}
-                  >
-                    Thêm giảng viên
-                  </Button>
-                </span>
-              </Tooltip>
-            )
-          ) : (
-            isEditable &&
-            trangThai === "DaDuyet" && (
-              <Tooltip title="Khóa học đã được duyệt, không thể mời thêm giảng viên mới. Bạn vẫn có thể chỉnh sửa quyền của giảng viên hiện có.">
-                <span>
-                  <Button
-                    variant="contained"
-                    disabled
-                    startIcon={<AddIcon sx={{ fontSize: 20 }} />}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 700,
-                      fontSize: 14,
-                      borderRadius: "12px",
-                      px: 2.75,
-                      py: 1.1,
-                    }}
-                  >
-                    Thêm giảng viên
-                  </Button>
-                </span>
-              </Tooltip>
+              isEditable &&
+              trangThai === "DaDuyet" && (
+                <Tooltip title="Khóa học đã được duyệt, không thể mời thêm giảng viên mới. Bạn vẫn có thể chỉnh sửa quyền của giảng viên hiện có.">
+                  <span>
+                    <Button
+                      variant="contained"
+                      disabled
+                      startIcon={<AddIcon sx={{ fontSize: 20 }} />}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        borderRadius: "12px",
+                        px: 2.75,
+                        py: 1.1,
+                      }}
+                    >
+                      Thêm giảng viên
+                    </Button>
+                  </span>
+                </Tooltip>
+              )
             )
           )}
         </Box>
 
-        {/* Card Tỷ lệ chia doanh thu */}
+        {/* Card Tỷ lệ chia doanh thu cho Chủ sở hữu */}
+        {isOwner && (
         <Paper
           elevation={0}
           sx={{
@@ -691,6 +792,100 @@ export default function InstructorsContent() {
             )}
           </Typography>
         </Paper>
+        )}
+
+        {/* Card Tỷ lệ chia doanh thu cho Giảng viên hợp tác */}
+        {!isOwner && (
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              mb: 3.5,
+              borderRadius: "16px",
+              bgcolor: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.03)",
+            }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1.5,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+                <Box
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: "10px",
+                    bgcolor: `${MAU.chinh}12`,
+                    color: MAU.chinh,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <PercentRoundedIcon sx={{ fontSize: 19 }} />
+                </Box>
+                <Typography
+                  sx={{ fontWeight: 700, fontSize: 14.5, color: "#1E293B" }}
+                >
+                  Tỷ lệ chia sẻ doanh thu của bạn
+                </Typography>
+              </Box>
+
+              <Chip
+                label={`${rows[0]?.tyLeChiaDoanhThu ?? quyenCuaToi?.tyLeChiaDoanhThu ?? 0}% / 100%`}
+                size="small"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  bgcolor: `${MAU.chinh}12`,
+                  color: MAU.chinh,
+                  border: `1px solid ${MAU.chinh}30`,
+                  borderRadius: "8px",
+                  px: 0.75,
+                  py: 0.25,
+                }}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                height: 10,
+                borderRadius: 99,
+                bgcolor: "#F1F5F9",
+                overflow: "hidden",
+                p: "2px",
+                border: "1px solid #E2E8F0",
+              }}
+            >
+              <Box
+                sx={{
+                  height: "100%",
+                  width: `${Math.min(rows[0]?.tyLeChiaDoanhThu ?? quyenCuaToi?.tyLeChiaDoanhThu ?? 0, 100)}%`,
+                  bgcolor: "#16A34A",
+                  borderRadius: 99,
+                  transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                }}
+              />
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 600,
+                mt: 1,
+                color: "#64748B",
+              }}
+            >
+              Bạn nhận được <strong>{rows[0]?.tyLeChiaDoanhThu ?? quyenCuaToi?.tyLeChiaDoanhThu ?? 0}%</strong> doanh thu trên mỗi lượt học viên mua khóa học này.
+            </Typography>
+          </Paper>
+        )}
 
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -839,18 +1034,20 @@ export default function InstructorsContent() {
                           }}
                         />
                       ) : (
-                        <Typography
+                        <Chip
+                          label="Giảng viên hợp tác"
+                          size="small"
                           sx={{
-                            fontSize: 12,
-                            color: "#64748B",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            height: 20,
+                            bgcolor: "#EFF6FF",
+                            color: "#1D4ED8",
+                            borderRadius: "6px",
                             mt: 0.25,
+                            px: 0.5,
                           }}
-                        >
-                          {row.email}
-                        </Typography>
+                        />
                       )}
                     </Box>
                   </Box>
@@ -864,66 +1061,83 @@ export default function InstructorsContent() {
                       gap: 0.75,
                     }}
                   >
-                    <TextField
-                      type="number"
-                      size="small"
-                      disabled={!isEditable}
-                      value={row.tyLeChiaDoanhThu}
-                      onChange={(e) => {
-                        const v = Math.min(
-                          100,
-                          Math.max(0, Number(e.target.value)),
-                        );
-                        setCell(row.idGiangVien, "tyLeChiaDoanhThu", v);
-                      }}
-                      slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
-                      sx={{
-                        width: 70,
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                          height: 36,
-                          bgcolor: "#F8FAFC",
-                          transition: "all 0.2s ease",
-                          "& input": {
-                            textAlign: "center",
-                            fontWeight: 800,
-                            fontSize: 14,
-                            p: "0 6px",
-                            color: "#0F172A",
-                          },
-                          "& fieldset": {
-                            borderColor:
-                              row.tyLeChiaDoanhThu < 0 ||
-                              (tongTyLe > 100 && row._dirty)
-                                ? "#EF4444"
-                                : "#E2E8F0",
-                          },
-                          "&:hover fieldset": {
-                            borderColor:
-                              row.tyLeChiaDoanhThu < 0 ||
-                              (tongTyLe > 100 && row._dirty)
-                                ? "#EF4444"
-                                : "#CBD5E1",
-                          },
-                          "&.Mui-focused": {
-                            bgcolor: "#FFFFFF",
-                            boxShadow: "0 0 0 3px rgba(139,19,19,0.1)",
-                            "& fieldset": {
-                              borderColor:
-                                row.tyLeChiaDoanhThu < 0 ||
-                                (tongTyLe > 100 && row._dirty)
-                                  ? "#EF4444"
-                                  : MAU.chinh,
+                    {isOwner ? (
+                      <>
+                        <TextField
+                          type="number"
+                          size="small"
+                          disabled={!isEditable}
+                          value={row.tyLeChiaDoanhThu}
+                          onChange={(e) => {
+                            const v = Math.min(
+                              100,
+                              Math.max(0, Number(e.target.value)),
+                            );
+                            setCell(row.idGiangVien, "tyLeChiaDoanhThu", v);
+                          }}
+                          slotProps={{ htmlInput: { min: 0, max: 100, step: 5 } }}
+                          sx={{
+                            width: 70,
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "10px",
+                              height: 36,
+                              bgcolor: "#F8FAFC",
+                              transition: "all 0.2s ease",
+                              "& input": {
+                                textAlign: "center",
+                                fontWeight: 800,
+                                fontSize: 14,
+                                p: "0 6px",
+                                color: "#0F172A",
+                              },
+                              "& fieldset": {
+                                borderColor:
+                                  row.tyLeChiaDoanhThu < 0 ||
+                                  (tongTyLe > 100 && row._dirty)
+                                    ? "#EF4444"
+                                    : "#E2E8F0",
+                              },
+                              "&:hover fieldset": {
+                                borderColor:
+                                  row.tyLeChiaDoanhThu < 0 ||
+                                  (tongTyLe > 100 && row._dirty)
+                                    ? "#EF4444"
+                                    : "#CBD5E1",
+                              },
+                              "&.Mui-focused": {
+                                bgcolor: "#FFFFFF",
+                                boxShadow: "0 0 0 3px rgba(139,19,19,0.1)",
+                                "& fieldset": {
+                                  borderColor:
+                                    row.tyLeChiaDoanhThu < 0 ||
+                                    (tongTyLe > 100 && row._dirty)
+                                      ? "#EF4444"
+                                      : MAU.chinh,
+                                },
+                              },
                             },
-                          },
-                        },
-                      }}
-                    />
-                    <Typography
-                      sx={{ fontSize: 13, color: "#64748B", fontWeight: 700 }}
-                    >
-                      %
-                    </Typography>
+                          }}
+                        />
+                        <Typography
+                          sx={{ fontSize: 13, color: "#64748B", fontWeight: 700 }}
+                        >
+                          %
+                        </Typography>
+                      </>
+                    ) : (
+                      <Chip
+                        label={`${row.tyLeChiaDoanhThu}%`}
+                        size="small"
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: 13,
+                          bgcolor: "#F1F5F9",
+                          color: "#0F172A",
+                          borderRadius: "8px",
+                          px: 0.5,
+                        }}
+                      />
+                    )}
                   </Box>
 
                   {/* Checkboxes quyền */}
@@ -943,7 +1157,7 @@ export default function InstructorsContent() {
                           <span>
                             <Checkbox
                               checked={isChecked}
-                              disabled={!isEditable || row.laChuSoHuu}
+                              disabled={!isOwner || !isEditable || row.laChuSoHuu}
                               onChange={(e) =>
                                 setCell(
                                   row.idGiangVien,
@@ -967,7 +1181,7 @@ export default function InstructorsContent() {
 
                   {/* Action */}
                   <Box sx={{ display: "flex", justifyContent: "center" }}>
-                    {!row.laChuSoHuu && isEditable && (
+                    {isOwner && !row.laChuSoHuu && isEditable && (
                       <IconButton
                         size="small"
                         onClick={() => setRemoveTarget(row)}
@@ -995,7 +1209,7 @@ export default function InstructorsContent() {
         )}
 
         {/* Nút Save */}
-        {isEditable && hasDirty && (
+        {isOwner && isEditable && hasDirty && (
           <Box sx={{ mt: 3 }}>
             <Button
               variant="contained"
@@ -1069,7 +1283,7 @@ export default function InstructorsContent() {
           </Box>
         )}
         {/* ── Section đang chờ xác nhận ─────────────────────────────────────── */}
-        {pendingRows.length > 0 && (
+        {isOwner && pendingRows.length > 0 && (
           <Box sx={{ mt: 3 }}>
             <Typography
               sx={{ fontWeight: 700, fontSize: 15, color: "#1F2937", mb: 1.5 }}

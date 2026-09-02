@@ -92,17 +92,80 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         {
             var userId = LayUserId();
 
+            var allKhoaHocIds = new List<Guid> { idKhoaHoc };
+            var kh = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(k => k.Id == idKhoaHoc);
+            if (kh != null)
+            {
+                if (kh.IdBanGhiTruoc.HasValue) allKhoaHocIds.Add(kh.IdBanGhiTruoc.Value);
+                var relatedIds = await _khoaHocRepo.GetQueryable()
+                    .Where(k => (k.IdBanGhiTruoc == idKhoaHoc || (kh.IdBanGhiTruoc.HasValue && k.IdBanGhiTruoc == kh.IdBanGhiTruoc.Value)) && !k.IsDeleted)
+                    .Select(k => k.Id)
+                    .ToListAsync();
+                allKhoaHocIds.AddRange(relatedIds);
+                allKhoaHocIds = allKhoaHocIds.Distinct().ToList();
+            }
+
             var ctv = await _khoaHocGVRepo.GetQueryable()
-                .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
-                                       && x.IdGiangVien == userId
-                                       && !x.IsDeleted);
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                         && x.IdGiangVien == userId
+                         && !x.IsDeleted)
+                .OrderByDescending(x => x.CreatedDate)
+                .FirstOrDefaultAsync();
+
+            var user = await _appUserService.GetQueryable()
+                .Where(u => u.Id == userId)
+                .Select(u => new { u.HoTen, u.Email, u.AnhDaiDien })
+                .FirstOrDefaultAsync();
 
             if (ctv == null)
+            {
+                if (kh != null && kh.CreatedId == userId)
+                {
+                    return new QuyenCuaToiDto
+                    {
+                        IdGiangVien = userId,
+                        HoTen = user?.HoTen,
+                        Email = user?.Email,
+                        AnhDaiDien = user?.AnhDaiDien,
+                        LaChuSoHuu = true,
+                        TyLeChiaDoanhThu = 100,
+                        Visible = true,
+                        Manage = true,
+                        Performance = true,
+                        QnA = true,
+                        Reviews = true,
+                        Assignments = true,
+                        Materials = true,
+                        Promotions = true,
+                    };
+                }
                 throw new Exception("Bạn không thuộc khóa học này");
+            }
+
+            var tyLeCuaToi = ctv.TyLeChiaDoanhThu;
+            if (tyLeCuaToi == 0 && !ctv.LaChuSoHuu)
+            {
+                var acceptedLoiMoi = await _loiMoiRepo.GetQueryable()
+                    .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                             && x.IdNguoiDuocMoi == userId
+                             && !x.IdKhuyenMai.HasValue
+                             && !x.IsDeleted)
+                    .OrderByDescending(x => x.CreatedDate)
+                    .FirstOrDefaultAsync();
+                if (acceptedLoiMoi != null && acceptedLoiMoi.TyLeChiaDoanhThu > 0)
+                {
+                    tyLeCuaToi = acceptedLoiMoi.TyLeChiaDoanhThu;
+                }
+            }
 
             return new QuyenCuaToiDto
             {
+                IdGiangVien = ctv.IdGiangVien,
+                HoTen = user?.HoTen,
+                Email = user?.Email,
+                AnhDaiDien = user?.AnhDaiDien,
                 LaChuSoHuu = ctv.LaChuSoHuu,
+                TyLeChiaDoanhThu = tyLeCuaToi,
                 Visible = ctv.Visible,
                 Manage = ctv.Manage,
                 Performance = ctv.Performance,
@@ -593,12 +656,26 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         {
             var userId = LayUserId();
 
+            var allKhoaHocIds = new List<Guid> { idKhoaHoc };
+            var kh = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(k => k.Id == idKhoaHoc);
+            if (kh != null)
+            {
+                if (kh.IdBanGhiTruoc.HasValue) allKhoaHocIds.Add(kh.IdBanGhiTruoc.Value);
+                var relatedIds = await _khoaHocRepo.GetQueryable()
+                    .Where(k => (k.IdBanGhiTruoc == idKhoaHoc || (kh.IdBanGhiTruoc.HasValue && k.IdBanGhiTruoc == kh.IdBanGhiTruoc.Value)) && !k.IsDeleted)
+                    .Select(k => k.Id)
+                    .ToListAsync();
+                allKhoaHocIds.AddRange(relatedIds);
+                allKhoaHocIds = allKhoaHocIds.Distinct().ToList();
+            }
+
             // Chỉ chủ sở hữu mới được sửa
             var laChu = await _khoaHocGVRepo.GetQueryable()
-                .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
+                .AnyAsync(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
                             && x.IdGiangVien == userId
                             && x.LaChuSoHuu
                             && !x.IsDeleted);
+            if (!laChu && kh != null && kh.CreatedId == userId) laChu = true;
             if (!laChu) throw new Exception("Chỉ chủ sở hữu mới được cập nhật quyền");
 
             if (request.DanhSach == null || !request.DanhSach.Any())
@@ -615,13 +692,13 @@ namespace Eduverse.Service.LoiMoiGiangVienService
 
             // ── Validate tổng % TOÀN BỘ khóa học trong 1 lần, không cộng dồn với DB cũ của các bản ghi sắp bị ghi đè ──
             var tongCongTacVienKhongDoi = await _khoaHocGVRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
                          && !x.IsDeleted
                          && !idGiangViensCanSua.Contains(x.IdGiangVien))
                 .SumAsync(x => x.TyLeChiaDoanhThu);
 
             var tongPendingKhongDoi = await _loiMoiRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
                          && x.TrangThai == "Pending"
                          && !x.IsDeleted)
                 .SumAsync(x => x.TyLeChiaDoanhThu);
@@ -635,44 +712,69 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     $"Các giảng viên khác (không nằm trong lần sửa này) đang chiếm {tongCongTacVienKhongDoi + tongPendingKhongDoi}%, " +
                     $"bạn chỉ có thể phân bổ tối đa {100 - tongCongTacVienKhongDoi - tongPendingKhongDoi}% cho {request.DanhSach.Count} giảng viên đang sửa.");
 
-            // ── Ghi đè 1 lần, không có trạng thái trung gian ──
+            // ── Ghi đè 1 lần, cập nhật toàn bộ bản ghi liên kết ──
             var congTacViens = await _khoaHocGVRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
                          && idGiangViensCanSua.Contains(x.IdGiangVien)
                          && !x.IsDeleted)
                 .ToListAsync();
 
             foreach (var item in request.DanhSach)
             {
-                var ctv = congTacViens.FirstOrDefault(x => x.IdGiangVien == item.IdGiangVien);
-                if (ctv == null)
-                    throw new Exception($"Không tìm thấy giảng viên {item.IdGiangVien} trong khóa học");
-
-                if (ctv.LaChuSoHuu)
+                var matchingCtvs = congTacViens.Where(x => x.IdGiangVien == item.IdGiangVien).ToList();
+                if (!matchingCtvs.Any())
                 {
-                    ctv.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
-                    _khoaHocGVRepo.Update(ctv);
-                    continue;
+                    // Tạo bản ghi cho idKhoaHoc hiện tại nếu chưa có
+                    var newCtv = new KhoaHoc_GiangVien
+                    {
+                        Id = Guid.NewGuid(),
+                        IdKhoaHoc = idKhoaHoc,
+                        IdGiangVien = item.IdGiangVien,
+                        LaChuSoHuu = (kh != null && kh.CreatedId == item.IdGiangVien),
+                        Visible = item.Visible,
+                        TyLeChiaDoanhThu = item.TyLeChiaDoanhThu,
+                        Manage = item.Manage,
+                        Performance = item.Performance,
+                        QnA = item.QnA,
+                        Reviews = item.Reviews,
+                        Assignments = item.Assignments,
+                        Materials = item.Materials,
+                        Promotions = item.Promotions,
+                    };
+                    _khoaHocGVRepo.Add(newCtv);
+                }
+                else
+                {
+                    foreach (var ctv in matchingCtvs)
+                    {
+                        if (ctv.LaChuSoHuu)
+                        {
+                            ctv.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
+                            _khoaHocGVRepo.Update(ctv);
+                            continue;
+                        }
+
+                        ctv.Visible = item.Visible;
+                        ctv.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
+                        ctv.Manage = item.Manage;
+                        ctv.Performance = item.Performance;
+                        ctv.QnA = item.QnA;
+                        ctv.Reviews = item.Reviews;
+                        ctv.Assignments = item.Assignments;
+                        ctv.Materials = item.Materials;
+                        ctv.Promotions = item.Promotions;
+
+                        _khoaHocGVRepo.Update(ctv);
+                    }
                 }
 
-                ctv.Visible = item.Visible;
-                ctv.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
-                ctv.Manage = item.Manage;
-                ctv.Performance = item.Performance;
-                ctv.QnA = item.QnA;
-                ctv.Reviews = item.Reviews;
-                ctv.Assignments = item.Assignments;
-                ctv.Materials = item.Materials;
-                ctv.Promotions = item.Promotions;
-
-                _khoaHocGVRepo.Update(ctv);
-
-                // Sync lại lời mời gốc nếu còn tồn tại (giữ đồng bộ như hàm CapNhatQuyenTheoGiangVien cũ)
-                var loiMoi = await _loiMoiRepo.GetQueryable()
-                    .FirstOrDefaultAsync(x => x.IdKhoaHoc == idKhoaHoc
-                                           && x.IdNguoiDuocMoi == item.IdGiangVien
-                                           && !x.IsDeleted);
-                if (loiMoi != null)
+                // Sync lại lời mời gốc nếu còn tồn tại
+                var loiMoiList = await _loiMoiRepo.GetQueryable()
+                    .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                             && x.IdNguoiDuocMoi == item.IdGiangVien
+                             && !x.IsDeleted)
+                    .ToListAsync();
+                foreach (var loiMoi in loiMoiList)
                 {
                     loiMoi.Visible = item.Visible;
                     loiMoi.TyLeChiaDoanhThu = item.TyLeChiaDoanhThu;
@@ -687,7 +789,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 }
             }
 
-            await _khoaHocGVRepo.SaveAsync(); // 1 transaction duy nhất
+            await _khoaHocGVRepo.SaveAsync();
+            await _loiMoiRepo.SaveAsync();
         }
 
 
@@ -754,19 +857,75 @@ namespace Eduverse.Service.LoiMoiGiangVienService
         public async Task<DanhSachGiangVienDto> GetDanhSachGiangVien(Guid idKhoaHoc)
         {
             var userId = LayUserId();
+            var laAdmin = LaAdmin();
+
+            var allKhoaHocIds = new List<Guid> { idKhoaHoc };
+            var kh = await _khoaHocRepo.GetQueryable().FirstOrDefaultAsync(k => k.Id == idKhoaHoc);
+            if (kh != null)
+            {
+                if (kh.IdBanGhiTruoc.HasValue) allKhoaHocIds.Add(kh.IdBanGhiTruoc.Value);
+                var relatedIds = await _khoaHocRepo.GetQueryable()
+                    .Where(k => (k.IdBanGhiTruoc == idKhoaHoc || (kh.IdBanGhiTruoc.HasValue && k.IdBanGhiTruoc == kh.IdBanGhiTruoc.Value)) && !k.IsDeleted)
+                    .Select(k => k.Id)
+                    .ToListAsync();
+                allKhoaHocIds.AddRange(relatedIds);
+                allKhoaHocIds = allKhoaHocIds.Distinct().ToList();
+            }
 
             var laChu = await _khoaHocGVRepo.GetQueryable()
-        .AnyAsync(x => x.IdKhoaHoc == idKhoaHoc
-                    && x.IdGiangVien == userId
-                    && x.LaChuSoHuu
-                    && !x.IsDeleted);
-            if (!laChu)
-                throw new Exception("Chỉ chủ sở hữu mới được xem danh sách giảng viên");
+                .AnyAsync(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                            && x.IdGiangVien == userId
+                            && x.LaChuSoHuu
+                            && !x.IsDeleted);
+
+            if (!laChu && kh != null && kh.CreatedId == userId) laChu = true;
+
+            var laThanhVien = laChu || laAdmin || await _khoaHocGVRepo.GetQueryable()
+                .AnyAsync(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                            && x.IdGiangVien == userId
+                            && !x.IsDeleted);
+
+            if (!laThanhVien)
+                throw new Exception("Bạn không có quyền truy cập khóa học này");
 
             // ── Danh sách đã accepted ────────────────────────────────────────
             var danhSach = await _khoaHocGVRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted)
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
                 .ToListAsync();
+
+            // Nhóm theo IdGiangVien để lấy bản ghi mới nhất nếu có nhiều version
+            danhSach = danhSach
+                .GroupBy(x => x.IdGiangVien)
+                .Select(g => g.OrderByDescending(x => x.CreatedDate).First())
+                .ToList();
+
+            // Nếu không có chủ sở hữu trong danhSach nhưng biết kh.CreatedId:
+            if (!danhSach.Any(x => x.LaChuSoHuu) && kh?.CreatedId != null)
+            {
+                var tongCongTac = danhSach.Where(x => !x.LaChuSoHuu).Sum(x => x.TyLeChiaDoanhThu);
+                danhSach.Insert(0, new KhoaHoc_GiangVien
+                {
+                    Id = Guid.NewGuid(),
+                    IdKhoaHoc = idKhoaHoc,
+                    IdGiangVien = kh.CreatedId.Value,
+                    LaChuSoHuu = true,
+                    Visible = true,
+                    TyLeChiaDoanhThu = Math.Max(0, 100 - tongCongTac),
+                    Manage = true,
+                    Performance = true,
+                    QnA = true,
+                    Reviews = true,
+                    Assignments = true,
+                    Materials = true,
+                    Promotions = true,
+                });
+            }
+
+            // Nếu không phải chủ sở hữu và không phải admin: Chỉ lấy thông tin của chính mình
+            if (!laChu && !laAdmin)
+            {
+                danhSach = danhSach.Where(x => x.IdGiangVien == userId).ToList();
+            }
 
             var giangVienIds = danhSach.Select(x => x.IdGiangVien).Distinct().ToList();
             var users = await _appUserService.GetQueryable()
@@ -774,9 +933,21 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien, x.Email })
                 .ToListAsync();
 
+            var acceptedLoiMois = await _loiMoiRepo.GetQueryable()
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                         && !x.IdKhuyenMai.HasValue
+                         && !x.IsDeleted)
+                .ToListAsync();
+
             var congTacList = danhSach.Select(gv =>
             {
                 var user = users.FirstOrDefault(u => u.Id == gv.IdGiangVien);
+                var tyLe = gv.TyLeChiaDoanhThu;
+                if (tyLe == 0 && !gv.LaChuSoHuu)
+                {
+                    var lm = acceptedLoiMois.FirstOrDefault(x => x.IdNguoiDuocMoi == gv.IdGiangVien);
+                    if (lm != null && lm.TyLeChiaDoanhThu > 0) tyLe = lm.TyLeChiaDoanhThu;
+                }
                 return new GiangVienCongTacDto
                 {
                     IdGiangVien = gv.IdGiangVien,
@@ -785,7 +956,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     Email = user?.Email,
                     LaChuSoHuu = gv.LaChuSoHuu,
                     Visible = gv.Visible,
-                    TyLeChiaDoanhThu = gv.TyLeChiaDoanhThu,
+                    TyLeChiaDoanhThu = tyLe,
                     Manage = gv.Manage,
                     Performance = gv.Performance,
                     QnA = gv.QnA,
@@ -796,42 +967,46 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 };
             }).ToList();
 
-            // ── Danh sách đang Pending ───────────────────────────────────────
-            var pendingList = await _loiMoiRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc
-                         && x.TrangThai == "Pending"
-                         && !x.IdKhuyenMai.HasValue   
-                         && x.IdNguoiMoi != x.IdNguoiDuocMoi
-                         && !x.IsDeleted)
-                .ToListAsync();
-
-            var pendingUserIds = pendingList.Select(x => x.IdNguoiDuocMoi).Distinct().ToList();
-            var pendingUsers = await _appUserService.GetQueryable()
-                .Where(x => pendingUserIds.Contains(x.Id))
-                .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
-                .ToListAsync();
-
-            var dangMoiList = pendingList.Select(lm =>
+            // ── Danh sách đang Pending: Chỉ chủ sở hữu và Admin mới xem được ──
+            var dangMoiList = new List<LoiMoiDangChoDto>();
+            if (laChu || laAdmin)
             {
-                var u = pendingUsers.FirstOrDefault(x => x.Id == lm.IdNguoiDuocMoi);
-                return new LoiMoiDangChoDto
+                var pendingList = await _loiMoiRepo.GetQueryable()
+                    .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc)
+                             && x.TrangThai == "Pending"
+                             && !x.IdKhuyenMai.HasValue   
+                             && x.IdNguoiMoi != x.IdNguoiDuocMoi
+                             && !x.IsDeleted)
+                    .ToListAsync();
+
+                var pendingUserIds = pendingList.Select(x => x.IdNguoiDuocMoi).Distinct().ToList();
+                var pendingUsers = await _appUserService.GetQueryable()
+                    .Where(x => pendingUserIds.Contains(x.Id))
+                    .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
+                    .ToListAsync();
+
+                dangMoiList = pendingList.Select(lm =>
                 {
-                    IdLoiMoi = lm.Id,
-                    EmailDuocMoi = lm.EmailDuocMoi,
-                    HoTenDuocMoi = u?.HoTen,
-                    AnhDaiDienDuocMoi = u?.AnhDaiDien,
-                    Visible = lm.Visible,
-                    TyLeChiaDoanhThu = lm.TyLeChiaDoanhThu,
-                    Manage = lm.Manage,
-                    Performance = lm.Performance,
-                    QnA = lm.QnA,
-                    Reviews = lm.Reviews,
-                    Assignments = lm.Assignments,
-                    Materials = lm.Materials,
-                    Promotions = lm.Promotions,
-                    NgayMoi = lm.CreatedDate,
-                };
-            }).ToList();
+                    var u = pendingUsers.FirstOrDefault(x => x.Id == lm.IdNguoiDuocMoi);
+                    return new LoiMoiDangChoDto
+                    {
+                        IdLoiMoi = lm.Id,
+                        EmailDuocMoi = lm.EmailDuocMoi,
+                        HoTenDuocMoi = u?.HoTen,
+                        AnhDaiDienDuocMoi = u?.AnhDaiDien,
+                        Visible = lm.Visible,
+                        TyLeChiaDoanhThu = lm.TyLeChiaDoanhThu,
+                        Manage = lm.Manage,
+                        Performance = lm.Performance,
+                        QnA = lm.QnA,
+                        Reviews = lm.Reviews,
+                        Assignments = lm.Assignments,
+                        Materials = lm.Materials,
+                        Promotions = lm.Promotions,
+                        NgayMoi = lm.CreatedDate,
+                    };
+                }).ToList();
+            }
 
             return new DanhSachGiangVienDto
             {

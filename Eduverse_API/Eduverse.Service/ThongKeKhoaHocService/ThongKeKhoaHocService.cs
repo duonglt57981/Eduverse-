@@ -217,8 +217,33 @@ namespace Eduverse.Service.ThongKeKhoaHocService
             await KiemTraQuyenPerformance(idKhoaHoc);
 
             var now = DateTime.Now;
+
+            // Lấy danh sách ID các giảng viên của khóa học này (chủ sở hữu và giảng viên hợp tác)
+            var allKhoaHocIds = new List<Guid> { idKhoaHoc };
+            var kh = await _khoaHocService.GetQueryable().FirstOrDefaultAsync(k => k.Id == idKhoaHoc);
+            if (kh != null)
+            {
+                if (kh.IdBanGhiTruoc.HasValue) allKhoaHocIds.Add(kh.IdBanGhiTruoc.Value);
+                var relatedIds = await _khoaHocService.GetQueryable()
+                    .Where(k => (k.IdBanGhiTruoc == idKhoaHoc || (kh.IdBanGhiTruoc.HasValue && k.IdBanGhiTruoc == kh.IdBanGhiTruoc.Value)) && !k.IsDeleted)
+                    .Select(k => k.Id)
+                    .ToListAsync();
+                allKhoaHocIds.AddRange(relatedIds);
+                allKhoaHocIds = allKhoaHocIds.Distinct().ToList();
+            }
+
+            var instructorIds = await _khoaHocGVRepo.GetQueryable()
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
+                .Select(x => x.IdGiangVien)
+                .ToListAsync();
+
+            if (kh != null && kh.CreatedId.HasValue) instructorIds.Add(kh.CreatedId.Value);
+            instructorIds = instructorIds.Distinct().ToList();
+
             var query = _dangKyRepo.GetQueryable()
-                .Where(x => x.IdKhoaHoc == idKhoaHoc && !x.IsDeleted);
+                .Where(x => allKhoaHocIds.Contains(x.IdKhoaHoc.Value)
+                         && !x.IsDeleted
+                         && (!x.IdNguoiDangKi.HasValue || !instructorIds.Contains(x.IdNguoiDangKi.Value)));
 
             var tatCa = await query.ToListAsync();
 

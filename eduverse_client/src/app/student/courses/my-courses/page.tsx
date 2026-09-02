@@ -504,7 +504,25 @@ function MyCoursesContent() {
         pageIndex: 1,
         pageSize: 1000,
       });
-      const allItems = extractCourseItems(response);
+      const rawItems = extractCourseItems(response);
+      const allItems = rawItems.filter((c: KhoaHocType) => {
+        const itemAny = c as Record<string, unknown>;
+        if (userId) {
+          const isMyCourse =
+            itemAny.createdId === userId ||
+            itemAny.idGiangVien === userId ||
+            (Array.isArray(itemAny.danhSachGiangVien) &&
+              (itemAny.danhSachGiangVien as Array<{ idGiangVien?: string; id?: string }>).some(
+                (gv) => gv.idGiangVien === userId || gv.id === userId,
+              )) ||
+            (Array.isArray(itemAny.giangViens) &&
+              (itemAny.giangViens as Array<{ idGiangVien?: string; id?: string }>).some(
+                (gv) => gv.idGiangVien === userId || gv.id === userId,
+              ));
+          if (isMyCourse) return false;
+        }
+        return true;
+      });
       const total = allItems.length;
       const inProgress = allItems.filter(
         (c) => (c.phanTramHoanThanh ?? 0) > 0 && (c.phanTramHoanThanh ?? 0) < 100,
@@ -554,7 +572,25 @@ function MyCoursesContent() {
       }
 
       const response = await khoaHocService.GetListDangKi(search);
-      const items = extractCourseItems(response);
+      const rawItems = extractCourseItems(response);
+      const items = rawItems.filter((c: KhoaHocType) => {
+        const itemAny = c as Record<string, unknown>;
+        if (userId) {
+          const isMyCourse =
+            itemAny.createdId === userId ||
+            itemAny.idGiangVien === userId ||
+            (Array.isArray(itemAny.danhSachGiangVien) &&
+              (itemAny.danhSachGiangVien as Array<{ idGiangVien?: string; id?: string }>).some(
+                (gv) => gv.idGiangVien === userId || gv.id === userId,
+              )) ||
+            (Array.isArray(itemAny.giangViens) &&
+              (itemAny.giangViens as Array<{ idGiangVien?: string; id?: string }>).some(
+                (gv) => gv.idGiangVien === userId || gv.id === userId,
+              ));
+          if (isMyCourse) return false;
+        }
+        return true;
+      });
 
       // Lấy thông tin phân trang
       const pagination = extractPaginationInfo(response);

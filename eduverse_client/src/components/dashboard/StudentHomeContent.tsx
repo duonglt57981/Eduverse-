@@ -1305,20 +1305,6 @@ function ContinueLearningCard({
           {title}
         </Typography>
 
-        {/* Instructor name */}
-        <Typography
-          sx={{
-            fontSize: 11.5,
-            color: C.textMuted,
-            fontWeight: 500,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {instructorName}
-        </Typography>
-
         {/* Rating score + Stars OR 'Chưa có đánh giá' */}
         {hasRating ? (
           <Tooltip title={`${reviewCount} lượt đánh giá`} arrow placement="top">
@@ -1528,12 +1514,54 @@ export default function StudentHomeContent() {
   const tabsRef = useRef<HTMLDivElement>(null);
 
   // "Tiếp tục học": lấy trực tiếp từ danh sách khoahoc-list (latestCourses),
-  // vì mỗi phần tử ở đó đã có sẵn daDangKy, phanTramHoanThanh, idDangKiKhoaHoc
-  // do backend trả về theo đúng người dùng hiện tại.
+  // loại bỏ các khóa học do chính người dùng tạo hoặc tham gia giảng dạy.
   const continuingCourses = useMemo(() => {
     if (!latestCourses || !Array.isArray(latestCourses)) return [];
-    return latestCourses.filter((c: any) => c.daDangKy === true);
-  }, [latestCourses]);
+    const currentUserId = user?.id || user?.userId || user?.sub || user?.nameid;
+    const currentUserName = (user?.hoTen || user?.name || "").trim().toLowerCase();
+    const currentUserEmail = (user?.email || "").trim().toLowerCase();
+
+    return latestCourses.filter((c: any) => {
+      // 1. Kiểm tra ID người tạo / giảng viên
+      if (currentUserId) {
+        if (c.createdId && String(c.createdId).toLowerCase() === String(currentUserId).toLowerCase()) return false;
+        if (c.idGiangVien && String(c.idGiangVien).toLowerCase() === String(currentUserId).toLowerCase()) return false;
+      }
+
+      // 2. Kiểm tra trong danhSachGiangVien / giangViens
+      const gvList = Array.isArray(c.danhSachGiangVien)
+        ? c.danhSachGiangVien
+        : Array.isArray(c.giangViens)
+          ? c.giangViens
+          : [];
+      if (gvList.length > 0) {
+        const isInstructor = gvList.some((gv: any) => {
+          const gvId = gv.id || gv.idGiangVien;
+          if (
+            currentUserId &&
+            gvId &&
+            String(gvId).toLowerCase() === String(currentUserId).toLowerCase()
+          ) {
+            return true;
+          }
+          const gvEmail = (gv.email || "").trim().toLowerCase();
+          if (currentUserEmail && gvEmail && gvEmail === currentUserEmail) return true;
+          const gvName = (gv.hoTen || gv.tenGiangVien || "").trim().toLowerCase();
+          if (currentUserName && gvName && gvName === currentUserName) return true;
+          return false;
+        });
+        if (isInstructor) return false;
+      }
+
+      // 3. Kiểm tra chuỗi tên giảng viên / tác giả
+      if (currentUserName && (c.tenGiangVien || c.tacGia || c.tenTacGia)) {
+        const fullGvText = String(c.tenGiangVien || c.tacGia || c.tenTacGia || "").toLowerCase();
+        if (fullGvText.includes(currentUserName)) return false;
+      }
+
+      return c.daDangKy === true;
+    });
+  }, [latestCourses, user]);
 
   // Lọc danh sách "Khóa học mới nhất":
   // 1. Chỉ lấy khóa học được tạo trong 1 tháng gần nhất (30 ngày)
@@ -1823,8 +1851,75 @@ export default function StudentHomeContent() {
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  // Gợi ý thông minh theo danh mục các khóa học đã học
+  // Gợi ý thông minh theo danh mục các khóa học đã học (chỉ hiển thị 1 hàng danh mục)
   const learnedRecs: HistoryRecommendationGroup[] = useMemo(() => {
+    // 1. Ưu tiên lấy theo đúng các khóa học mà học viên ĐANG THỰC SỰ HỌC (continuingCourses)
+    if (continuingCourses && continuingCourses.length > 0) {
+      const learningCourseIds = new Set(
+        continuingCourses.map((c: any) =>
+          String(c.id || c.idKhoaHoc || "").toLowerCase(),
+        ),
+      );
+
+      // Thử tìm trong backend historyRecommendations nhóm nào dựa trên khóa học đang học
+      if (
+        data?.historyRecommendations &&
+        Array.isArray(data.historyRecommendations)
+      ) {
+        const matched = data.historyRecommendations.find(
+          (g: any) =>
+            g.courses &&
+            g.courses.length > 0 &&
+            g.basedOnCourseId &&
+            learningCourseIds.has(String(g.basedOnCourseId).toLowerCase()),
+        );
+        if (matched) return [matched];
+      }
+
+      // Tự động xây dựng nhóm gợi ý theo khóa học đầu tiên học viên đang học
+      const firstLearning = continuingCourses[0];
+      const basedTitle =
+        firstLearning.tieuDe || firstLearning.title || "Khóa học đang học";
+      const basedId = firstLearning.id || firstLearning.idKhoaHoc;
+      const keywords = basedTitle
+        .toLowerCase()
+        .split(/[\s\-_,/:|]+/)
+        .filter((w: string) => w.length > 2);
+
+      const enrolledIds = new Set<string>();
+      continuingCourses.forEach((c: any) => {
+        if (c.id) enrolledIds.add(String(c.id).toLowerCase());
+        if (c.idKhoaHoc) enrolledIds.add(String(c.idKhoaHoc).toLowerCase());
+      });
+
+      const relatedCourses = (latestCourses || []).filter((c: any) => {
+        const cId = String(c.id || c.idKhoaHoc || "").toLowerCase();
+        if (enrolledIds.has(cId)) return false;
+        if (c.daDangKy) return false;
+        if (user?.id) {
+          if (c.createdId && String(c.createdId).toLowerCase() === String(user.id).toLowerCase()) return false;
+          if (c.idGiangVien && String(c.idGiangVien).toLowerCase() === String(user.id).toLowerCase()) return false;
+        }
+        const cTitle = (c.tieuDe || c.title || "").toLowerCase();
+        return keywords.some((kw: string) => cTitle.includes(kw));
+      });
+
+      if (relatedCourses.length > 0) {
+        return [
+          {
+            basedOnCourseId: basedId,
+            basedOnCourse: basedTitle,
+            categoryName:
+              firstLearning.categoryName ||
+              firstLearning.tenDanhMuc ||
+              "cùng chủ đề",
+            courses: relatedCourses.slice(0, 8),
+          },
+        ];
+      }
+    }
+
+    // 2. Fallback backend historyRecommendations nếu có
     if (
       data?.historyRecommendations &&
       Array.isArray(data.historyRecommendations) &&
@@ -1833,7 +1928,7 @@ export default function StudentHomeContent() {
       const valid = data.historyRecommendations.filter(
         (g) => g.courses && g.courses.length > 0,
       );
-      if (valid.length > 0) return valid;
+      if (valid.length > 0) return [valid[0]];
     }
     if (
       data?.historyRecommendation?.courses &&
@@ -1841,51 +1936,9 @@ export default function StudentHomeContent() {
     ) {
       return [data.historyRecommendation];
     }
-    // Fallback: Gợi ý theo chủ đề nổi bật của các khóa học hiện có
-    if (latestCourses && latestCourses.length > 0) {
-      const designCourses = latestCourses.filter(
-        (c: any) =>
-          c.tieuDe?.toLowerCase().includes("design") ||
-          c.tieuDe?.toLowerCase().includes("photoshop") ||
-          c.tieuDe?.toLowerCase().includes("đồ họa") ||
-          c.categoryNames?.some((cn: string) => cn.toLowerCase().includes("thiết kế")),
-      );
-      const devCourses = latestCourses.filter(
-        (c: any) =>
-          c.tieuDe?.toLowerCase().includes("html") ||
-          c.tieuDe?.toLowerCase().includes("css") ||
-          c.tieuDe?.toLowerCase().includes("react") ||
-          c.tieuDe?.toLowerCase().includes("ruby") ||
-          c.tieuDe?.toLowerCase().includes("git") ||
-          c.categoryNames?.some((cn: string) => cn.toLowerCase().includes("lập trình")),
-      );
 
-      const recs: HistoryRecommendationGroup[] = [];
-      if (designCourses.length > 0) {
-        recs.push({
-          basedOnCourse: "Thiết kế đồ họa",
-          categoryName: "Thiết kế đồ họa",
-          courses: designCourses.slice(0, 8),
-        });
-      }
-      if (devCourses.length > 0) {
-        recs.push({
-          basedOnCourse: "Lập trình & Phát triển",
-          categoryName: "Lập trình & Phát triển",
-          courses: devCourses.slice(0, 8),
-        });
-      }
-      if (recs.length === 0) {
-        recs.push({
-          basedOnCourse: "Kỹ năng chuyên môn",
-          categoryName: "Kỹ năng chuyên môn",
-          courses: latestCourses.slice(0, 8),
-        });
-      }
-      return recs;
-    }
     return [];
-  }, [data, latestCourses]);
+  }, [continuingCourses, data, latestCourses, user?.id]);
 
   // Gợi ý thông minh theo danh mục các khóa học trong danh sách mong ước (Wishlist)
   const wishlistRecs: HistoryRecommendationGroup[] = useMemo(() => {
@@ -2297,83 +2350,111 @@ export default function StudentHomeContent() {
       )}
 
       {/* ── 4. Vì bạn đã học... (Gợi ý theo chủ đề / khóa học đã học) ── */}
-      {learnedRecs.map((group, gIdx) => (
-        <Box key={group.basedOnCourseId || `learned-${gIdx}`}>
-          <RecommendationHeader
-            prefix="Vì bạn đã học"
-            highlight={group.basedOnCourse}
-            subtitle={
-              group.categoryName
-                ? `Các khóa học cùng chủ đề ${group.categoryName} có thể bạn sẽ quan tâm`
-                : "Gợi ý các khóa học liên quan dựa trên lịch sử học tập của bạn"
-            }
-            onClickHighlight={
-              group.basedOnCourseId
-                ? () =>
-                    router.push(
-                      `/student/enroll-courses/${group.basedOnCourseId}`,
-                    )
-                : undefined
-            }
-          />
-          <CarouselRow>
-            {group.courses?.map((c: any, i: number) => (
-              <CourseCard
-                key={c.id || i}
-                course={{
-                  ...c,
-                  hinhAnhKhoaHoc:
-                    c.hinhAnhKhoaHoc ||
-                    courseImages[c.id || ""] ||
-                    titleImages[c.tieuDe || ""],
-                }}
-                onAddCart={handleAddCart}
-                onClick={handleOpenCourse}
-              />
-            ))}
-          </CarouselRow>
-        </Box>
-      ))}
+      {learnedRecs.map((group, gIdx) => {
+        const targetCourseId =
+          group.basedOnCourseId ||
+          latestCourses?.find(
+            (c: any) =>
+              (c.tieuDe || c.title) === group.basedOnCourse,
+          )?.id ||
+          continuingCourses?.find(
+            (c: any) =>
+              (c.tieuDe || c.title) === group.basedOnCourse,
+          )?.id;
+
+        return (
+          <Box key={group.basedOnCourseId || `learned-${gIdx}`}>
+            <RecommendationHeader
+              prefix="Vì bạn đã học"
+              highlight={group.basedOnCourse}
+              subtitle={
+                group.categoryName
+                  ? `Các khóa học cùng chủ đề ${group.categoryName} có thể bạn sẽ quan tâm`
+                  : "Gợi ý các khóa học liên quan dựa trên lịch sử học tập của bạn"
+              }
+              onClickHighlight={
+                targetCourseId
+                  ? () =>
+                      router.push(
+                        `/student/enroll-courses/${targetCourseId}`,
+                      )
+                  : undefined
+              }
+            />
+            <CarouselRow>
+              {group.courses?.map((c: any, i: number) => (
+                <CourseCard
+                  key={c.id || i}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc:
+                      c.hinhAnhKhoaHoc ||
+                      courseImages[c.id || ""] ||
+                      titleImages[c.tieuDe || ""],
+                  }}
+                  onAddCart={handleAddCart}
+                  onClick={(course) => {
+                    const id = course.id || (course as any).idKhoaHoc;
+                    if (id) router.push(`/student/enroll-courses/${id}`);
+                  }}
+                />
+              ))}
+            </CarouselRow>
+          </Box>
+        );
+      })}
 
       {/* ── 5. Vì bạn đã đưa ... vào danh sách mong ước (Wishlist Recommendations) ── */}
-      {wishlistRecs.map((group, gIdx) => (
-        <Box key={group.basedOnCourseId || `wishlist-${gIdx}`}>
-          <RecommendationHeader
-            prefix="Vì bạn đã đưa"
-            highlight={group.basedOnCourse}
-            suffix="vào danh sách mong ước"
-            subtitle={
-              group.categoryName
-                ? `Các khóa học cùng chủ đề ${group.categoryName} nổi bật nhất`
-                : "Gợi ý dựa trên danh sách mong ước của bạn"
-            }
-            onClickHighlight={
-              group.basedOnCourseId
-                ? () =>
-                    router.push(
-                      `/student/enroll-courses/${group.basedOnCourseId}`,
-                    )
-                : undefined
-            }
-          />
-          <CarouselRow>
-            {group.courses?.map((c: any, i: number) => (
-              <CourseCard
-                key={c.id || i}
-                course={{
-                  ...c,
-                  hinhAnhKhoaHoc:
-                    c.hinhAnhKhoaHoc ||
-                    courseImages[c.id || ""] ||
-                    titleImages[c.tieuDe || ""],
-                }}
-                onAddCart={handleAddCart}
-                onClick={handleOpenCourse}
-              />
-            ))}
-          </CarouselRow>
-        </Box>
-      ))}
+      {wishlistRecs.map((group, gIdx) => {
+        const targetCourseId =
+          group.basedOnCourseId ||
+          latestCourses?.find(
+            (c: any) =>
+              (c.tieuDe || c.title) === group.basedOnCourse,
+          )?.id;
+
+        return (
+          <Box key={group.basedOnCourseId || `wishlist-${gIdx}`}>
+            <RecommendationHeader
+              prefix="Vì bạn đã đưa"
+              highlight={group.basedOnCourse}
+              suffix="vào danh sách mong ước"
+              subtitle={
+                group.categoryName
+                  ? `Các khóa học cùng chủ đề ${group.categoryName} nổi bật nhất`
+                  : "Gợi ý dựa trên danh sách mong ước của bạn"
+              }
+              onClickHighlight={
+                targetCourseId
+                  ? () =>
+                      router.push(
+                        `/student/enroll-courses/${targetCourseId}`,
+                      )
+                  : undefined
+              }
+            />
+            <CarouselRow>
+              {group.courses?.map((c: any, i: number) => (
+                <CourseCard
+                  key={c.id || i}
+                  course={{
+                    ...c,
+                    hinhAnhKhoaHoc:
+                      c.hinhAnhKhoaHoc ||
+                      courseImages[c.id || ""] ||
+                      titleImages[c.tieuDe || ""],
+                  }}
+                  onAddCart={handleAddCart}
+                  onClick={(course) => {
+                    const id = course.id || (course as any).idKhoaHoc;
+                    if (id) router.push(`/student/enroll-courses/${id}`);
+                  }}
+                />
+              ))}
+            </CarouselRow>
+          </Box>
+        );
+      })}
 
       {/* ── 5.5. Các khóa học nổi bật (được nhiều người đánh giá cao nhất) ── */}
       {trendingCoursesList.length > 0 && (

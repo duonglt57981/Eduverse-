@@ -155,6 +155,25 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching user registrations: " + ex.Message);
             }
 
+            // Loại bỏ các khóa học do chính người dùng này làm giảng viên hoặc người tạo
+            var myInstructorCourseIds = new List<Guid>();
+            try
+            {
+                myInstructorCourseIds = await _khoaHocGiangVienService.GetQueryable()
+                    .Where(kgv => kgv.IdGiangVien == loggedInUserId.Value && !kgv.IsDeleted)
+                    .Select(kgv => kgv.IdKhoaHoc)
+                    .Distinct()
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error fetching instructor course IDs: " + ex.Message);
+            }
+
+            userRegistrations = userRegistrations
+                .Where(r => r.IdKhoaHoc.HasValue && !myInstructorCourseIds.Contains(r.IdKhoaHoc.Value))
+                .ToList();
+
             var registeredCourseIds = userRegistrations.Select(r => r.IdKhoaHoc).ToList();
 
             // Fetch actual courses information
@@ -173,7 +192,11 @@ namespace Eduverse.Api.Controller
                 Console.WriteLine("Error fetching courses: " + ex.Message);
             }
 
-
+            // Loại bỏ thêm nếu c.CreatedId == loggedInUserId.Value
+            userRegistrations = userRegistrations
+                .Where(r => !courses.Any(c => c.Id == r.IdKhoaHoc && c.CreatedId == loggedInUserId.Value))
+                .ToList();
+            registeredCourseIds = userRegistrations.Select(r => r.IdKhoaHoc).ToList();
 
             var registeredCourses = courses.Where(c => registeredCourseIds.Contains(c.Id)).ToList();
 
@@ -679,6 +702,8 @@ namespace Eduverse.Api.Controller
                     {
                         matchedCourses = courses
                             .Where(c => !registeredCourseIds.Contains(c.Id) &&
+                                        !myInstructorCourseIds.Contains(c.Id) &&
+                                        c.CreatedId != loggedInUserId &&
                                         !recommendedCourseIdsUsed.Contains(c.Id) &&
                                         courseCategoryLinks.Any(l => l.IdKhoaHoc == c.Id && learnedCatIds.Contains(l.IdDanhMuc)))
                             .OrderByDescending(c => ratingMap.TryGetValue(c.Id, out var tr) ? tr.DiemTrungBinh : 0)
@@ -699,6 +724,8 @@ namespace Eduverse.Api.Controller
                         {
                             matchedCourses = courses
                                 .Where(c => !registeredCourseIds.Contains(c.Id) &&
+                                            !myInstructorCourseIds.Contains(c.Id) &&
+                                            c.CreatedId != loggedInUserId &&
                                             !recommendedCourseIdsUsed.Contains(c.Id) &&
                                             words.Any(w => (c.TieuDe ?? "").Contains(w, StringComparison.OrdinalIgnoreCase)))
                                 .Take(10)
@@ -1081,13 +1108,16 @@ namespace Eduverse.Api.Controller
             }
             catch (Exception ex) { Console.WriteLine("Error fetching instructor courses: " + ex.Message); }
             var myCourseIds = myCourses.Select(c => c.Id).ToList();
+            var prevVersionIds = myCourses.Where(c => c.IdBanGhiTruoc.HasValue).Select(c => c.IdBanGhiTruoc!.Value).ToList();
+            var allMyRelevantCourseIds = myCourseIds.Union(prevVersionIds).Distinct().ToList();
             int totalCourses = myCourses.Count;
 
             var tongTyLeByCourseId = new Dictionary<Guid, int>();
+            var allMembershipsOfMyCourses = new List<KhoaHoc_GiangVien>();
             try
             {
-                var allMembershipsOfMyCourses = await _khoaHocGiangVienService.GetQueryable()
-                    .Where(x => myCourseIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
+                allMembershipsOfMyCourses = await _khoaHocGiangVienService.GetQueryable()
+                    .Where(x => allMyRelevantCourseIds.Contains(x.IdKhoaHoc) && !x.IsDeleted)
                     .ToListAsync();
 
                 tongTyLeByCourseId = allMembershipsOfMyCourses
@@ -1102,7 +1132,15 @@ namespace Eduverse.Api.Controller
                 allRegs = await _dangKyKhoaHocService.GetQueryable().Where(r => r.IsDeleted == false).ToListAsync();
             }
             catch (Exception ex) { Console.WriteLine("Error fetching registrations: " + ex.Message); }
-            var myRegs = allRegs.Where(r => r.IdKhoaHoc.HasValue && myCourseIds.Contains(r.IdKhoaHoc.Value)).ToList();
+
+            // Lọc đăng ký: LOẠI BỎ bất kỳ học viên nào là giảng viên (chủ sở hữu hoặc giảng viên cộng tác) của khóa học đó
+            var myRegs = allRegs
+                .Where(r => r.IdKhoaHoc.HasValue 
+                         && allMyRelevantCourseIds.Contains(r.IdKhoaHoc.Value)
+                         && r.IdNguoiDangKi.HasValue
+                         && !allMembershipsOfMyCourses.Any(m => m.IdKhoaHoc == r.IdKhoaHoc.Value && m.IdGiangVien == r.IdNguoiDangKi.Value)
+                         && !myCourses.Any(c => (c.Id == r.IdKhoaHoc.Value || (c.IdBanGhiTruoc.HasValue && c.IdBanGhiTruoc.Value == r.IdKhoaHoc.Value)) && c.CreatedId == r.IdNguoiDangKi.Value))
+                .ToList();
 
             var myRevenueRecords = new List<DonHang_GiangVien>();
 
@@ -1111,7 +1149,7 @@ namespace Eduverse.Api.Controller
                 myRevenueRecords = await _donHangGiangVienService.GetQueryable()
                     .Where(x =>
                         x.IdGiangVien == instructorId &&
-                        myCourseIds.Contains(x.IdKhoaHoc) &&
+                        allMyRelevantCourseIds.Contains(x.IdKhoaHoc) &&
                         !x.IsDeleted)
                     .ToListAsync();
             }
@@ -1125,7 +1163,7 @@ namespace Eduverse.Api.Controller
                 0
             );
 
-            int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
+            int totalStudents = myRegs.Where(r => r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi!.Value).Distinct().Count();
 
             var allProgress = new List<TienDoHocTap>();
             try
@@ -1137,8 +1175,16 @@ namespace Eduverse.Api.Controller
             var nowDate = DateTime.Now;
             var curMonthStart = new DateTime(nowDate.Year, nowDate.Month, 1);
             var prevMonthStart = curMonthStart.AddMonths(-1);
-            int newThisMonth = myRegs.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= curMonthStart && r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
-            int newPrevMonth = myRegs.Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= prevMonthStart && r.ThoiGianDK.Value < curMonthStart && r.IdNguoiDangKi.HasValue).Select(r => r.IdNguoiDangKi.Value).Distinct().Count();
+            int newThisMonth = myRegs.Where(r => {
+                var regDate = r.ThoiGianDK ?? r.CreatedDate;
+                return regDate >= curMonthStart && r.IdNguoiDangKi.HasValue;
+            }).Select(r => r.IdNguoiDangKi!.Value).Distinct().Count();
+
+            int newPrevMonth = myRegs.Where(r => {
+                var regDate = r.ThoiGianDK ?? r.CreatedDate;
+                return regDate >= prevMonthStart && regDate < curMonthStart && r.IdNguoiDangKi.HasValue;
+            }).Select(r => r.IdNguoiDangKi!.Value).Distinct().Count();
+
             double studentGrowthPercent = newPrevMonth > 0
                 ? Math.Round((double)(newThisMonth - newPrevMonth) / newPrevMonth * 100, 0)
                 : (newThisMonth > 0 ? 100 : 0);
@@ -1149,7 +1195,10 @@ namespace Eduverse.Api.Controller
                 var mStart = curMonthStart.AddMonths(-i);
                 var mEnd = mStart.AddMonths(1);
                 int cnt = myRegs
-                    .Where(r => r.ThoiGianDK.HasValue && r.ThoiGianDK.Value >= mStart && r.ThoiGianDK.Value < mEnd && r.IdNguoiDangKi.HasValue)
+                    .Where(r => {
+                        var regDate = r.ThoiGianDK ?? r.CreatedDate;
+                        return regDate >= mStart && regDate < mEnd && r.IdNguoiDangKi.HasValue;
+                    })
                     .Select(r => r.IdNguoiDangKi!.Value)
                     .Distinct()
                     .Count();
@@ -1489,10 +1538,12 @@ namespace Eduverse.Api.Controller
 
                     // Đếm số học viên UNIQUE đăng ký khóa học trong tháng đó
                     studentGrowth[i] = allRegistrations
-                        .Where(r => r.ThoiGianDK.HasValue
-                                 && r.ThoiGianDK.Value.Year == targetMonth.Year
-                                 && r.ThoiGianDK.Value.Month == targetMonth.Month
-                                 && r.IdNguoiDangKi.HasValue)
+                        .Where(r => {
+                            var regDate = r.ThoiGianDK ?? r.CreatedDate;
+                            return regDate.Year == targetMonth.Year
+                                && regDate.Month == targetMonth.Month
+                                && r.IdNguoiDangKi.HasValue;
+                        })
                         .Select(r => r.IdNguoiDangKi!.Value)
                         .Distinct()
                         .Count();

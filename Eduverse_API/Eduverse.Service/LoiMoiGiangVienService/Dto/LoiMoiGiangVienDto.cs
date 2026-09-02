@@ -89,7 +89,12 @@ namespace Eduverse.Service.LoiMoiGiangVienService.Dto
 
     public class QuyenCuaToiDto
     {
+        public Guid IdGiangVien { get; set; }
+        public string? HoTen { get; set; }
+        public string? Email { get; set; }
+        public string? AnhDaiDien { get; set; }
         public bool LaChuSoHuu { get; set; }
+        public int TyLeChiaDoanhThu { get; set; }
         public bool Visible { get; set; }
         public bool Manage { get; set; }
         public bool Performance { get; set; }

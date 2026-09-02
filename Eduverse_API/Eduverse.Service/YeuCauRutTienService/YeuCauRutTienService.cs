@@ -61,6 +61,11 @@ namespace Eduverse.Service.YeuCauRutTienService
             var user = await _userRepo.GetByIdAsync(userId)
                 ?? throw new Exception("Không tìm thấy người dùng");
 
+            var dangCho = await AnyAsync(x =>
+                x.IdNguoiDung == userId && x.TrangThai == "ChoDuyet" && !x.IsDeleted);
+            if (dangCho)
+                throw new Exception("Bạn đang có yêu cầu rút tiền đang chờ duyệt, vui lòng đợi xử lý xong");
+
             if (string.IsNullOrEmpty(user.Email))
                 throw new Exception("Tài khoản chưa có email. Vui lòng cập nhật email.");
 

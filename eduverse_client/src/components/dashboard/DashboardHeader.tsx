@@ -43,6 +43,7 @@ import { EduAvatar } from "@/src/components/common/EduAvatar";
 import { alpha } from "@mui/material/styles";
 import { BRAND, CSSVAR } from "@/src/theme/tokens";
 import { useFavorite } from "@/src/features/favorite/hooks/useFavorite";
+import LoiMoiGiangVienService from "@/src/services/LoiMoiGiangVienService";
 import { getGioHang } from "@/src/store/gioHang/GioHangSlice";
 import WishlistHoverPopover from "./header/WishlistHoverPopover";
 import CartHoverPopover from "./header/CartHoverPopover";
@@ -80,6 +81,7 @@ export default function DashboardHeader({
   const { favorites, favoriteCount, fetchFavorites } = useFavorite();
   const gioHang = useSelector((state: any) => state.gioHang.gioHang);
   const cartItemsCount = gioHang?.items?.length ?? 0;
+  const [pendingInvitesCount, setPendingInvitesCount] = useState<number>(0);
 
   const [isFavOpen, setIsFavOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -256,6 +258,44 @@ export default function DashboardHeader({
   const isInstructorMode = !isPersonnelMode && activeRole === "GiaoVien";
   const isAdminMode = !isPersonnelMode && activeRole === "Admin";
   const isStudentMode = !isPersonnelMode && activeRole === "HocVien";
+
+  useEffect(() => {
+    if (!user || !isInstructorMode) {
+      setPendingInvitesCount(0);
+      return;
+    }
+
+    let isMounted = true;
+    const fetchPendingCount = async () => {
+      try {
+        const [invites, promos] = await Promise.all([
+          LoiMoiGiangVienService.GetLoiMoiCuaToi().catch(() => []),
+          LoiMoiGiangVienService.GetLoiMoiKhuyenMaiCuaToi().catch(() => []),
+        ]);
+
+        if (isMounted) {
+          const pendingInvites = (invites || []).filter(
+            (x: any) => x.trangThai === "Pending" && Boolean(x?.tenKhoaHoc?.trim()),
+          ).length;
+          const pendingPromos = (promos || []).filter(
+            (x: any) => x.trangThai === "Pending" && Boolean(x?.tenKhoaHoc?.trim()),
+          ).length;
+
+          setPendingInvitesCount(pendingInvites + pendingPromos);
+        }
+      } catch {
+        if (isMounted) setPendingInvitesCount(0);
+      }
+    };
+
+    void fetchPendingCount();
+
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [user, isInstructorMode, pathname]);
 
   useEffect(() => {
     const keyword = searchQuery.trim();
@@ -974,7 +1014,7 @@ export default function DashboardHeader({
 
             {isInstructorMode && (
               <IconButton
-                aria-label="Lời mời giảng dạy"
+                aria-label="Lời mời & yêu cầu giảng dạy"
                 onClick={() => router.push("/instructor/invites")}
                 sx={{
                   width: 42,
@@ -984,7 +1024,9 @@ export default function DashboardHeader({
                   "&:hover": { color: "primary.main" },
                 }}
               >
-                <MailOutlineRounded fontSize="small" />
+                <Badge badgeContent={pendingInvitesCount} color="error">
+                  <MailOutlineRounded fontSize="small" />
+                </Badge>
               </IconButton>
             )}
 

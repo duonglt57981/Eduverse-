@@ -179,7 +179,6 @@ export const sidebarGiaoVienItems: DashboardNavItem[] = [
 export const sidebarAdminItems: DashboardNavItem[] = [
   { label: 'Dashboard', icon: DashboardRounded },
   { label: 'Người dùng', icon: PeopleAltRounded },
-  { label: 'Vai trò', icon: AdminPanelSettingsRounded },
   { label: 'Danh mục', icon: CategoryRounded },
   { label: 'Khóa học', icon: SchoolRounded },
   { label: 'Khuyến mãi', icon: LocalOfferRounded },

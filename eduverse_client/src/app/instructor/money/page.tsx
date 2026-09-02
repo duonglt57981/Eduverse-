@@ -22,6 +22,7 @@ import {
   CircularProgress,
   Alert,
   Stack,
+  Snackbar,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AddIcon from "@mui/icons-material/Add";
@@ -139,9 +140,22 @@ function DoanhThuContent() {
   const [otpCountdown, setOtpCountdown] = useState(0);
 
   const [error, setError] = useState("");
+  const [warningMessage, setWarningMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+
+  const coYeuCauChoDuyet = lichSu.some((item) => item.trangThai === "ChoDuyet");
+
+  const handleOpenRutTien = () => {
+    if (coYeuCauChoDuyet) {
+      setWarningMessage(
+        "Bạn đang có 1 yêu cầu rút tiền đang chờ duyệt. Vui lòng đợi quản trị viên xử lý xong trước khi tạo yêu cầu mới.",
+      );
+      return;
+    }
+    setOpenRut(true);
+  };
 
   useEffect(() => {
     dispatch(getSoDu());
@@ -173,6 +187,11 @@ function DoanhThuContent() {
 
   // Bước 1: Gửi OTP
   const handleGuiOtp = async () => {
+    if (coYeuCauChoDuyet) {
+      return setError(
+        "Bạn đang có 1 yêu cầu rút tiền đang chờ duyệt. Vui lòng đợi xử lý xong.",
+      );
+    }
     const so = parseFloat(soTienRut);
     if (!so || so <= 0) return setError("Vui lòng nhập số tiền hợp lệ");
     if (!idNganHang) return setError("Vui lòng chọn tài khoản ngân hàng");
@@ -325,7 +344,7 @@ function DoanhThuContent() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setOpenRut(true)}
+              onClick={handleOpenRutTien}
               disabled={soDu < 50000 || nganHangs.length === 0}
               sx={{
                 bgcolor: CSSVAR.paper,
@@ -344,6 +363,11 @@ function DoanhThuContent() {
             </Button>
           </Box>
         </Box>
+        {coYeuCauChoDuyet && (
+          <Alert severity="warning" sx={{ mt: 2, borderRadius: "10px", fontWeight: 600 }}>
+            Bạn đang có 1 yêu cầu rút tiền đang chờ duyệt. Vui lòng đợi quản trị viên xử lý xong trước khi tạo yêu cầu mới.
+          </Alert>
+        )}
         {nganHangs.length === 0 && (
           <Alert severity="warning" sx={{ mt: 2, borderRadius: "10px" }}>
             Bạn chưa có tài khoản ngân hàng. Vui lòng thêm tài khoản trước khi
@@ -712,6 +736,21 @@ function DoanhThuContent() {
           )}
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={Boolean(warningMessage)}
+        autoHideDuration={6000}
+        onClose={() => setWarningMessage("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          severity="warning"
+          sx={{ width: "100%", borderRadius: "12px", fontWeight: 600, boxShadow: 3 }}
+          onClose={() => setWarningMessage("")}
+        >
+          {warningMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

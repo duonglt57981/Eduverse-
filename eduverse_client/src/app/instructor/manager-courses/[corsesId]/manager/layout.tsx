@@ -198,14 +198,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  // Chỉ chủ sở hữu mới thấy "Quản lý giảng viên" — bất kể trạng thái khóa học
-  if (quyenCuaToi?.laChuSoHuu) {
-    mucKhoaHoc.push({
-      key: "instructors",
-      nhan: "Quản lý giảng viên",
-      hoanThanh: false,
-    });
-  }
+  // Quản lý giảng viên: hiển thị cho cả chủ sở hữu và giảng viên hợp tác
+  mucKhoaHoc.push({
+    key: "instructors",
+    nhan: "Quản lý giảng viên",
+    hoanThanh: false,
+  });
 
   // Hỏi đáp / Thống kê / Đánh giá: ẩn hết khi khóa học chưa được duyệt.
   // Sau khi duyệt mới xét quyền cụ thể của từng giảng viên.
@@ -333,6 +331,15 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleGuiPheDuyet = useCallback(async () => {
+    if (!quyenCuaToi?.laChuSoHuu) {
+      setToast({
+        open: true,
+        message: "Chỉ giảng viên chủ sở hữu mới có quyền gửi phê duyệt khóa học.",
+        severity: "error",
+      });
+      return;
+    }
+
     // VALIDATE: Cần ít nhất 5 bài giảng
     const totalBaiGiang = phans.reduce((total, phan) => {
       return total + (phan.DanhSachBaiGiang?.length || 0);
@@ -378,9 +385,18 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     } finally {
       setDangXuLy(false);
     }
-  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty, phans]);
+  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty, phans, quyenCuaToi]);
 
   const handleHuyPheDuyet = useCallback(async () => {
+    if (!quyenCuaToi?.laChuSoHuu) {
+      setToast({
+        open: true,
+        message: "Chỉ giảng viên chủ sở hữu mới có quyền hủy phê duyệt khóa học.",
+        severity: "error",
+      });
+      return;
+    }
+
     setDangXuLy(true);
     try {
       const res = await khoaHocService.ChuyenTTDangSuaBatch(idKhoaHoc);
@@ -416,7 +432,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     } finally {
       setDangXuLy(false);
     }
-  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty]);
+  }, [idKhoaHoc, khoaHocService, setTrangThai, refreshData, resetDirty, quyenCuaToi]);
 
   const dialogContent = useMemo(() => {
     if (pendingNavigation === "back") {
@@ -451,6 +467,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         activeKey={activeKey}
         loading={loading || dangXuLy}
         idKhoaHoc={idKhoaHoc}
+        laChuSoHuu={quyenCuaToi?.laChuSoHuu ?? false}
         onBack={handleBack}
         onNavigateSidebar={handleNavigateSidebar}
         onGuiPheDuyet={handleGuiPheDuyet}

@@ -99,7 +99,12 @@ export interface LoiMoiDangChoDto {
 }
 
 export interface QuyenCuaToiDto {
+  idGiangVien?: string;
+  hoTen?: string;
+  email?: string;
+  anhDaiDien?: string;
   laChuSoHuu: boolean;
+  tyLeChiaDoanhThu?: number;
   visible: boolean;
   manage: boolean;
   performance: boolean;

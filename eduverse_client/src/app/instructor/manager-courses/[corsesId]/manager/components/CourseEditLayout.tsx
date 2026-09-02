@@ -6,8 +6,6 @@ import { Box, Typography, Chip, Button, CircularProgress } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBackIosNew";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import { PhanHocType } from "@/src/types/PhanHoc/Dto/PhanHocdto";
 import {
   MAU,
@@ -48,6 +46,7 @@ interface Props {
   activeKey: string;
   loading?: boolean;
   idKhoaHoc?: string;
+  laChuSoHuu?: boolean;
   onBack: () => void;
   onNavigateSidebar: (key: string) => void;
   onGuiPheDuyet: () => Promise<void>;
@@ -69,6 +68,7 @@ export default function CourseEditLayout({
   activeKey,
   loading = false,
   idKhoaHoc,
+  laChuSoHuu = true,
   onBack,
   onNavigateSidebar,
   onGuiPheDuyet,
@@ -357,6 +357,7 @@ export default function CourseEditLayout({
               thongTinKhoaHoc={thongTinKhoaHoc}
               phans={phans}
               lyDoTuChoi={lyDoTuChoi}
+              laChuSoHuu={laChuSoHuu}
               onGuiPheDuyet={onGuiPheDuyet}
               onHuyPheDuyet={onHuyPheDuyet}
               onDiChuyenDen={onDiChuyenDenTuValidate}
@@ -470,18 +471,6 @@ export default function CourseEditLayout({
                           },
                         }}
                       >
-                        {m.hoanThanh ? (
-                          <CheckCircleIcon
-                            sx={{ fontSize: 18, color: "#16A34A" }}
-                          />
-                        ) : (
-                          <RadioButtonUncheckedIcon
-                            sx={{
-                              fontSize: 18,
-                              color: CSSVAR.textMuted,
-                            }}
-                          />
-                        )}
                         <Typography
                           sx={{
                             fontSize: 14,

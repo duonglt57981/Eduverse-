@@ -41,6 +41,7 @@ interface Props {
   thongTinKhoaHoc: ThongTinKhoaHocCoBan;
   phans: PhanHocType[];
   lyDoTuChoi?: string | null;
+  laChuSoHuu?: boolean;
   onGuiPheDuyet: () => Promise<void>;
   onHuyPheDuyet?: () => Promise<void>;
   onDiChuyenDen: (diChuyenDen: MucThieu["diChuyenDen"]) => void;
@@ -51,6 +52,7 @@ export default function CourseStatusAction({
   thongTinKhoaHoc,
   phans,
   lyDoTuChoi,
+  laChuSoHuu = true,
   onGuiPheDuyet,
   onHuyPheDuyet,
   onDiChuyenDen,
@@ -89,6 +91,10 @@ export default function CourseStatusAction({
   }, [chiTiet]);
 
   const xuLyBamGuiPheDuyet = async () => {
+    if (!laChuSoHuu) {
+      setLoiGuiDuyet("Chỉ giảng viên chủ sở hữu mới có quyền gửi phê duyệt khóa học.");
+      return;
+    }
     const ketQua = kiemTraDieuKienGuiDuyet(thongTinKhoaHoc, phans);
     if (!ketQua.hopLe) {
       setDanhSachThieu(ketQua.danhSachThieu);
@@ -138,7 +144,7 @@ export default function CourseStatusAction({
               Đang chờ phê duyệt
             </Typography>
           </Box>
-          {onHuyPheDuyet && (
+          {onHuyPheDuyet && laChuSoHuu && (
             <Button
               variant="contained"
               onClick={() => setMoDialogHuyDuyet(true)}
@@ -280,6 +286,48 @@ export default function CourseStatusAction({
   }
 
   const isDisabled = !coDangSua || trangThai !== "DangSua";
+
+  if (!laChuSoHuu && trangThai === "DangSua") {
+    return (
+      <Tooltip
+        title="Chỉ giảng viên chủ sở hữu mới có quyền gửi phê duyệt khóa học"
+        placement="bottom"
+        arrow
+        slotProps={{
+          tooltip: {
+            sx: {
+              bgcolor: "#1c1d1f",
+              maxWidth: 320,
+              borderRadius: "8px",
+              p: 1,
+            },
+          },
+        }}
+      >
+        <span>
+          <Button
+            variant="contained"
+            disabled
+            sx={{
+              bgcolor: MAU.chinh,
+              textTransform: "none",
+              fontWeight: 700,
+              px: 3,
+              boxShadow: "none",
+              opacity: 0.5,
+              "&.Mui-disabled": {
+                bgcolor: MAU.chinh,
+                opacity: 0.5,
+                color: "#fff",
+              },
+            }}
+          >
+            Gửi Phê Duyệt
+          </Button>
+        </span>
+      </Tooltip>
+    );
+  }
 
   return (
     <>

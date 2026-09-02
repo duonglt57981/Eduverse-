@@ -440,18 +440,9 @@ function StudentGrowthChart({ data }: { data: number[] }) {
     >
       <Typography
         variant="h6"
-        sx={{ fontWeight: 800, color: COLORS.textDark, mb: 0.5 }}
+        sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}
       >
         Tăng trưởng học viên
-      </Typography>
-      <Typography
-        sx={{
-          fontSize: 13,
-          color: "var(--ev-text-muted, rgba(31,41,55,0.48))",
-          mb: 3,
-        }}
-      >
-        Số học viên unique đăng ký khóa học theo từng tháng.
       </Typography>
 
       <Stack
@@ -780,41 +771,28 @@ export default function AdminDashboardContent() {
     {
       title: "DOANH THU NỀN TẢNG (30%)",
       value: invoiceTotal.toLocaleString("vi-VN") + "đ",
-      // thêm tooltip để thấy số gốc
       trend: fmtTrend(welcomeStats.revenueTrendPct),
       isUp: trendUp(welcomeStats.revenueTrendPct),
       icon: (
-        <MonetizationOnRounded sx={{ color: COLORS.primary, fontSize: 22 }} />
+        <MonetizationOnRounded sx={{ color: COLORS.primary, fontSize: 24 }} />
       ),
-      iconBg: "rgba(141,19,19,0.05)",
+      iconBg: "rgba(141,19,19,0.06)",
     },
     {
       title: "TỔNG HỌC VIÊN",
       value: (welcomeStats.totalStudents || 0).toLocaleString(),
       trend: fmtTrend(welcomeStats.studentsTrendPct),
       isUp: trendUp(welcomeStats.studentsTrendPct),
-      icon: <PeopleRounded sx={{ color: COLORS.purpleAI, fontSize: 22 }} />,
-      iconBg: "rgba(124,58,237,0.05)",
+      icon: <PeopleRounded sx={{ color: COLORS.purpleAI, fontSize: 24 }} />,
+      iconBg: "rgba(124,58,237,0.06)",
     },
     {
       title: "TỔNG KHÓA HỌC",
       value: (welcomeStats.totalCourses || 0).toString(),
       trend: fmtTrend(welcomeStats.coursesTrendPct),
       isUp: trendUp(welcomeStats.coursesTrendPct),
-      icon: <SchoolRounded sx={{ color: "#0EA5E9", fontSize: 22 }} />,
-      iconBg: "rgba(14,165,233,0.05)",
-    },
-    {
-      title: "TỶ LỆ HOÀN THÀNH",
-      value: `${welcomeStats.completionRate || 0}%`,
-      trend: fmtTrend(welcomeStats.completionTrendPct),
-      isUp: trendUp(welcomeStats.completionTrendPct),
-      icon: (
-        <AssignmentTurnedInRounded
-          sx={{ color: STATUS.success, fontSize: 22 }}
-        />
-      ),
-      iconBg: "rgba(16,185,129,0.05)",
+      icon: <SchoolRounded sx={{ color: "#0EA5E9", fontSize: 24 }} />,
+      iconBg: "rgba(14,165,233,0.06)",
     },
   ];
 
@@ -863,14 +841,14 @@ export default function AdminDashboardContent() {
 
       {adminActiveTab === 0 && (
         <>
-          {/* 2. Indicators Cards */}
+          {/* 2. Indicators Cards (3 cột cân đối) */}
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: {
                 xs: "1fr",
                 sm: "1fr 1fr",
-                md: "1fr 1fr 1fr 1fr",
+                md: "repeat(3, 1fr)",
               },
               gap: 3,
             }}
@@ -880,14 +858,21 @@ export default function AdminDashboardContent() {
                 key={idx}
                 elevation={0}
                 sx={{
-                  p: 3,
+                  p: { xs: 2.5, md: 3 },
                   borderRadius: "20px",
                   border: "1px solid rgba(0,0,0,0.06)",
                   bgcolor: COLORS.white,
                   display: "flex",
                   flexDirection: "column",
-                  gap: 2,
+                  gap: 2.25,
                   position: "relative",
+                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.02)",
+                  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                  "&:hover": {
+                    transform: "translateY(-3px)",
+                    boxShadow: "0 12px 28px rgba(0, 0, 0, 0.06)",
+                    borderColor: "rgba(0,0,0,0.1)",
+                  },
                 }}
               >
                 {/* Header info */}
@@ -897,10 +882,10 @@ export default function AdminDashboardContent() {
                 >
                   <Typography
                     sx={{
-                      fontSize: 11.5,
+                      fontSize: 12,
                       fontWeight: 800,
-                      color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                      letterSpacing: "0.4px",
+                      color: "var(--ev-text-muted, rgba(31,41,55,0.45))",
+                      letterSpacing: "0.5px",
                     }}
                   >
                     {stat.title}
@@ -920,7 +905,7 @@ export default function AdminDashboardContent() {
                 >
                   <Typography
                     sx={{
-                      fontSize: 22,
+                      fontSize: { xs: 22, lg: 26 },
                       fontWeight: 900,
                       color: COLORS.textDark,
                       letterSpacing: "-0.5px",
@@ -930,12 +915,16 @@ export default function AdminDashboardContent() {
                   </Typography>
                   <Box
                     sx={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: "12px",
+                      width: 44,
+                      height: 44,
+                      borderRadius: "14px",
                       bgcolor: stat.iconBg,
                       display: "grid",
                       placeItems: "center",
+                      transition: "transform 0.2s ease",
+                      "&:hover": {
+                        transform: "scale(1.08)",
+                      },
                     }}
                   >
                     {stat.icon}
@@ -1089,73 +1078,6 @@ export default function AdminDashboardContent() {
             </Grid>
           </Grid>
 
-          {/* 5. Recent activity */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3.5,
-              borderRadius: "24px",
-              border: "1px solid rgba(141,19,19,0.06)",
-              bgcolor: COLORS.white,
-              width: "100%",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 800, color: COLORS.textDark, mb: 3 }}
-            >
-              Hoạt động trực tuyến
-            </Typography>
-
-            <Stack spacing={2.5}>
-              {recentActivities.map((act: any, idx: number) => {
-                const getIconColor = () => {
-                  if (act.type === "registration") return COLORS.green;
-                  if (act.type === "quiz") return "#3B82F6";
-                  return STATUS.warning;
-                };
-                return (
-                  <Stack
-                    key={idx}
-                    direction="row"
-                    spacing={2}
-                    sx={{ alignItems: "flex-start" }}
-                  >
-                    <FiberManualRecordRounded
-                      sx={{
-                        color: getIconColor(),
-                        fontSize: 12,
-                        mt: 0.5,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography
-                        sx={{
-                          fontSize: 13.5,
-                          fontWeight: 700,
-                          color: COLORS.textDark,
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        {act.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: 11.5,
-                          color: "var(--ev-text-muted, rgba(31,41,55,0.4))",
-                          mt: 0.5,
-                          fontWeight: 600,
-                        }}
-                      >
-                        {act.time} • {act.subtitle}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                );
-              })}
-            </Stack>
-          </Paper>
         </>
       )}
 
