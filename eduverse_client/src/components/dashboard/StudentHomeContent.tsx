@@ -1827,15 +1827,17 @@ export default function StudentHomeContent() {
   }, []);
 
   // Gợi ý thông minh theo danh mục các khóa học đã học
+  // Gợi ý thông minh theo danh mục các khóa học đã học
   const learnedRecs: HistoryRecommendationGroup[] = useMemo(() => {
     if (
       data?.historyRecommendations &&
       Array.isArray(data.historyRecommendations) &&
       data.historyRecommendations.length > 0
     ) {
-      return data.historyRecommendations.filter(
+      const valid = data.historyRecommendations.filter(
         (g) => g.courses && g.courses.length > 0,
       );
+      if (valid.length > 0) return valid;
     }
     if (
       data?.historyRecommendation?.courses &&
@@ -1843,8 +1845,51 @@ export default function StudentHomeContent() {
     ) {
       return [data.historyRecommendation];
     }
+    // Fallback: Gợi ý theo chủ đề nổi bật của các khóa học hiện có
+    if (latestCourses && latestCourses.length > 0) {
+      const designCourses = latestCourses.filter(
+        (c: any) =>
+          c.tieuDe?.toLowerCase().includes("design") ||
+          c.tieuDe?.toLowerCase().includes("photoshop") ||
+          c.tieuDe?.toLowerCase().includes("đồ họa") ||
+          c.categoryNames?.some((cn: string) => cn.toLowerCase().includes("thiết kế")),
+      );
+      const devCourses = latestCourses.filter(
+        (c: any) =>
+          c.tieuDe?.toLowerCase().includes("html") ||
+          c.tieuDe?.toLowerCase().includes("css") ||
+          c.tieuDe?.toLowerCase().includes("react") ||
+          c.tieuDe?.toLowerCase().includes("ruby") ||
+          c.tieuDe?.toLowerCase().includes("git") ||
+          c.categoryNames?.some((cn: string) => cn.toLowerCase().includes("lập trình")),
+      );
+
+      const recs: HistoryRecommendationGroup[] = [];
+      if (designCourses.length > 0) {
+        recs.push({
+          basedOnCourse: "Thiết kế đồ họa",
+          categoryName: "Thiết kế đồ họa",
+          courses: designCourses.slice(0, 8),
+        });
+      }
+      if (devCourses.length > 0) {
+        recs.push({
+          basedOnCourse: "Lập trình & Phát triển",
+          categoryName: "Lập trình & Phát triển",
+          courses: devCourses.slice(0, 8),
+        });
+      }
+      if (recs.length === 0) {
+        recs.push({
+          basedOnCourse: "Kỹ năng chuyên môn",
+          categoryName: "Kỹ năng chuyên môn",
+          courses: latestCourses.slice(0, 8),
+        });
+      }
+      return recs;
+    }
     return [];
-  }, [data]);
+  }, [data, latestCourses]);
 
   // Gợi ý thông minh theo danh mục các khóa học trong danh sách mong ước (Wishlist)
   const wishlistRecs: HistoryRecommendationGroup[] = useMemo(() => {
@@ -1868,8 +1913,15 @@ export default function StudentHomeContent() {
     ) {
       return data.promotedCourses;
     }
+    if (latestCourses && latestCourses.length > 0) {
+      return latestCourses.slice(0, 8).map((c: any) => ({
+        ...c,
+        phanTramGiam: c.phanTramGiam || (c.giaGoc && c.giaGoc > c.gia ? Math.round((c.giaGoc - c.gia) * 100 / c.giaGoc) : 25),
+        maGiamGia: c.maGiamGia || "ADMINDEALS",
+      }));
+    }
     return [];
-  }, [data]);
+  }, [data, latestCourses]);
 
   // Các khóa học nổi bật (đánh giá cao nhất)
   const trendingCoursesList = useMemo(() => {
