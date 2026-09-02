@@ -1,4 +1,4 @@
-﻿using Eduverse.Model;
+using Eduverse.Model;
 using Eduverse.Model.Entities;
 using Eduverse.Repository.DonHang_GiangVienRepository;
 using Eduverse.Repository.DonHang_KhuyenMaiRepository;
@@ -257,7 +257,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 TieuDe = "Bạn đã bị xóa khỏi khóa học",
                 NoiDung = $"Bạn không còn là giảng viên cộng tác của khóa học \"{khoaHoc?.TieuDe}\".",
                 LoaiThongBao = "XoaKhoiKhoaHoc",
-                Link = "/instructor/courses",
+                Link = "/instructor/manager-courses",
                 FromUser = userId,
                 ItemId = idKhoaHoc,
                 ItemName = khoaHoc?.TieuDe
@@ -374,7 +374,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 TieuDe = "Lời mời đồng giảng dạy",
                 NoiDung = $"Bạn được mời tham gia giảng dạy khóa học \"{khoaHoc.TieuDe}\".",
                 LoaiThongBao = "LoiMoiDongGiangVien",
-                Link = $"/instructor/invites/{loiMoi.Id}",
+                Link = "/instructor/invites",
                 FromUser = userId,
                 ItemId = loiMoi.Id,
                 ItemName = khoaHoc.TieuDe
@@ -484,7 +484,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
             var nguoiMoiIds = loiMois.Select(x => x.IdNguoiMoi).Distinct().ToList();
 
             var khoaHocs = await _khoaHocRepo.GetQueryable()
-                .Where(x => khoaHocIds.Contains(x.Id) && !x.IsDeleted)
+                .Where(x => khoaHocIds.Contains(x.Id) && !x.IsDeleted && x.TrangThai != "DaXoa")
                 .Select(x => new { x.Id, x.TieuDe, x.HinhAnhKhoaHoc })
                 .ToListAsync();
 
@@ -493,31 +493,37 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
                 .ToListAsync();
 
-            return loiMois.Select(lm =>
-            {
-                var kh = khoaHocs.FirstOrDefault(k => k.Id == lm.IdKhoaHoc);
-                var nm = nguoiMois.FirstOrDefault(n => n.Id == lm.IdNguoiMoi);
-                return new LoiMoiChoXacNhanDto
+            return loiMois
+                .Select(lm =>
                 {
-                    Id = lm.Id,
-                    IdKhoaHoc = lm.IdKhoaHoc,
-                    TenKhoaHoc = kh?.TieuDe,
-                    HinhAnhKhoaHoc = kh?.HinhAnhKhoaHoc,
-                    TenNguoiMoi = nm?.HoTen,
-                    AnhNguoiMoi = nm?.AnhDaiDien,
-                    TrangThai = lm.TrangThai,
-                    Visible = lm.Visible,
-                    TyLeChiaDoanhThu = lm.TyLeChiaDoanhThu,
-                    Manage = lm.Manage,
-                    Performance = lm.Performance,
-                    QnA = lm.QnA,
-                    Reviews = lm.Reviews,
-                    Assignments = lm.Assignments,
-                    Materials = lm.Materials,
-                    Promotions = lm.Promotions,
-                    NgayMoi = lm.CreatedDate,
-                };
-            }).ToList();
+                    var kh = khoaHocs.FirstOrDefault(k => k.Id == lm.IdKhoaHoc);
+                    var nm = nguoiMois.FirstOrDefault(n => n.Id == lm.IdNguoiMoi);
+                    if (kh == null) return null;
+
+                    return new LoiMoiChoXacNhanDto
+                    {
+                        Id = lm.Id,
+                        IdKhoaHoc = lm.IdKhoaHoc,
+                        IdNguoiMoi = lm.IdNguoiMoi,
+                        TenKhoaHoc = kh.TieuDe,
+                        HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
+                        TenNguoiMoi = nm?.HoTen,
+                        AnhNguoiMoi = nm?.AnhDaiDien,
+                        TrangThai = lm.TrangThai,
+                        Visible = lm.Visible,
+                        TyLeChiaDoanhThu = lm.TyLeChiaDoanhThu,
+                        Manage = lm.Manage,
+                        Performance = lm.Performance,
+                        QnA = lm.QnA,
+                        Reviews = lm.Reviews,
+                        Assignments = lm.Assignments,
+                        Materials = lm.Materials,
+                        Promotions = lm.Promotions,
+                        NgayMoi = lm.CreatedDate,
+                    };
+                })
+                .Where(x => x != null)!
+                .ToList();
         }
 
         public async Task CapNhatQuyen(Guid idLoiMoi, CapNhatQuyenRequest request)
@@ -1032,8 +1038,6 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     continue;
                 }
 
-                var daThamGiaDeals = await DaThamGiaEduverseDeals(idKhoaHoc);
-
                 var loiMoi = new Model.Entities.LoiMoiGiangVien
                 {
                     IdKhuyenMai = idKhuyenMai,
@@ -1041,8 +1045,8 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     IdNguoiMoi = userId,
                     IdNguoiDuocMoi = idNguoiDuyet.Value,
                     EmailDuocMoi = string.Empty,
-                    TrangThai = daThamGiaDeals ? "Accepted" : "Pending",
-                    NgayPhanHoi = daThamGiaDeals ? DateTime.UtcNow : (DateTime?)null,
+                    TrangThai = "Pending",
+                    NgayPhanHoi = (DateTime?)null,
                     Visible = false,
                     TyLeChiaDoanhThu = 0,
                     Manage = false,
@@ -1067,44 +1071,16 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     throw;
                 }
 
-                if (daThamGiaDeals)
+                await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
                 {
-                    // Gắn liên kết ngay — y hệt nhánh dongY=true trong PhanHoiKhuyenMai
-                    var daCoLink = await _kmKhoaHocRepo.GetQueryable()
-                        .AnyAsync(x => x.IdKhuyenMai == idKhuyenMai && x.IdKhoaHoc == idKhoaHoc);
-                    if (!daCoLink)
-                    {
-                        _kmKhoaHocRepo.Add(new KhuyenMai_KhoaHoc
-                        {
-                            IdKhuyenMai = idKhuyenMai,
-                            IdKhoaHoc = idKhoaHoc,
-                        });
-                        await _kmKhoaHocRepo.SaveAsync();
-                    }
-
-                    await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
-                    {
-                        TieuDe = "Mã khuyến mãi đã được áp dụng tự động",
-                        NoiDung = $"Khóa học \"{khoaHoc.TieuDe}\" đang tham gia Eduverse Deals nên mã khuyến mãi mới được áp dụng tự động, không cần xác nhận.",
-                        LoaiThongBao = "PhanHoiApDungKhuyenMai",
-                        FromUser = userId,
-                        ItemId = loiMoi.Id,
-                        ItemName = khoaHoc.TieuDe
-                    });
-                }
-                else
-                {
-                    await _notificationPublisher.NotifyUserAsync(idNguoiDuyet.Value, new NotificationPayload
-                    {
-                        TieuDe = "Yêu cầu áp dụng mã khuyến mãi",
-                        NoiDung = $"Admin muốn áp mã khuyến mãi cho khóa học \"{khoaHoc.TieuDe}\". Vui lòng xác nhận.",
-                        LoaiThongBao = "LoiMoiApDungKhuyenMai",
-                        Link = "/instructor/invites",
-                        FromUser = userId,
-                        ItemId = loiMoi.Id,
-                        ItemName = khoaHoc.TieuDe
-                    });
-                }
+                    TieuDe = "Yêu cầu áp dụng mã khuyến mãi",
+                    NoiDung = $"Quản trị viên muốn áp dụng mã khuyến mãi cho khóa học \"{khoaHoc.TieuDe}\". Vui lòng xem và xác nhận.",
+                    LoaiThongBao = "LoiMoiApDungKhuyenMai",
+                    Link = "/instructor/invites",
+                    FromUser = userId,
+                    ItemId = loiMoi.Id,
+                    ItemName = khoaHoc.TieuDe
+                });
             }
 
             return idsTaoMoi;
@@ -1133,7 +1109,7 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .ToListAsync();
 
             var khoaHocs = await _khoaHocRepo.GetQueryable()
-                .Where(x => khoaHocIds.Contains(x.Id))
+                .Where(x => khoaHocIds.Contains(x.Id) && !x.IsDeleted && x.TrangThai != "DaXoa")
                 .Select(x => new { x.Id, x.TieuDe, x.HinhAnhKhoaHoc })
                 .ToListAsync();
 
@@ -1142,29 +1118,33 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                 .Select(x => new { x.Id, x.HoTen, x.AnhDaiDien })
                 .ToListAsync();
 
-            return loiMois.Select(lm =>
-            {
-                var km = khuyenMais.FirstOrDefault(k => k.Id == lm.IdKhuyenMai);
-                var kh = khoaHocs.FirstOrDefault(k => k.Id == lm.IdKhoaHoc);
-                var nm = nguoiMois.FirstOrDefault(n => n.Id == lm.IdNguoiMoi);
-
-                return new LoiMoiKhuyenMaiChoXacNhanDto
+            return loiMois
+                .Select(lm =>
                 {
-                    Id = lm.Id,
-                    IdKhuyenMai = lm.IdKhuyenMai!.Value,
-                    MaGiamGia = km?.MaGiamGia,
-                    PhanTramGiam = km?.PhanTramGiam,
-                    NgayBatDauKM = km?.NgayBatDau,
-                    NgayKetThucKM = km?.NgayKetThuc,
-                    IdKhoaHoc = lm.IdKhoaHoc,
-                    TenKhoaHoc = kh?.TieuDe,
-                    HinhAnhKhoaHoc = kh?.HinhAnhKhoaHoc,
-                    TenNguoiMoi = nm?.HoTen,
-                    AnhNguoiMoi = nm?.AnhDaiDien,
-                    TrangThai = lm.TrangThai,
-                    NgayMoi = lm.CreatedDate,
-                };
-            }).ToList();
+                    var km = khuyenMais.FirstOrDefault(k => k.Id == lm.IdKhuyenMai);
+                    var kh = khoaHocs.FirstOrDefault(k => k.Id == lm.IdKhoaHoc);
+                    var nm = nguoiMois.FirstOrDefault(n => n.Id == lm.IdNguoiMoi);
+                    if (kh == null) return null;
+
+                    return new LoiMoiKhuyenMaiChoXacNhanDto
+                    {
+                        Id = lm.Id,
+                        IdKhuyenMai = lm.IdKhuyenMai!.Value,
+                        MaGiamGia = km?.MaGiamGia,
+                        PhanTramGiam = km?.PhanTramGiam,
+                        NgayBatDauKM = km?.NgayBatDau,
+                        NgayKetThucKM = km?.NgayKetThuc,
+                        IdKhoaHoc = lm.IdKhoaHoc,
+                        TenKhoaHoc = kh.TieuDe,
+                        HinhAnhKhoaHoc = kh.HinhAnhKhoaHoc,
+                        TenNguoiMoi = nm?.HoTen,
+                        AnhNguoiMoi = nm?.AnhDaiDien,
+                        TrangThai = lm.TrangThai,
+                        NgayMoi = lm.CreatedDate,
+                    };
+                })
+                .Where(x => x != null)!
+                .ToList();
         }
 
         public async Task PhanHoiKhuyenMai(Guid idLoiMoi, bool dongY)
@@ -1221,15 +1201,16 @@ namespace Eduverse.Service.LoiMoiGiangVienService
                     });
                     await _kmKhoaHocRepo.SaveAsync();
                 }
-                await DanhDauThamGiaEduverseDeals(loiMoi.IdKhoaHoc, userId);
+                // Đã liên kết khóa học thành công với mã giảm giá
             }
 
             // Báo lại cho Admin đã gửi lời mời biết kết quả
             await _notificationPublisher.NotifyUserAsync(loiMoi.IdNguoiMoi, new NotificationPayload
             {
                 TieuDe = dongY ? "Khuyến mãi đã được chấp nhận" : "Khuyến mãi đã bị từ chối",
-                NoiDung = $"Giảng viên đã {(dongY ? "đồng ý" : "từ chối")} áp dụng khuyến mãi cho khóa học.",
+                NoiDung = $"Giảng viên đã {(dongY ? "đồng ý" : "từ chối")} áp dụng mã giảm giá cho khóa học.",
                 LoaiThongBao = "PhanHoiApDungKhuyenMai",
+                Link = "/admin/promotions",
                 FromUser = userId,
                 ItemId = loiMoi.IdKhuyenMai,
             });

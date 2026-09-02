@@ -61,6 +61,7 @@ export function AvatarCropModal({
   // Load image when imageSrc changes or modal opens
   useEffect(() => {
     if (!open || !imageSrc) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImage(null);
       setZoom(1);
       setRotation(0);

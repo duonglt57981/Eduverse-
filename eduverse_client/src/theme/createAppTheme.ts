@@ -94,6 +94,14 @@ export function createAppTheme(
           },
           // Ảnh/logo KHÔNG bị đảo màu trong chế độ tối
           "img, video, canvas, svg.no-invert": { filter: "none" },
+          ".recharts-wrapper, .recharts-surface, .recharts-responsive-container, svg": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
+          ".recharts-wrapper:focus, .recharts-surface:focus, .recharts-responsive-container:focus, svg:focus, svg:focus-visible": {
+            outline: "none !important",
+            boxShadow: "none !important",
+          },
         },
       },
       MuiPopover: { styleOverrides: { paper: { backgroundColor: S.paper, backgroundImage: "none" } } },

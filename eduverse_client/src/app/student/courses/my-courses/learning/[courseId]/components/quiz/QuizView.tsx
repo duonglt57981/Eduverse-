@@ -262,8 +262,13 @@ export function QuizView({
               }}
             >
               {(() => {
-                const cleanedTitle = cleanHtmlContent(cauHoi.tenCauHoi);
-                const cleanedNoiDung = cleanHtmlContent(cauHoi.noiDungCauHoi);
+                const rawTitle = cauHoi.tenCauHoi || cauHoi.noiDungCauHoi || "";
+                const rawNoiDung =
+                  cauHoi.noiDungCauHoi && cauHoi.noiDungCauHoi !== cauHoi.tenCauHoi
+                    ? cauHoi.noiDungCauHoi
+                    : "";
+                const cleanedTitle = cleanHtmlContent(rawTitle);
+                const cleanedNoiDung = cleanHtmlContent(rawNoiDung);
                 const hasDistinctNoiDung =
                   Boolean(cleanedNoiDung) &&
                   cleanedNoiDung !== cleanedTitle &&

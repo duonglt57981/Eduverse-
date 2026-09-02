@@ -252,6 +252,8 @@ export default function InstructorsContent() {
   // ── Tính tổng % ──────────────────────────────────────────────────────────
   const tongTyLe = rows.reduce((s, r) => s + (r.tyLeChiaDoanhThu || 0), 0);
   const hasDirty = rows.some((r) => r._dirty);
+  const chuSoHuuTyLeKhaDung =
+    rows.find((r) => r.laChuSoHuu)?.tyLeChiaDoanhThu ?? 0;
 
   const vuot100 = tongTyLe > 100;
   const chuaDu100 = tongTyLe < 100;
@@ -350,11 +352,22 @@ export default function InstructorsContent() {
     }
 
     // Kiểm tra tổng % sau khi thêm
-    if (tongTyLe + formMoi.tyLeChiaDoanhThu > 100) {
-      setLoiMoiDialog(
-        `Tổng tỷ lệ sẽ vượt 100%. Tối đa bạn có thể thêm ${100 - tongTyLe}%.`,
-      );
-      return;
+    const chuSoHuu = rows.find((r) => r.laChuSoHuu);
+    const tyLeKhaDungCuaChu = chuSoHuu?.tyLeChiaDoanhThu ?? 0;
+
+    if (formMoi.tyLeChiaDoanhThu > 0) {
+      if (tyLeKhaDungCuaChu <= 0) {
+        setLoiMoiDialog(
+          "Chủ sở hữu đã chia hết 100% doanh thu (đang ở 0%). Vui lòng điều chỉnh lại tỷ lệ chia doanh thu của các giảng viên hiện có trước khi mời thêm.",
+        );
+        return;
+      }
+      if (tyLeKhaDungCuaChu < formMoi.tyLeChiaDoanhThu) {
+        setLoiMoiDialog(
+          `Chủ sở hữu chỉ còn ${tyLeKhaDungCuaChu}% khả dụng, không đủ để chia ${formMoi.tyLeChiaDoanhThu}% cho giảng viên mới.`,
+        );
+        return;
+      }
     }
 
     setDangGui(true);
@@ -385,35 +398,10 @@ export default function InstructorsContent() {
         removeTarget.idGiangVien,
       );
 
-      // Đẩy tỷ lệ doanh thu của giảng viên vừa xóa về cho chủ sở hữu, tự động lưu
-      const chuSoHuu = rows.find((r) => r.laChuSoHuu);
-      const tyLeXoa = removeTarget.tyLeChiaDoanhThu || 0;
-
-      if (chuSoHuu && tyLeXoa > 0) {
-        await LoiMoiGiangVienService.CapNhatQuyenHangLoat(idKhoaHoc, {
-          danhSach: [
-            {
-              idGiangVien: chuSoHuu.idGiangVien,
-              visible: chuSoHuu.visible,
-              tyLeChiaDoanhThu: chuSoHuu.tyLeChiaDoanhThu + tyLeXoa,
-              manage: chuSoHuu.manage,
-              performance: chuSoHuu.performance,
-              qnA: chuSoHuu.qnA,
-              reviews: chuSoHuu.reviews,
-              assignments: chuSoHuu.assignments,
-              materials: chuSoHuu.materials,
-              promotions: chuSoHuu.promotions,
-            },
-          ],
-        });
-      }
-
       setToast({
         open: true,
         message:
-          chuSoHuu && tyLeXoa > 0
-            ? `Đã xóa giảng viên, cộng ${tyLeXoa}% doanh thu về chủ sở hữu`
-            : "Đã xóa giảng viên",
+          "Đã xóa giảng viên, % doanh thu đã được hoàn lại cho chủ sở hữu",
         severity: "success",
       });
       setRemoveTarget(null);
@@ -495,35 +483,57 @@ export default function InstructorsContent() {
           </Box>
 
           {coTheThemGV ? (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon sx={{ fontSize: 20 }} />}
-              onClick={() => {
-                setShowMoiDialog(true);
-                setLoiMoiDialog(null);
-                setEmailWarning(null);
-                setFormMoi({ ...DEFAULT_QUYEN });
-              }}
-              sx={{
-                textTransform: "none",
-                fontWeight: 700,
-                fontSize: 14,
-                bgcolor: MAU.chinh,
-                color: "#FFFFFF",
-                borderRadius: "12px",
-                px: 2.75,
-                py: 1.1,
-                boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
-                transition: "all 0.2s ease",
-                "&:hover": {
-                  bgcolor: MAU.chinhDam || "#6b0f0f",
-                  boxShadow: "0 6px 20px rgba(139,19,19,0.35)",
-                  transform: "translateY(-1px)",
-                },
-              }}
-            >
-              Thêm giảng viên
-            </Button>
+            chuSoHuuTyLeKhaDung > 0 ? (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon sx={{ fontSize: 20 }} />}
+                onClick={() => {
+                  setShowMoiDialog(true);
+                  setLoiMoiDialog(null);
+                  setEmailWarning(null);
+                  setFormMoi({ ...DEFAULT_QUYEN, tyLeChiaDoanhThu: 0 });
+                }}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  bgcolor: MAU.chinh,
+                  color: "#FFFFFF",
+                  borderRadius: "12px",
+                  px: 2.75,
+                  py: 1.1,
+                  boxShadow: "0 4px 14px rgba(139,19,19,0.22)",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    bgcolor: MAU.chinhDam || "#6b0f0f",
+                    boxShadow: "0 6px 20px rgba(139,19,19,0.35)",
+                    transform: "translateY(-1px)",
+                  },
+                }}
+              >
+                Thêm giảng viên
+              </Button>
+            ) : (
+              <Tooltip title="Chủ sở hữu đã chia hết 100% doanh thu. Vui lòng điều chỉnh tỷ lệ hiện có trước khi mời thêm.">
+                <span>
+                  <Button
+                    variant="contained"
+                    disabled
+                    startIcon={<AddIcon sx={{ fontSize: 20 }} />}
+                    sx={{
+                      textTransform: "none",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      borderRadius: "12px",
+                      px: 2.75,
+                      py: 1.1,
+                    }}
+                  >
+                    Thêm giảng viên
+                  </Button>
+                </span>
+              </Tooltip>
+            )
           ) : (
             isEditable &&
             trangThai === "DaDuyet" && (
@@ -1390,14 +1400,14 @@ export default function InstructorsContent() {
                 </Typography>
 
                 <Chip
-                  label={`Còn lại: ${100 - tongTyLe}%`}
+                  label={`Chủ sở hữu còn: ${chuSoHuuTyLeKhaDung}%`}
                   size="small"
                   sx={{
                     fontWeight: 700,
                     fontSize: 11.5,
-                    bgcolor: 100 - tongTyLe > 0 ? "#ECFDF5" : "#FEF2F2",
-                    color: 100 - tongTyLe > 0 ? "#059669" : STATUS.error,
-                    border: `1px solid ${100 - tongTyLe > 0 ? "#A7F3D0" : "#FCA5A5"}`,
+                    bgcolor: chuSoHuuTyLeKhaDung > 0 ? "#ECFDF5" : "#FEF2F2",
+                    color: chuSoHuuTyLeKhaDung > 0 ? "#059669" : STATUS.error,
+                    border: `1px solid ${chuSoHuuTyLeKhaDung > 0 ? "#A7F3D0" : "#FCA5A5"}`,
                   }}
                 />
               </Stack>

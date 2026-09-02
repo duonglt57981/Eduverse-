@@ -150,12 +150,35 @@ namespace Eduverse.Api.Controller
                     .Select(c => c.Value)
                     .ToList();
 
-                // If Admin, auto-populate all permissions
-                if (role.Name == "Admin" && !permissions.Contains("User.View"))
+                // Return fixed permissions for standard built-in roles
+                if (role.Name == "Admin")
                 {
                     permissions = new List<string> { 
                         "User.View", "User.Edit", "User.Delete", 
-                        "Course.View", "Course.Create", "Course.Edit", "Course.Delete" 
+                        "Course.View", "Course.Create", "Course.Edit", "Course.Delete",
+                        "Category.View", "Category.Manage", "Category.Delete",
+                        "Course.Approve", "Test.Manage",
+                        "Payment.View", "Withdrawal.Approve",
+                        "Role.Manage", "System.Settings"
+                    };
+                }
+                else if (role.Name == "GiaoVien" || role.Name == "Instructor")
+                {
+                    permissions = new List<string> {
+                        "Course.View", "Course.Create", "Course.Edit", "Course.Delete",
+                        "Test.Manage", "Payment.View", "Category.View"
+                    };
+                }
+                else if (role.Name == "HocVien" || role.Name == "Student")
+                {
+                    permissions = new List<string> {
+                        "Course.View", "Category.View", "Payment.View"
+                    };
+                }
+                else if (role.Name == "Personnel" || role.Name == "NhanVien" || role.Name == "KiemDuyet")
+                {
+                    permissions = new List<string> {
+                        "Course.View", "Course.Approve", "Test.Manage", "Category.View", "User.View"
                     };
                 }
 

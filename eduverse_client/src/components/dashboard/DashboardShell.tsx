@@ -84,6 +84,7 @@ import { useSignalR } from "@/src/hook/useSignalR";
 import { thongBaoService } from "@/src/services/ThongBaoService";
 import { ThongBao } from "@/src/types/thongbao";
 import { isNotificationForRole } from "@/src/libs/notificationRole";
+import { resolveNotificationUrl } from "@/src/utils/notificationUrlResolver";
 
 // --- Bảng màu dùng chung (đồng bộ từ src/theme/tokens) ---
 
@@ -843,65 +844,8 @@ function CourseCard({ course }: { course: CourseCardItem }) {
   );
 }
 
-const getNotificationTarget = (notification: ThongBao, pathname: string) => {
-  const rawLink = notification.link?.trim();
-  const normalizedLink = rawLink
-    ? /^https?:\/\//i.test(rawLink) || rawLink.startsWith("/")
-      ? rawLink
-      : `/${rawLink}`
-    : null;
-
-  if (!pathname.startsWith("/admin")) {
-    let target = normalizedLink;
-    if (target === "/instructor/revenue") {
-      target = "/instructor/money";
-    }
-    return (
-      target ||
-      (pathname.startsWith("/instructor")
-        ? "/instructor/dashboard"
-        : "/student/dashboard")
-    );
-  }
-
-  if (normalizedLink?.startsWith("/admin")) return normalizedLink;
-
-  const searchableText = [
-    notification.type,
-    notification.loaiThongBao,
-    notification.tieuDe,
-    notification.noiDung,
-    notification.message,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLocaleLowerCase("vi-VN");
-
-  if (/rút tiền|rut tien|withdraw/.test(searchableText)) {
-    return "/admin/withdrawal-request";
-  }
-  if (/thanh toán|thanh toan|đơn mua|don mua|payment/.test(searchableText)) {
-    return "/admin/payments";
-  }
-  if (/nâng cấp giảng viên|nang cap giang vien|instructor request/.test(searchableText)) {
-    return "/admin/dashboard?tab=instructor-requests";
-  }
-  if (/phê duyệt khóa học|phe duyet khoa hoc|khóa học mới chờ phê duyệt|khoa hoc moi cho phe duyet/.test(searchableText)) {
-    return notification.itemId
-      ? `/admin/approve-courses/${notification.itemId}`
-      : "/admin/approve-courses";
-  }
-  if (/khuyến mãi|khuyen mai|promotion/.test(searchableText)) {
-    return "/admin/promotions";
-  }
-  if (/khóa học|khoa hoc|course/.test(searchableText)) {
-    return "/admin/courses";
-  }
-  if (/người dùng|nguoi dung|user|tài khoản|tai khoan/.test(searchableText)) {
-    return "/admin/users";
-  }
-
-  return "/admin/notifications";
+const getNotificationTarget = (notification: ThongBao, pathname: string, roles: string[] = []) => {
+  return resolveNotificationUrl(notification, pathname, roles);
 };
 
 // MAIN RENDER COMPONENT
@@ -992,7 +936,7 @@ export default function DashboardShell({
       }
     }
 
-    const target = getNotificationTarget(noti, pathname);
+    const target = getNotificationTarget(noti, pathname, roles);
     if (/^https?:\/\//i.test(target)) {
       window.location.assign(target);
       return;

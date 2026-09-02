@@ -338,6 +338,7 @@ function EnrollmentLineChart({
         <AreaChart
           data={data}
           margin={{ top: 15, right: 20, left: -15, bottom: 6 }}
+          style={{ outline: "none" }}
         >
           <defs>
             <linearGradient id="enrollmentGrad" x1="0" y1="0" x2="0" y2="1">
@@ -498,6 +499,7 @@ function RevenueBarChart({
         <BarChart
           data={data}
           margin={{ top: 15, right: 20, left: -5, bottom: 6 }}
+          style={{ outline: "none" }}
         >
           <CartesianGrid
             strokeDasharray="3 3"

@@ -622,7 +622,8 @@ export default function QnAManagerContent() {
   );
 
   useEffect(() => {
-    load(true);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load(true);
   }, [idKhoaHoc, filterLoai, sapXep]);
 
   // ── Mở chi tiết câu hỏi ──────────────────────────────────────────

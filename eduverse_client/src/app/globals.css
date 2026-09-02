@@ -79,3 +79,46 @@ body {
 .swal2-container {
   z-index: 1400 !important;
 }
+
+/* ==========================================================================
+   TẮT VIỀN ĐEN (OUTLINE/BORDER) KHI CLICK HOẶC FOCUS VÀO BIỂU ĐỒ (RECHARTS, SVG, CANVAS)
+   ========================================================================== */
+.recharts-responsive-container,
+.recharts-responsive-container *,
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface *,
+svg.recharts-surface,
+svg.recharts-surface *,
+.recharts-layer,
+.recharts-layer *,
+svg,
+svg *,
+canvas {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.recharts-responsive-container:focus,
+.recharts-responsive-container:focus-visible,
+.recharts-responsive-container:active,
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-wrapper:active,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-surface:active,
+svg:focus,
+svg:focus-visible,
+svg:active,
+svg *:focus,
+svg *:focus-visible,
+svg *:active,
+canvas:focus,
+canvas:focus-visible,
+canvas:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
